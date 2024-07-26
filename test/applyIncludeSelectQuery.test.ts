@@ -62,6 +62,35 @@ describe('apply include select query', () => {
             }
         })
     }*/)
+    it('applies select method and does not allow reading of field', () => {
+        const { can, cannot, build } = abilityBuilder()
+        can('read', 'User')
+        cannot('read', 'User', 'email', {
+            id: 0
+        })
+        const args = applyIncludeSelectQuery(build(), {
+            where: {
+                author: {
+                    id: 0
+                }
+            },
+            select: {
+                author: true
+            }
+        }, 'Post')
+        expect(args).toEqual({
+            select: {
+                author: {
+                    select: undefined
+                }
+            },
+            where: {
+                author: {
+                    id: 0
+                }
+            }
+        })
+    })
     it('applies select method on array', () => {
         const { can, cannot, build } = abilityBuilder()
         can('read', 'Post', 'id', {

@@ -152,7 +152,35 @@ describe('apply casl to query', () => {
             }
         })
     })
+    it('ignores conditional rule, if not part of query', ()=>{
+        const { can, build } = abilityBuilder()
+        can('read', 'all' as any)
+        can('read', 'User', ['email', 'id'], {
+            id: 0
+        })
+        const abilities = build()
+        const result = applyCaslToQuery('findUnique', {}, abilities, 'User')
+        expect(result).toEqual({})
+    })
 
+    it('applies filter props and ignores weaker can rule', ()=>{
+        const { can, build } = abilityBuilder()
+        can('read', 'User', {
+            id: 0
+        })
+        can('read', 'User', ['email', 'id'])
+        const abilities = build()
+        const result = applyCaslToQuery('findUnique', {}, abilities, 'User')
+        expect(result).toEqual({ select: { email: true, id: true }})
+    })
+    it('allows to see more props on a condition', ()=>{
+        const { can, build } = abilityBuilder()
+        can('read', 'User', 'email')
+        can('read', 'User', ['email', 'id'], {id:0})
+        const abilities = build()
+        const result = applyCaslToQuery('findUnique', { where: { id: 0 } }, abilities, 'User')
+        expect(result).toEqual({ where: { id: 0 }, select: { email: true, id: true }})
+    })
     Object.entries(caslOperationDict).map(([operation, settings]) => {
         it(`${operation} applies ${settings.dataQuery ? 'data' : 'no data'} ${settings.whereQuery ? 'where' : 'no where'} and ${settings.includeSelectQuery ? 'include/select' : 'no include/select'} query`, () => {
             const { can, build } = abilityBuilder()

@@ -82,7 +82,23 @@ export const propertyFieldsByModel = Object.fromEntries(Prisma.dmmf.datamodel.mo
     return [model.name, propertyFields]
 }))
 
-
+/**
+ * goes through all permitted fields of a model
+ * 
+ * - if there area only rules with fields, permittedFields are at least empty
+ * 
+ * - if a rule has fields And conditions, it's fields are only permitted
+ * if the query overlaps with the conditions
+ * 
+ * - if permittedFields are empty, but there is a rule without fields,
+ * the result is undefined. allowing us to query for all fields
+ * 
+ * @param abilities 
+ * @param args 
+ * @param action 
+ * @param model 
+ * @returns 
+ */
 export function getPermittedFields(
     abilities: PureAbility<AbilityTuple, PrismaQuery>,
     args: any,
@@ -90,25 +106,36 @@ export function getPermittedFields(
     model: string
 ){
     let hasPermittedFields = false
+    let hasNoRuleWithoutFields: boolean | undefined = undefined
     const omittedFieldsSet = new Set()
     const permittedFields = permittedFieldsOf(abilities, action, model, {
         fieldsFrom: rule => {
+            if(hasNoRuleWithoutFields === undefined){
+                // make assumption true on first call of fieldsFrom
+                hasNoRuleWithoutFields = true
+            }
             if (rule.fields) {
                 if(rule.inverted){
                     rule.fields.forEach((field)=>omittedFieldsSet.add(field))
-                }
-                else{
+                } else {
                     hasPermittedFields = true
                 }
                 if (rule.conditions) {
                     if (isSubset(rule.conditions, args.where)) {
                         return rule.fields
-                    } else {
-                        // console.warn(`${model} fields ${JSON.stringify(rule.fields)} can only be read with following conditions: ${JSON.stringify(rule.conditions)}`)
-                    }
+                    } 
+                    // else if(process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
+                    //     const queriedFields = args.select ? Object.keys(args.select) : args.include ? Object.keys(args.include) : []
+
+                    //     if(queriedFields.findIndex((field)=> rule.fields?.includes(field)) > -1){
+                    //         console.warn(`${model} fields ${JSON.stringify(rule.fields)} can only be read with following conditions: ${JSON.stringify(rule.conditions)}`)
+                    //     }
+                    // }
                 } else {
                     return rule.fields
                 }
+            }else{
+                hasNoRuleWithoutFields = false
             }
             return []
         }
@@ -120,7 +147,7 @@ export function getPermittedFields(
         permittedFields.push(...Object.keys(propertyFieldsByModel[model]).filter((field)=> !omittedFieldsSet.has(field)))
         hasPermittedFields = true
     }
-    return hasPermittedFields ? permittedFields : undefined
+    return hasPermittedFields && permittedFields.length > 0 ? permittedFields : hasNoRuleWithoutFields ? [] : undefined
 }
 
 
