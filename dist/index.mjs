@@ -832,9 +832,13 @@ var propertyFieldsByModel = Object.fromEntries(Prisma.dmmf.datamodel.models.map(
 }));
 function getPermittedFields(abilities, args, action, model) {
   let hasPermittedFields = false;
+  let hasNoRuleWithoutFields = void 0;
   const omittedFieldsSet = /* @__PURE__ */ new Set();
   const permittedFields = c4(abilities, action, model, {
     fieldsFrom: (rule) => {
+      if (hasNoRuleWithoutFields === void 0) {
+        hasNoRuleWithoutFields = true;
+      }
       if (rule.fields) {
         if (rule.inverted) {
           rule.fields.forEach((field) => omittedFieldsSet.add(field));
@@ -844,11 +848,12 @@ function getPermittedFields(abilities, args, action, model) {
         if (rule.conditions) {
           if (isSubset(rule.conditions, args.where)) {
             return rule.fields;
-          } else {
           }
         } else {
           return rule.fields;
         }
+      } else {
+        hasNoRuleWithoutFields = false;
       }
       return [];
     }
@@ -857,7 +862,7 @@ function getPermittedFields(abilities, args, action, model) {
     permittedFields.push(...Object.keys(propertyFieldsByModel[model]).filter((field) => !omittedFieldsSet.has(field)));
     hasPermittedFields = true;
   }
-  return hasPermittedFields ? permittedFields : void 0;
+  return hasPermittedFields && permittedFields.length > 0 ? permittedFields : hasNoRuleWithoutFields ? [] : void 0;
 }
 function isSubset(obj1, obj2) {
   if (obj1 === obj2) return true;

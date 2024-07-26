@@ -1,5 +1,12 @@
 
 
+## [0.1.4](https://github.com/dennemark/prisma-extension-casl/compare/0.1.3...0.1.4) (2024-07-26)
+
+
+### Bug Fixes
+
+* :bug: consider rules without fields in select queries ([2a222ae](https://github.com/dennemark/prisma-extension-casl/commit/2a222aec8b546f416bbed9ea19f79acd77a7b877))
+
 ## [0.1.3](https://github.com/dennemark/prisma-extension-casl/compare/0.1.2...0.1.3) (2024-07-26)
 
 
