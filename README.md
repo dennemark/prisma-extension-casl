@@ -1,9 +1,9 @@
 # Prisma Extension CASL
 
 
-
 [Prisma client extension](https://www.prisma.io/docs/orm/prisma-client/client-extensions) that utilizes [CASL](https://casl.js.org/) to enforce authorization logic on most queries. 
 
+> [!CAUTION]
 > Please be very careful using this library in production! Test your endpoints on your own and raise an issue if some case is not supported by this library!
 
 Supports mainly/only CRUD actions `create`, `read`, `update` and `delete`, which allows us to generate and transform `include`, `select` and `where` queries to enforce nested filtering.
