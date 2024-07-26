@@ -1,7 +1,7 @@
 
 import { abilityBuilder } from './abilities'
 import { applyCaslToQuery } from '../src/applyCaslToQuery'
-import { caslOperationDict } from '../src/helpers'
+import { caslOperationDict, PrismaCaslOperation } from '../src/helpers'
 
 describe('apply casl to query', () => {
 
@@ -164,7 +164,7 @@ describe('apply casl to query', () => {
             can('read', 'Post', ['id'])
 
             const abilities = build()
-            const result = applyCaslToQuery(operation, {
+            const result = applyCaslToQuery(operation as PrismaCaslOperation, {
                 ...(settings.dataQuery ? { data: { id: 0 } }: {}),
                 ...(settings.includeSelectQuery ? { include: { posts: true } } : {})
             }, abilities, 'User')
