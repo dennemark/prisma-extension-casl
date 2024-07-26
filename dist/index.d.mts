@@ -10,7 +10,8 @@ import { PrismaQuery } from '@casl/prisma';
  * https://casl.js.org/v6/en/package/casl-prisma
  *
  *
- * @param getAbilities function to return CASL prisma abilities - this is a function call to instantiate abilities on client call with i.e. context and claims
+ * @param getAbilities function to return CASL prisma abilities
+ *  - this is a function call to instantiate abilities on each prisma query to allow adding i.e. context or claims
  * @returns enriched prisma client
  */
 declare const useCaslAbilities: (getAbilities: () => PureAbility<AbilityTuple, PrismaQuery>) => (client: any) => {

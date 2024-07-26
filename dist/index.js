@@ -1109,64 +1109,63 @@ function applyCaslToQuery(operation, args, abilities, model) {
 
 // src/index.ts
 var useCaslAbilities = (getAbilities) => {
-  const abilities = getAbilities();
   return import_client2.Prisma.defineExtension({
     name: "prisma-extension-casl",
     query: {
       $allModels: {
         create({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, abilities, model));
+          return query(applyCaslToQuery(operation, args, getAbilities(), model));
         },
         createMany({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, abilities, model));
+          return query(applyCaslToQuery(operation, args, getAbilities(), model));
         },
         createManyAndReturn({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, abilities, model));
+          return query(applyCaslToQuery(operation, args, getAbilities(), model));
         },
         upsert({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, abilities, model));
+          return query(applyCaslToQuery(operation, args, getAbilities(), model));
         },
         findFirst({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, abilities, model));
+          return query(applyCaslToQuery(operation, args, getAbilities(), model));
         },
         findFirstOrThrow({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, abilities, model));
+          return query(applyCaslToQuery(operation, args, getAbilities(), model));
         },
         findMany({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, abilities, model));
+          return query(applyCaslToQuery(operation, args, getAbilities(), model));
         },
         findUnique({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, abilities, model));
+          return query(applyCaslToQuery(operation, args, getAbilities(), model));
         },
         findUniqueOrThrow({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, abilities, model));
+          return query(applyCaslToQuery(operation, args, getAbilities(), model));
         },
         aggregate({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, abilities, model));
+          return query(applyCaslToQuery(operation, args, getAbilities(), model));
         },
         count({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, abilities, model));
+          return query(applyCaslToQuery(operation, args, getAbilities(), model));
         },
         groupBy({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, abilities, model));
+          return query(applyCaslToQuery(operation, args, getAbilities(), model));
         },
         update({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, abilities, model));
+          return query(applyCaslToQuery(operation, args, getAbilities(), model));
         },
         updateMany({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, abilities, model));
+          return query(applyCaslToQuery(operation, args, getAbilities(), model));
         },
         delete({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, abilities, model));
+          return query(applyCaslToQuery(operation, args, getAbilities(), model));
         },
         deleteMany({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, abilities, model));
+          return query(applyCaslToQuery(operation, args, getAbilities(), model));
         }
         // async $allOperations<T>({ args, query, model, operation }: { args: any, query: any, model: any, operation: any }) {
         //     if (!(operation in caslOperationDict)) {
         //         return query(args)
         //     }
-        //     args = applyCaslToQuery(operation, args, abilities, model)
+        //     args = applyCaslToQuery(operation, args, getAbilities(), model)
         //     return query(args)
         // },
       }
