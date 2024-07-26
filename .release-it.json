@@ -1,0 +1,13 @@
+{
+    "hooks": {
+        "after:init": "pnpm run build && pnpm jest"
+    },
+    "plugins":{
+        "@release-it/conventional-changelog": {
+            "preset": {
+                "name": "conventionalcommits"
+            },
+            "infile": "CHANGELOG.md"
+        }
+    }
+}
