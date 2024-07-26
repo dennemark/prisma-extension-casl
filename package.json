@@ -11,7 +11,8 @@
   "scripts": {
     "build": "tsup src/index.ts --format=cjs,esm --dts",
     "watch": "tsup src/index.ts --format=cjs,esm --dts --watch",
-    "test": "jest --watch"
+    "test": "jest --watch",
+    "release": "release-it"
   },
   "keywords": [
     "prisma",
@@ -33,6 +34,7 @@
     "esbuild": "^0.23.0",
     "jest": "^29.7.0",
     "prisma": "latest",
+    "release-it": "^17.6.0",
     "ts-jest": "^29.2.2",
     "ts-node": "^10.9.2",
     "tsup": "^8.1.0",
