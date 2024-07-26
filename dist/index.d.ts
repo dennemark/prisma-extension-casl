@@ -1,6 +1,20 @@
 import * as _prisma_client_runtime_library from '@prisma/client/runtime/library';
 import { PureAbility, AbilityTuple } from '@casl/ability';
 import { PrismaQuery } from '@casl/prisma';
+import { Prisma } from '@prisma/client';
+
+type PrismaCaslOperation = 'create' | 'createMany' | 'createManyAndReturn' | 'upsert' | 'findFirst' | 'findFirstOrThrow' | 'findMany' | 'findUnique' | 'findUniqueOrThrow' | 'aggregate' | 'count' | 'groupBy' | 'update' | 'updateMany' | 'delete' | 'deleteMany';
+
+/**
+ * Applies CASL authorization logic to prisma query
+ *
+ * @param operation Prisma Operation `findUnique` etc
+ * @param args Prisma query
+ * @param abilities Casl prisma abilities
+ * @param model Prisma model
+ * @returns Enriched query with casl authorization
+ */
+declare function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: Prisma.ModelName): any;
 
 /**
  * enrich a prisma client to check for CASL abilities even in nested queries
@@ -20,4 +34,4 @@ declare const useCaslAbilities: (getAbilities: () => PureAbility<AbilityTuple, P
     };
 };
 
-export { useCaslAbilities };
+export { applyCaslToQuery, useCaslAbilities };

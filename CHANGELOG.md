@@ -1,5 +1,13 @@
 
 
+## [0.1.3](https://github.com/dennemark/prisma-extension-casl/compare/0.1.2...0.1.3) (2024-07-26)
+
+
+### Bug Fixes
+
+* :art: expose apply casl to query function ([06e9fdb](https://github.com/dennemark/prisma-extension-casl/commit/06e9fdb6193173d0d0189a3ee80b25fb1300a322))
+* :label: fix type in test ([4f6be55](https://github.com/dennemark/prisma-extension-casl/commit/4f6be55196d546b15783623b537f9f2ddcdb3be0))
+
 ## [0.1.2](https://github.com/dennemark/prisma-extension-casl/compare/0.1.1...0.1.2) (2024-07-26)
 
 

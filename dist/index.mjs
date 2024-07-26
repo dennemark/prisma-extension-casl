@@ -1149,5 +1149,6 @@ var useCaslAbilities = (getAbilities) => {
   });
 };
 export {
+  applyCaslToQuery,
   useCaslAbilities
 };
