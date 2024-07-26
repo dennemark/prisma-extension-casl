@@ -22,7 +22,7 @@ Now how does it work?
     })
     can('read', 'Thread', 'id')
     const caslClient = prismaClient.$extends(
-        useCaslAbilities(build())
+        useCaslAbilities(build)
     )
     const result = await caslClient.post.findMany({
         include: {
@@ -61,7 +61,7 @@ Mutations will only run, if abilities allow it.
     can('update', 'Post')
     cannot('update', 'Post', 'text')
     const caslClient = prismaClient.$extends(
-        useCaslAbilities(build())
+        useCaslAbilities(build)
     )
     const result = await caslClient.post.update({ data: { text: '-' }, where: { id: 0 }})
     /** 
@@ -73,7 +73,9 @@ Mutations will only run, if abilities allow it.
 Check out tests for some other examples.
 
 
-### Limitations
+### Limitations and Constraints
+
+- On nested `connect`, `disconnect`, `upsert` or `connectOrCreate` mutation queries the client assumes an `update` action for insertion or connection.
 
 - A limitation is the necessary use of `create`, `read`, `update` and `delete` as actions for nested queries. Since this allows us to deal with nested creations or updates. However there is an option to specify a custom `caslAction` for the highest query. It has no typing and is not tested yet. 
 

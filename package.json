@@ -9,8 +9,8 @@
     "url": "https://github.com/dennemark/prisma-extension-casl.git"
   },
   "scripts": {
-    "build": "tsup src/index.ts --format=cjs,esm --dts",
-    "watch": "tsup src/index.ts --format=cjs,esm --dts --watch",
+    "build": "prisma generate && tsup src/index.ts --format=cjs,esm --dts",
+    "watch": "prisma generate && tsup src/index.ts --format=cjs,esm --dts --watch",
     "test": "jest --watch",
     "release": "release-it"
   },

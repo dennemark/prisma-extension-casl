@@ -21,7 +21,7 @@ describe('prisma extension casl', () => {
             })
             can('read', 'User', ['email'])
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(build)
             )
             const result = await client.user.findUnique({
                 where: {
@@ -42,7 +42,7 @@ describe('prisma extension casl', () => {
             can('read', 'User')
             cannot('read', 'User', ['email'])
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
             expect(await client.user.findUnique({
                 where: {
@@ -62,7 +62,7 @@ describe('prisma extension casl', () => {
             })
             can('read', 'User', ['email'])
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
 
             const result = await client.post.findUnique({
@@ -107,7 +107,7 @@ describe('prisma extension casl', () => {
             })
             can('read', 'User', ['email'])
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
 
 
@@ -182,7 +182,7 @@ describe('prisma extension casl', () => {
                 }
             })
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
             const result = await client.post.findUnique({ where: { id: 0 } })
             expect(result).toEqual({ authorId: 0, id: 0, threadId: 0, text: '' })
@@ -203,7 +203,7 @@ describe('prisma extension casl', () => {
                 id: 0
             })
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
             const result = await client.post.findUnique({
                 where: { id: 0 },
@@ -230,7 +230,7 @@ describe('prisma extension casl', () => {
                 }
             })
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
             const result = await client.post.findUnique({ where: { id: 2 } })
             expect(result?.authorId).toBe(1)
@@ -248,7 +248,7 @@ describe('prisma extension casl', () => {
                 }
             })
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
             const result = await client.post.findMany()
             expect(result).toEqual([{ authorId: 0, id: 0, text: '', threadId: 0 }, { authorId: 1, id: 1, text: '', threadId: 0 }, { authorId: 0, id: 3, text: '', threadId: 2 }])
@@ -260,7 +260,7 @@ describe('prisma extension casl', () => {
             const { build } = abilityBuilder()
 
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
 
             await expect(client.user.update({
@@ -276,7 +276,7 @@ describe('prisma extension casl', () => {
             const { can, build } = abilityBuilder()
             can('update', 'User')
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
             const result = await client.user.update({
                 data: {
@@ -293,7 +293,7 @@ describe('prisma extension casl', () => {
             can('read', 'User', ['email'])
             can('update', 'User')
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
             const result = await client.user.update({
                 data: {
@@ -309,7 +309,7 @@ describe('prisma extension casl', () => {
             const { can, build } = abilityBuilder()
             can('update', 'User', ['email'])
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
             const result = await client.user.update({
                 data: {
@@ -325,7 +325,7 @@ describe('prisma extension casl', () => {
             const { can, build } = abilityBuilder()
             can('update', 'User', ['id'])
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
             await expect(client.user.update({
                 data: {
@@ -341,7 +341,7 @@ describe('prisma extension casl', () => {
             can('update', 'User')
             cannot('update', 'User', ['email'])
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
             await expect(client.user.update({
                 data: {
@@ -357,7 +357,7 @@ describe('prisma extension casl', () => {
             can('update', 'User', ['email'])
             can('read', 'Post', ['id'])
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
             const result = await client.user.update({
                 data: {
@@ -378,7 +378,7 @@ describe('prisma extension casl', () => {
             can('update', 'Post')
             can('read', 'Post')
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
             const result = await client.user.update({
                 data: {
@@ -410,7 +410,7 @@ describe('prisma extension casl', () => {
             can('update', 'User')
             can('read', 'Post')
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
 
             await expect(client.user.update({
@@ -438,7 +438,7 @@ describe('prisma extension casl', () => {
         it('cannot delete if not ability exists', async () => {
             const { can, build } = abilityBuilder()
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
             await expect(client.user.delete({
                 where: {
@@ -450,7 +450,7 @@ describe('prisma extension casl', () => {
             const { can, build } = abilityBuilder()
             can('delete', 'User')
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
             const result = await client.user.delete({
                 where: {
@@ -467,7 +467,7 @@ describe('prisma extension casl', () => {
                 id: 0
             })
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
             const result = await client.user.delete({
                 where: {
@@ -484,7 +484,7 @@ describe('prisma extension casl', () => {
                 id: 1
             })
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
             await expect(client.user.delete({
                 where: {
@@ -499,7 +499,7 @@ describe('prisma extension casl', () => {
         it('cannot delete many if not ability exists', async () => {
             const { can, build } = abilityBuilder()
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
             await expect(client.user.deleteMany({
                 where: {
@@ -511,7 +511,7 @@ describe('prisma extension casl', () => {
             const { can, build } = abilityBuilder()
             can('delete', 'User')
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
             await client.user.deleteMany({
                 where: {
@@ -530,7 +530,7 @@ describe('prisma extension casl', () => {
                 }
             })
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
             await client.user.deleteMany({
                 where: {
@@ -549,7 +549,7 @@ describe('prisma extension casl', () => {
                 }
             })
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
             await client.user.deleteMany({
                 where: {
@@ -567,7 +567,7 @@ describe('prisma extension casl', () => {
             can('read', 'User')
             can('read', 'Post', { id: 0 })
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
             const result = await client.user.findUnique({ where: { id: 0 } }).posts()
             expect(result?.length).toBe(1)
@@ -578,7 +578,7 @@ describe('prisma extension casl', () => {
             const { can, build } = abilityBuilder()
             can('read', 'User')
             const client = seedClient.$extends(
-                useCaslAbilities(build())
+                useCaslAbilities(()=>build())
             )
             await expect(client.user.findUnique({ where: { id: 0 } }).posts()).rejects.toThrow()
 
