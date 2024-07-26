@@ -1,5 +1,5 @@
 
-import { isSubset } from '../dist'
+import { isSubset } from '../src/helpers'
 
 
 describe('subset', () => {

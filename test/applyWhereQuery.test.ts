@@ -1,6 +1,6 @@
 
 import { abilityBuilder } from './abilities'
-import { applyWhereQuery } from '../dist'
+import { applyWhereQuery } from '../src/applyWhereQuery'
 
 
 describe('apply where query', () => {

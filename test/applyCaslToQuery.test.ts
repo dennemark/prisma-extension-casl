@@ -1,6 +1,7 @@
 
 import { abilityBuilder } from './abilities'
-import { applyCaslToQuery, caslOperationDict } from '../dist'
+import { applyCaslToQuery } from '../src/applyCaslToQuery'
+import { caslOperationDict } from '../src/helpers'
 
 describe('apply casl to query', () => {
 

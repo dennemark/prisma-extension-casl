@@ -1,6 +1,6 @@
 
 import { abilityBuilder } from './abilities'
-import { applyDataQuery } from '../dist'
+import { applyDataQuery } from '../src/applyDataQuery'
 
 
 describe('apply data query', () => {

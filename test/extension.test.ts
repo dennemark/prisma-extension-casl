@@ -3,7 +3,7 @@ import { seedClient } from './client'
 import { seed } from './seed'
 
 import { abilityBuilder } from './abilities'
-import { applyCaslToQuery, useCaslAbilities } from '../dist'
+import { useCaslAbilities } from '../src/index'
 
 
 beforeEach(async () => {
@@ -240,7 +240,7 @@ describe('prisma extension casl', () => {
         })
     })
     describe('findMany', () => {
-        it.only('filters only readable posts', async () => {
+        it('filters only readable posts', async () => {
             const { can, build } = abilityBuilder()
             can('read', 'Post', {
                 thread: {

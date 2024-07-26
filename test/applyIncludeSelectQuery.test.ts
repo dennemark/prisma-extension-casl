@@ -1,6 +1,6 @@
 
 import { abilityBuilder } from './abilities'
-import { applyIncludeSelectQuery } from '../dist'
+import { applyIncludeSelectQuery } from '../src/applyIncludeSelectQuery'
 
 describe('apply include select query', () => {
     it('applies select method', () => {

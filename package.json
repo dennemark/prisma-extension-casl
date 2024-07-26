@@ -27,6 +27,7 @@
     "@casl/ability": "^6.7.1",
     "@casl/prisma": "^1.4.1",
     "@prisma/client": "latest",
+    "@prisma/generator-helper": "^5.17.0",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.14.10",
     "esbuild": "^0.23.0",

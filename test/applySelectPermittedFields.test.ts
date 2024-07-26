@@ -1,6 +1,6 @@
 
 import { abilityBuilder } from './abilities'
-import { applySelectPermittedFields, } from '../dist'
+import { applySelectPermittedFields } from '../src/applySelectPermittedFields'
 
 
 

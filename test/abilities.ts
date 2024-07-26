@@ -1,8 +1,5 @@
-import { permission } from 'process'
-
-import { AbilityBuilder, ExtractSubjectType, PureAbility, subject } from '@casl/ability'
+import { AbilityBuilder, PureAbility } from '@casl/ability'
 import {
-  accessibleBy,
   createPrismaAbility,
   PrismaQuery,
   Subjects,
@@ -25,20 +22,3 @@ type AppAbility = PureAbility<
 export function abilityBuilder(){
     return new AbilityBuilder<AppAbility>(createPrismaAbility)
 }
-export function defineAbilities({userId}: { userId: number}) {
-    
-    const { can: allow, cannot: forbid, build } = new AbilityBuilder<AppAbility>(createPrismaAbility)
-
-    allow(['create', 'read'], 'Thread')
-    allow(['update', 'delete'], 'Thread', {
-        creatorId: userId
-    })
-    allow(['read', 'create'], 'Post')
-    allow(['update', 'delete'], 'Post', {
-        authorId: userId
-    })
-    
-
-    return build()
-  }
-  
