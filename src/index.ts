@@ -3,6 +3,7 @@ import { AbilityTuple, PureAbility } from '@casl/ability'
 import { PrismaQuery } from '@casl/prisma'
 import { applyCaslToQuery } from './applyCaslToQuery'
 
+export { applyCaslToQuery }
 
 /**
  * enrich a prisma client to check for CASL abilities even in nested queries

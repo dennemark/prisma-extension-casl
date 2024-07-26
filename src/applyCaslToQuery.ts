@@ -16,7 +16,7 @@ import { PrismaQuery } from '@casl/prisma'
  * @param model Prisma model
  * @returns Enriched query with casl authorization
  */
-export function applyCaslToQuery(operation: any, args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: Prisma.ModelName) {
+export function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: Prisma.ModelName) {
     const operationAbility = caslOperationDict[operation as PrismaCaslOperation]
     if (args.caslAction) {
         operationAbility.action = args.caslAction
