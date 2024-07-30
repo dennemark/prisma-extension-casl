@@ -1,11 +1,10 @@
-import { Prisma } from '@prisma/client'
-import { accessibleBy } from "@casl/prisma"
-import { caslOperationDict, PrismaCaslOperation } from "./helpers"
-import { applyDataQuery } from "./applyDataQuery"
-import { applyWhereQuery } from "./applyWhereQuery"
-import { applyIncludeSelectQuery } from "./applyIncludeSelectQuery"
 import { AbilityTuple, PureAbility } from '@casl/ability'
 import { PrismaQuery } from '@casl/prisma'
+import { Prisma } from '@prisma/client'
+import { applyDataQuery } from "./applyDataQuery"
+import { applyIncludeSelectQuery } from "./applyIncludeSelectQuery"
+import { applyWhereQuery } from "./applyWhereQuery"
+import { caslOperationDict, PrismaCaslOperation } from "./helpers"
 
 /**
  * Applies CASL authorization logic to prisma query
@@ -17,14 +16,11 @@ import { PrismaQuery } from '@casl/prisma'
  * @returns Enriched query with casl authorization
  */
 export function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: Prisma.ModelName) {
-    const operationAbility = caslOperationDict[operation as PrismaCaslOperation]
-    if (args.caslAction) {
-        operationAbility.action = args.caslAction
-    }
+    const operationAbility = caslOperationDict[operation]
 
-    accessibleBy(abilities, operationAbility.action)[model]
-    
-    if(operationAbility.dataQuery && args.data) {
+    // accessibleBy(abilities, operationAbility.action)[model]
+
+    if (operationAbility.dataQuery && args.data) {
         args.data = applyDataQuery(abilities, args.data, operationAbility.action, model)
     }
 
@@ -33,8 +29,13 @@ export function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abil
         args = applyWhereQuery(abilities, args, operationAbility.action, model)
     }
 
+
     if (operationAbility.includeSelectQuery) {
         args = applyIncludeSelectQuery(abilities, args, model)
+    } else {
+        delete args.include
+        delete args.select
     }
+    console.dir(args, { depth: null })
     return args
 }

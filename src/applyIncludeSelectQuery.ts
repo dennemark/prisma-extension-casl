@@ -1,7 +1,7 @@
 import { AbilityTuple, PureAbility } from '@casl/ability'
 import { PrismaQuery } from '@casl/prisma'
-import { relationFieldsByModel } from './helpers'
 import { applyWhereQuery } from './applyWhereQuery'
+import { relationFieldsByModel } from './helpers'
 
 
 /**

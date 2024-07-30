@@ -1,6 +1,6 @@
 
-import { abilityBuilder } from './abilities'
 import { applyIncludeSelectQuery } from '../src/applyIncludeSelectQuery'
+import { abilityBuilder } from './abilities'
 
 describe('apply include select query', () => {
     it('applies select method', () => {
@@ -16,11 +16,7 @@ describe('apply include select query', () => {
         }, 'Post')
         expect(args).toEqual({
             select: {
-                author: {
-                    select: {
-                        email: true
-                    }
-                }
+                author: true
             },
             where: {
                 AND: [{
@@ -31,11 +27,12 @@ describe('apply include select query', () => {
             }
         })
     })
-    it.todo('applies select method'/*, () => {
+    it('applies select method', () => {
         const { can, cannot, build } = abilityBuilder()
         can('read', 'User', {
             id: 1
         })
+        // this has to be filtered after query.
         cannot('read', 'User', 'email', {
             id: 0
         })
@@ -46,22 +43,19 @@ describe('apply include select query', () => {
         }, 'Post')
         expect(args).toEqual({
             select: {
-                author: {
-                    select: {
-                        email: true
-                    }
-                }
+                author: true
             },
             where: {
                 AND: [{
                     author: {
                         OR: [{ id: 1 }],
-                        AND: [{ NOT: { id: 0 } }]
+                        // AND: [{ NOT: { id: 0 } }]
                     }
                 }]
             }
         })
-    }*/)
+    })
+
     it('applies select method and does not allow reading of field', () => {
         const { can, cannot, build } = abilityBuilder()
         can('read', 'User')
@@ -80,9 +74,7 @@ describe('apply include select query', () => {
         }, 'Post')
         expect(args).toEqual({
             select: {
-                author: {
-                    select: undefined
-                }
+                author: true
             },
             where: {
                 author: {
@@ -103,7 +95,11 @@ describe('apply include select query', () => {
         }, 'User')
         expect(args).toEqual({
             select: {
-                posts: false
+                posts: {
+                    where: {
+                        AND: [{ OR: [{ authorId: 0 }] }]
+                    }
+                }
             }
         })
     })
@@ -126,9 +122,6 @@ describe('apply include select query', () => {
                     where: {
                         authorId: 0,
                         AND: [{ OR: [{ authorId: 0 }] }]
-                    },
-                    select: {
-                        id: true
                     }
                 }
             }
@@ -147,11 +140,7 @@ describe('apply include select query', () => {
         }, 'Post')
         expect(args).toEqual({
             include: {
-                author: {
-                    select: {
-                        email: true
-                    }
-                }
+                author: true
             },
             where: {
                 AND: [{
@@ -162,7 +151,7 @@ describe('apply include select query', () => {
             }
         })
     })
-    
+
     it('applies select method on array', () => {
         const { can, cannot, build } = abilityBuilder()
         can('read', 'Post', 'id', {
@@ -175,7 +164,11 @@ describe('apply include select query', () => {
         }, 'User')
         expect(args).toEqual({
             include: {
-                posts: false
+                posts: {
+                    where: {
+                        AND: [{ OR: [{ authorId: 0 }] }]
+                    }
+                }
             }
         })
     })
@@ -199,9 +192,6 @@ describe('apply include select query', () => {
                     where: {
                         authorId: 0,
                         AND: [{ OR: [{ authorId: 0 }] }]
-                    },
-                    select: {
-                        id: true
                     }
                 }
             }

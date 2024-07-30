@@ -1,8 +1,8 @@
+import { AbilityTuple, PureAbility, Subject, subject } from '@casl/ability'
+import { permittedFieldsOf } from '@casl/ability/extra'
+import { prismaQuery, PrismaQuery } from '@casl/prisma'
 import { Prisma } from '@prisma/client'
 import { DMMF } from '@prisma/generator-helper'
-import { AbilityTuple, PureAbility } from '@casl/ability'
-import { permittedFieldsOf } from '@casl/ability/extra'
-import { PrismaQuery } from '@casl/prisma'
 
 type DefaultCaslAction = "create" | "read" | "update" | "delete"
 
@@ -52,12 +52,12 @@ export const caslOperationDict: Record<
 } as const
 
 export const caslNestedOperationDict: Record<string, 'create' | 'update' | 'read' | 'delete'> = {
-    upsert: 'create', 
-    connect: 'update', 
-    connectOrCreate:'create', 
-    create: 'create', 
-    createMany: 'create', 
-    update: 'update', 
+    upsert: 'create',
+    connect: 'update',
+    connectOrCreate: 'create',
+    create: 'create',
+    createMany: 'create',
+    update: 'update',
     updateMany: 'update',
     delete: 'delete',
     deleteMany: 'delete',
@@ -76,11 +76,20 @@ export const propertyFieldsByModel = Object.fromEntries(Prisma.dmmf.datamodel.mo
     const propertyFields = Object.fromEntries(model.fields
         .filter((field) => !(field && field.kind === 'object' && field.relationName))
         .map((field) => {
-            const relation = Object.values(relationFieldsByModel[model.name]).find((value: any)=>value.relationFromFields.includes(field.name))
+            const relation = Object.values(relationFieldsByModel[model.name]).find((value: any) => value.relationFromFields.includes(field.name))
             return [field.name, relation?.name]
         }))
     return [model.name, propertyFields]
 }))
+
+export function pick<T extends Record<string, K>, K extends keyof T>(obj: T | undefined, keys: K[]) {
+    return keys.reduce((acc, val) => {
+        if (obj && val in obj) {
+            (acc[val] = obj[val]);
+        }
+        return acc;
+    }, {} as Pick<T, K>);
+}
 
 /**
  * goes through all permitted fields of a model
@@ -94,62 +103,49 @@ export const propertyFieldsByModel = Object.fromEntries(Prisma.dmmf.datamodel.mo
  * the result is undefined. allowing us to query for all fields
  * 
  * @param abilities 
- * @param args 
  * @param action 
  * @param model 
+ * @param obj 
  * @returns 
  */
 export function getPermittedFields(
     abilities: PureAbility<AbilityTuple, PrismaQuery>,
-    args: any,
     action: string,
-    model: string
-){
-    let hasPermittedFields = false
-    let hasNoRuleWithoutFields: boolean | undefined = undefined
-    const omittedFieldsSet = new Set()
-    const permittedFields = permittedFieldsOf(abilities, action, model, {
-        fieldsFrom: rule => {
-            if(hasNoRuleWithoutFields === undefined){
-                // make assumption true on first call of fieldsFrom
-                hasNoRuleWithoutFields = true
-            }
-            if (rule.fields) {
-                if(rule.inverted){
-                    rule.fields.forEach((field)=>omittedFieldsSet.add(field))
-                } else {
-                    hasPermittedFields = true
-                }
-                if (rule.conditions) {
-                    if (isSubset(rule.conditions, args.where)) {
-                        return rule.fields
-                    } 
-                    // else if(process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
-                    //     const queriedFields = args.select ? Object.keys(args.select) : args.include ? Object.keys(args.include) : []
+    model: string,
+    obj?: any
+) {
+    const modelFields = Object.keys(propertyFieldsByModel[model])
+    const subjectFields = [...modelFields, ...Object.keys(relationFieldsByModel[model])]
 
-                    //     if(queriedFields.findIndex((field)=> rule.fields?.includes(field)) > -1){
-                    //         console.warn(`${model} fields ${JSON.stringify(rule.fields)} can only be read with following conditions: ${JSON.stringify(rule.conditions)}`)
-                    //     }
-                    // }
-                } else {
-                    return rule.fields
-                }
-            }else{
-                hasNoRuleWithoutFields = false
-            }
-            return []
+    const permittedFields = permittedFieldsOf(abilities, action, obj ? subject(model, pick(obj, subjectFields)) : model, {
+        fieldsFrom: rule => {
+            return rule.fields || modelFields;
         }
     })
-    
-    // if can rules allow read access on all properties, but some cannot rules omit fields, we add all permitted properties to select to create an inverted version
-    // newer prisma version will allow omit besides select for cleaner interface.
-    if(hasPermittedFields === false && permittedFields.length === 0 && omittedFieldsSet.size > 0){
-        permittedFields.push(...Object.keys(propertyFieldsByModel[model]).filter((field)=> !omittedFieldsSet.has(field)))
-        hasPermittedFields = true
-    }
-    return hasPermittedFields && permittedFields.length > 0 ? permittedFields : hasNoRuleWithoutFields ? [] : undefined
+
+    return permittedFields
 }
 
+
+/**
+ * if fluent api is used `client.user.findUnique().post()`
+ * we need to get its model
+ * https://github.com/prisma/prisma/blob/cebc9c0ceb91ff9c80f0b149f3a7ff112fbb46fd/packages/client/src/runtime/core/model/applyFluent.ts#L20
+ * @param startModel query model
+ * @param data query args with internalParams - includes a dataPath for fluent api
+ * @returns fluent api model
+ */
+export function getFluentModel(startModel: string, data: any) {
+    const dataPath = data?.__internalParams?.dataPath as string[]
+    if (dataPath?.length > 0) {
+        return dataPath.filter((x) => x !== 'select').reduce((acc, x) => {
+            acc = relationFieldsByModel[acc][x].type
+            return acc
+        }, startModel)
+    } else {
+        return startModel
+    }
+}
 
 export function isSubset(obj1: any, obj2: any): boolean {
     if (obj1 === obj2) return true;

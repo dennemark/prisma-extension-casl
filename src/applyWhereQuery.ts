@@ -1,10 +1,9 @@
 
-import { Prisma } from '@prisma/client'
 import { AbilityTuple, PureAbility } from '@casl/ability'
 import { accessibleBy, PrismaQuery } from '@casl/prisma'
-import { applySelectPermittedFields } from './applySelectPermittedFields'
-import { relationFieldsByModel } from './helpers'
+import { Prisma } from '@prisma/client'
 import { applyAccessibleQuery } from './applyAccessibleQuery'
+import { relationFieldsByModel } from './helpers'
 
 
 /**
@@ -53,7 +52,7 @@ export function applyWhereQuery(
         // if we add a where clause to a relation
         // we fake the where query, since it is otherwise buried in AND: [ OR: ...]
         // to get the select query
-        const method = args.include ? "include" : "select"
+        /*const method = args.include ? "include" : "select"
 
 
         const selectQuery = applySelectPermittedFields(abilities, {
@@ -72,10 +71,10 @@ export function applyWhereQuery(
                     select: selectQuery.select
                 }
             }
-        }
+        }*/
 
-        return result
+        return args//result
     } else {
-        return applySelectPermittedFields(abilities, args, model)
+        return args//applySelectPermittedFields(abilities, args, model)
     }
 }

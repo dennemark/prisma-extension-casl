@@ -1,6 +1,6 @@
 
-import { abilityBuilder } from './abilities'
 import { applyWhereQuery } from '../src/applyWhereQuery'
+import { abilityBuilder } from './abilities'
 
 
 describe('apply where query', () => {
@@ -13,7 +13,7 @@ describe('apply where query', () => {
             id: 1
         })
         const args = applyWhereQuery(build(), true, 'read', 'User')
-        expect(args.where).toEqual({ AND: [{ OR: [{ id: 1 }], AND: [{ NOT: { id: 0 } }] }] })
+        expect(args).toEqual({ where: { AND: [{ OR: [{ id: 1 }], AND: [{ NOT: { id: 0 } }] }] } })
     })
     it('adds where query if missing', () => {
         const { can, build } = abilityBuilder()
@@ -21,7 +21,16 @@ describe('apply where query', () => {
             id: 0
         })
         const args = applyWhereQuery(build(), {}, 'read', 'User')
-        expect(args.where).toEqual({ AND: [{ OR: [{ id: 0 }] }] })
+        expect(args).toEqual({ where: { AND: [{ OR: [{ id: 0 }] }] } })
+    })
+    it('does not add where query if there is no condition', () => {
+        const { can, build } = abilityBuilder()
+        can('read', 'User')
+        can('read', 'User', ['email'], {
+            id: 0
+        })
+        const args = applyWhereQuery(build(), {}, 'read', 'User')
+        expect(args).toEqual({})
     })
     it('adds to existing where query', () => {
         const { can, build } = abilityBuilder()
@@ -34,9 +43,9 @@ describe('apply where query', () => {
                 AND: [{ id: 1 }]
             }
         }, 'read', 'User')
-        expect(args.where).toEqual({ id: 1, AND: [{ id: 1 }, { OR: [{ id: 0 }] }] })
+        expect(args).toEqual({ where: { id: 1, AND: [{ id: 1 }, { OR: [{ id: 0 }] }] } })
     })
-    it('adds permitted field to query and turns include into select', () => {
+    it('does not alter where query if there is not condition', () => {
         const { can, cannot, build } = abilityBuilder()
         can('read', 'User', ['email'])
         can('read', 'Post')
@@ -53,8 +62,7 @@ describe('apply where query', () => {
             where: {
                 id: 1, AND: [{ id: 1 }]
             },
-            select: {
-                email: true,
+            include: {
                 posts: true
             }
         })
