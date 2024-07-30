@@ -322,6 +322,13 @@ function O4(t3) {
   return Array.isArray(t3) ? t3 : [t3];
 }
 var C = "__caslSubjectType__";
+function R2(t3, i4) {
+  if (i4) {
+    if (!Object.hasOwn(i4, C)) Object.defineProperty(i4, C, { value: t3 });
+    else if (t3 !== i4[C]) throw new Error(`Trying to cast object to subject type ${t3} but previously it was casted to ${i4[C]}`);
+  }
+  return i4;
+}
 var P2 = (t3) => {
   const i4 = typeof t3;
   return i4 === "string" || i4 === "function";
@@ -704,7 +711,7 @@ var I2 = (r2, n3) => {
   } });
 };
 var M2 = { equals: j4, not: N4, in: $3, notIn: I2("in", $3), lt: E3, lte: E3, gt: E3, gte: E3, mode: x4, startsWith: T2, endsWith: T2, contains: T2, isEmpty: S3, has: D, hasSome: C2, hasEvery: C2, NOT: W2, AND: W2, OR: W2, every: F, some: F, none: I2("some", F), is: F, isNot: I2("is", F) };
-var R2 = class extends j {
+var R3 = class extends j {
   constructor() {
     super(M2, { defaultOperatorName: "equals" });
   }
@@ -754,7 +761,7 @@ function Y(t3) {
 }
 var Z2 = (t3, e4) => a2(Y(t3), Y(e4));
 var tt2 = l3({ equals: b2, notEquals: A2, in: N2, lt: h3, lte: d3, gt: j3, gte: w3, startsWith: _4, istartsWith: J2, endsWith: P3, iendsWith: k, contains: z4, icontains: B3, isEmpty: G2, has: H2, hasSome: K2, hasEvery: L, and: m3, or: p3, AND: m3, OR: p3, NOT: X2, every: Q2, some: U2, is: V2 }, { get: (t3, e4) => t3[e4], compare: Z2 });
-var et = new R2();
+var et = new R3();
 var rt2 = v(et.parse, tt2);
 function nt2(t3) {
   return t3.inverted ? { NOT: t3.conditions } : t3.conditions;
@@ -785,6 +792,17 @@ function createAbilityFactory() {
 // node_modules/.pnpm/@casl+prisma@1.4.1_@casl+ability@6.7.1_@prisma+client@5.16.2_prisma@5.16.2_/node_modules/@casl/prisma/dist/es6m/index.mjs
 var e3 = createAbilityFactory();
 var m5 = st2();
+
+// src/applyAccessibleQuery.ts
+function applyAccessibleQuery(query, accessibleQuery) {
+  return {
+    ...query,
+    AND: [
+      ...query.AND ?? [],
+      accessibleQuery
+    ]
+  };
+}
 
 // src/helpers.ts
 import { Prisma } from "@prisma/client";
@@ -830,81 +848,39 @@ var propertyFieldsByModel = Object.fromEntries(Prisma.dmmf.datamodel.models.map(
   }));
   return [model.name, propertyFields];
 }));
-function getPermittedFields(abilities, args, action, model) {
-  let hasPermittedFields = false;
-  let hasNoRuleWithoutFields = void 0;
-  const omittedFieldsSet = /* @__PURE__ */ new Set();
-  const permittedFields = c4(abilities, action, model, {
+function pick(obj, keys) {
+  return keys.reduce((acc, val) => {
+    if (obj && val in obj) {
+      acc[val] = obj[val];
+    }
+    return acc;
+  }, {});
+}
+function getPermittedFields(abilities, action, model, obj) {
+  const modelFields = Object.keys(propertyFieldsByModel[model]);
+  const subjectFields = [...modelFields, ...Object.keys(relationFieldsByModel[model])];
+  const permittedFields = c4(abilities, action, obj ? R2(model, pick(obj, subjectFields)) : model, {
     fieldsFrom: (rule) => {
-      if (hasNoRuleWithoutFields === void 0) {
-        hasNoRuleWithoutFields = true;
-      }
-      if (rule.fields) {
-        if (rule.inverted) {
-          rule.fields.forEach((field) => omittedFieldsSet.add(field));
-        } else {
-          hasPermittedFields = true;
-        }
-        if (rule.conditions) {
-          if (isSubset(rule.conditions, args.where)) {
-            return rule.fields;
-          }
-        } else {
-          return rule.fields;
-        }
-      } else {
-        hasNoRuleWithoutFields = false;
-      }
-      return [];
+      return rule.fields || modelFields;
     }
   });
-  if (hasPermittedFields === false && permittedFields.length === 0 && omittedFieldsSet.size > 0) {
-    permittedFields.push(...Object.keys(propertyFieldsByModel[model]).filter((field) => !omittedFieldsSet.has(field)));
-    hasPermittedFields = true;
-  }
-  return hasPermittedFields && permittedFields.length > 0 ? permittedFields : hasNoRuleWithoutFields ? [] : void 0;
+  return permittedFields;
 }
-function isSubset(obj1, obj2) {
-  if (obj1 === obj2) return true;
-  if (typeof obj1 === "object" && typeof obj2 === "object") {
-    if (Array.isArray(obj1) && Array.isArray(obj2)) {
-      for (const item1 of obj1) {
-        let found = false;
-        for (const item2 of obj2) {
-          if (isSubset(item1, item2)) {
-            found = true;
-            break;
-          }
-        }
-        if (!found) return false;
-      }
-      return true;
-    } else {
-      for (const key in obj1) {
-        if (!(key in obj2) || !isSubset(obj1[key], obj2[key])) {
-          return false;
-        }
-      }
-      return true;
-    }
+function getFluentModel(startModel, data) {
+  const dataPath = data?.__internalParams?.dataPath;
+  if (dataPath?.length > 0) {
+    return dataPath.filter((x5) => x5 !== "select").reduce((acc, x5) => {
+      acc = relationFieldsByModel[acc][x5].type;
+      return acc;
+    }, startModel);
+  } else {
+    return startModel;
   }
-  return false;
-}
-
-// src/applyAccessibleQuery.ts
-function applyAccessibleQuery(query, accessibleQuery) {
-  return {
-    ...query,
-    AND: [
-      ...query.AND ?? [],
-      accessibleQuery
-    ]
-  };
 }
 
 // src/applyDataQuery.ts
 function applyDataQuery(abilities, args, action, model) {
-  const permittedFields = getPermittedFields(abilities, args, action, model);
+  const permittedFields = getPermittedFields(abilities, action, model);
   const accessibleQuery = m5(abilities, action)[model];
   const mutationArgs = [];
   (Array.isArray(args) ? args : [args]).map((argsEntry) => {
@@ -923,7 +899,7 @@ function applyDataQuery(abilities, args, action, model) {
       }
     });
     if (mutationArgs.length === 0) {
-      mutationArgs.push(args);
+      mutationArgs.push(argsEntry);
     }
   });
   mutationArgs.map((mutation) => {
@@ -965,45 +941,6 @@ function applyDataQuery(abilities, args, action, model) {
   return args;
 }
 
-// src/applySelectPermittedFields.ts
-var applySelectPermittedFields = (abilities, args, model) => {
-  const permittedFields = getPermittedFields(abilities, args, "read", model);
-  if (permittedFields) {
-    if (args === true) {
-      args = {
-        select: {}
-      };
-    }
-    if (args.include) {
-      args.select = { ...args.include };
-      delete args.include;
-    }
-    if (!args.select) {
-      args.select = {};
-    }
-    const queriedFields = args.select ? Object.keys(args.select) : [];
-    const remainingFields = queriedFields.filter((field) => {
-      const isRelation = relationFieldsByModel[model][field] ? true : false;
-      if (!permittedFields.includes(field) && !isRelation) {
-        delete args.select[field];
-        return false;
-      } else if (isRelation) {
-        return false;
-      }
-      return true;
-    });
-    if (remainingFields.length === 0) {
-      permittedFields.forEach((field) => {
-        args.select = {
-          ...args.select,
-          [field]: true
-        };
-      });
-    }
-  }
-  return args;
-};
-
 // src/applyWhereQuery.ts
 function applyWhereQuery(abilities, args, action, model, relation) {
   const prismaModel = model in relationFieldsByModel ? model : void 0;
@@ -1021,27 +958,9 @@ function applyWhereQuery(abilities, args, action, model, relation) {
     args.where = applyAccessibleQuery(args.where, relation && accessibleQuery ? { [relation]: accessibleQuery } : accessibleQuery);
   }
   if (relation) {
-    const method = args.include ? "include" : "select";
-    const selectQuery = applySelectPermittedFields(abilities, {
-      ...args[method][relation],
-      where: {
-        ...args[method][relation].where ?? {},
-        ...accessibleQuery
-      }
-    }, model);
-    const result = {
-      ...args,
-      [method]: {
-        ...args[method],
-        [relation]: {
-          ...args[method][relation],
-          select: selectQuery.select
-        }
-      }
-    };
-    return result;
+    return args;
   } else {
-    return applySelectPermittedFields(abilities, args, model);
+    return args;
   }
 }
 
@@ -1072,10 +991,6 @@ var applyIncludeSelectQuery = (abilities, args, model) => {
 // src/applyCaslToQuery.ts
 function applyCaslToQuery(operation, args, abilities, model) {
   const operationAbility = caslOperationDict[operation];
-  if (args.caslAction) {
-    operationAbility.action = args.caslAction;
-  }
-  m5(abilities, operationAbility.action)[model];
   if (operationAbility.dataQuery && args.data) {
     args.data = applyDataQuery(abilities, args.data, operationAbility.action, model);
   }
@@ -1084,8 +999,41 @@ function applyCaslToQuery(operation, args, abilities, model) {
   }
   if (operationAbility.includeSelectQuery) {
     args = applyIncludeSelectQuery(abilities, args, model);
+  } else {
+    delete args.include;
+    delete args.select;
   }
+  console.dir(args, { depth: null });
   return args;
+}
+
+// src/filterQueryResults.ts
+function filterQueryResults(result, abilities, model) {
+  const prismaModel = model in relationFieldsByModel ? model : void 0;
+  if (!prismaModel) {
+    throw new Error(`Model ${model} does not exist on Prisma Client`);
+  }
+  const filterPermittedFields = (entry) => {
+    if (!entry) {
+      return null;
+    }
+    const permittedFields = getPermittedFields(abilities, "read", model, entry);
+    console.log(model, entry, permittedFields);
+    let hasKeys = false;
+    Object.keys(entry).forEach((field) => {
+      const relationField = relationFieldsByModel[model][field];
+      if (!permittedFields.includes(field) && !relationField) {
+        delete entry[field];
+      } else if (relationField) {
+        hasKeys = true;
+        entry[field] = filterQueryResults(entry[field], abilities, relationField.type);
+      } else {
+        hasKeys = true;
+      }
+    });
+    return hasKeys ? entry : null;
+  };
+  return Array.isArray(result) ? result.map((entry) => filterPermittedFields(entry)).filter((x5) => x5) : filterPermittedFields(result);
 }
 
 // src/index.ts
@@ -1094,53 +1042,53 @@ var useCaslAbilities = (getAbilities) => {
     name: "prisma-extension-casl",
     query: {
       $allModels: {
-        create({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model));
+        create({ args, query, model, operation, ...rest }) {
+          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
         },
-        createMany({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model));
+        createMany({ args, query, model, operation, ...rest }) {
+          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
         },
-        createManyAndReturn({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model));
+        createManyAndReturn({ args, query, model, operation, ...rest }) {
+          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
         },
-        upsert({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model));
+        upsert({ args, query, model, operation, ...rest }) {
+          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
         },
-        findFirst({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model));
+        findFirst({ args, query, model, operation, ...rest }) {
+          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
         },
-        findFirstOrThrow({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model));
+        findFirstOrThrow({ args, query, model, operation, ...rest }) {
+          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
         },
-        findMany({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model));
+        findMany({ args, query, model, operation, ...rest }) {
+          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
         },
-        findUnique({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model));
+        findUnique({ args, query, model, operation, ...rest }) {
+          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
         },
-        findUniqueOrThrow({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model));
+        findUniqueOrThrow({ args, query, model, operation, ...rest }) {
+          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
         },
-        aggregate({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model));
+        aggregate({ args, query, model, operation, ...rest }) {
+          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
         },
-        count({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model));
+        count({ args, query, model, operation, ...rest }) {
+          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
         },
-        groupBy({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model));
+        groupBy({ args, query, model, operation, ...rest }) {
+          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
         },
-        update({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model));
+        update({ args, query, model, operation, ...rest }) {
+          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
         },
-        updateMany({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model));
+        updateMany({ args, query, model, operation, ...rest }) {
+          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
         },
-        delete({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model));
+        delete({ args, query, model, operation, ...rest }) {
+          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
         },
-        deleteMany({ args, query, model, operation }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model));
+        deleteMany({ args, query, model, operation, ...rest }) {
+          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
         }
         // async $allOperations<T>({ args, query, model, operation }: { args: any, query: any, model: any, operation: any }) {
         //     if (!(operation in caslOperationDict)) {

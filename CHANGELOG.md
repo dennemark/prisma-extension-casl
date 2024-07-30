@@ -1,5 +1,12 @@
 
 
+## [0.2.0](https://github.com/dennemark/prisma-extension-casl/compare/0.1.4...0.2.0) (2024-07-30)
+
+
+### Features
+
+* :sparkles: filter results in app and not within db query ([3af823f](https://github.com/dennemark/prisma-extension-casl/commit/3af823f334a24c770b54f336bbfe5231062d31c5))
+
 ## [0.1.4](https://github.com/dennemark/prisma-extension-casl/compare/0.1.3...0.1.4) (2024-07-26)
 
 
