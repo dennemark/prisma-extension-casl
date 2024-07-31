@@ -26,32 +26,63 @@ export const useCaslAbilities = (getAbilities: () => PureAbility<AbilityTuple, P
         query: {
             $allModels: {
                 async $allOperations<T>({ args, query, model, operation, ...rest }: { args: any, query: any, model: any, operation: any }) {
-                    // performance.clearMeasures()
-                    // performance.clearMarks()
+                    const debug = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' && args.debugCasl
+                    delete args.debugCasl
+                    const perf = debug ? performance : undefined
+                    const logger = debug ? console : undefined
+                    perf?.clearMeasures('prisma-casl-extension-Overall')
+                    perf?.clearMeasures('prisma-casl-extension-Create Abilities')
+                    perf?.clearMeasures('prisma-casl-extension-Create Casl Query')
+                    perf?.clearMeasures('prisma-casl-extension-Finish Query')
+                    perf?.clearMeasures('prisma-casl-extension-Filtering Results')
+                    perf?.clearMarks('prisma-casl-extension-0')
+                    perf?.clearMarks('prisma-casl-extension-1')
+                    perf?.clearMarks('prisma-casl-extension-2')
+                    perf?.clearMarks('prisma-casl-extension-3')
+                    perf?.clearMarks('prisma-casl-extension-4')
+
+
                     if (!(operation in caslOperationDict)) {
                         return query(args)
                     }
-                    // performance.mark('start')
+
+
+                    perf?.mark('prisma-casl-extension-0')
+
+
                     const abilities = getAbilities()
-                    // performance.mark('abilities')
+
+
+                    perf?.mark('prisma-casl-extension-1')
+
+
                     const caslQuery = applyCaslToQuery(operation, args, abilities, model)
 
-                    // performance.mark('finishCaslQuery')
+
+                    perf?.mark('prisma-casl-extension-2')
+                    logger?.log('Query Args', JSON.stringify(caslQuery.args))
+                    logger?.log('Query Mask', JSON.stringify(caslQuery.mask))
+
                     return query(caslQuery.args).then((result: any) => {
-                        // performance.mark('finishQuery')
+
+                        perf?.mark('prisma-casl-extension-3')
+
 
                         const res = filterQueryResults(result, caslQuery.mask, abilities, getFluentModel(model, rest))
-                        // performance.mark('finishFiltering')
-                        // console.log(
-                        //     [performance.measure('overall', 'start', 'finishFiltering'),
-                        //     performance.measure('create abilities', 'start', 'abilities'),
-                        //     performance.measure('create casl query', 'abilities', 'finishCaslQuery'),
-                        //     performance.measure('finish query', 'finishCaslQuery', 'finishQuery'),
-                        //     performance.measure('filtering results', 'finishQuery', 'finishFiltering')
-                        //     ].map((measure) => {
-                        //         return `${measure.name}: ${measure.duration}`
-                        //     })
-                        // )
+
+                        if (perf) {
+                            perf.mark('prisma-casl-extension-4')
+                            logger?.log(
+                                [perf.measure('prisma-casl-extension-Overall', 'prisma-casl-extension-0', 'prisma-casl-extension-4'),
+                                perf.measure('prisma-casl-extension-Create Abilities', 'prisma-casl-extension-0', 'prisma-casl-extension-1'),
+                                perf.measure('prisma-casl-extension-Create Casl Query', 'prisma-casl-extension-1', 'prisma-casl-extension-2'),
+                                perf.measure('prisma-casl-extension-Finish Query', 'prisma-casl-extension-2', 'prisma-casl-extension-3'),
+                                perf.measure('prisma-casl-extension-Filtering Results', 'prisma-casl-extension-3', 'prisma-casl-extension-4')
+                                ].map((measure) => {
+                                    return `${measure.name.replace('prisma-casl-extension-', '')}: ${measure.duration}`
+                                })
+                            )
+                        }
                         return res
                     })
                 },

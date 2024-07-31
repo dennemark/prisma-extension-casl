@@ -73,6 +73,10 @@ const result = await caslClient.post.update({
 
 Check out tests for some other examples.
 
+### Debugging queries
+
+To debug queries add `debugCasl: true` to the query like this `caslClient.post.findUnique({ debugCasl: true })`
+
 ### Limitations and Constraints
 
 #### Avoid columns with prisma naming
