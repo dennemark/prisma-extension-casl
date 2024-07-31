@@ -1,5 +1,12 @@
 
 
+## [0.3.0](https://github.com/dennemark/prisma-extension-casl/compare/0.2.0...0.3.0) (2024-07-31)
+
+
+### Features
+
+* :sparkles: filter permissions on query result ([54b0d8b](https://github.com/dennemark/prisma-extension-casl/commit/54b0d8b07f715b7f6cd0a85bfaae2d775cc33566))
+
 ## [0.2.0](https://github.com/dennemark/prisma-extension-casl/compare/0.1.4...0.2.0) (2024-07-30)
 
 

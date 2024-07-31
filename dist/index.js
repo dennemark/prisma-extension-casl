@@ -86,6 +86,7 @@ function p(t3, e4) {
   e4 !== s && t3.push(e4);
 }
 var w = (t3) => u("and", t3);
+var b = (t3) => u("or", t3);
 var O = { compound(t3, e4, n3) {
   const o3 = (Array.isArray(e4) ? e4 : [e4]).map((t4) => n3.parse(t4));
   return new r(t3.name, o3);
@@ -181,21 +182,21 @@ var l2 = (e4) => (t3, r2) => {
   if (typeof r2 !== e4) throw new Error(`"${t3.name}" expects value to be a "${e4}"`);
 };
 var c2 = { type: "compound", validate: p2, parse(t3, r2, { parse: o3 }) {
-  const a4 = r2.map((e4) => o3(e4));
-  return u(t3.name, a4);
+  const a5 = r2.map((e4) => o3(e4));
+  return u(t3.name, a5);
 } };
 var f2 = c2;
 var d2 = { type: "compound", validate: p2 };
 var u2 = { type: "field", validate(e4, t3) {
   if (!(t3 && (t3 instanceof RegExp || t3.constructor === Object))) throw new Error(`"${e4.name}" expects to receive either regular expression or object of field operators`);
-}, parse(e4, o3, a4) {
-  const n3 = o3 instanceof RegExp ? new o("regex", a4.field, o3) : a4.parse(o3, a4);
+}, parse(e4, o3, a5) {
+  const n3 = o3 instanceof RegExp ? new o("regex", a5.field, o3) : a5.parse(o3, a5);
   return new r(e4.name, [n3]);
 } };
 var $ = { type: "field", validate(e4, t3) {
   if (!t3 || t3.constructor !== Object) throw new Error(`"${e4.name}" expects to receive an object with nested query or field level operators`);
-}, parse(e4, r2, { parse: a4, field: n3, hasOperators: i4 }) {
-  const s3 = i4(r2) ? a4(r2, { field: n }) : a4(r2);
+}, parse(e4, r2, { parse: a5, field: n3, hasOperators: i4 }) {
+  const s3 = i4(r2) ? a5(r2, { field: n }) : a5(r2);
   return new o(e4.name, n3, s3);
 } };
 var w2 = { type: "field", validate: l2("number") };
@@ -209,20 +210,20 @@ var m2 = { type: "field", validate: l2("boolean") };
 var g = { type: "field", validate: function(e4, t3) {
   if (!("string" == typeof t3 || "number" == typeof t3 || t3 instanceof Date)) throw new Error(`"${e4.name}" expects value to be comparable (i.e., string, number or date)`);
 } };
-var b = g;
-var E = b;
-var j2 = b;
+var b2 = g;
+var E = b2;
+var j2 = b2;
 var O2 = { type: "field" };
 var R = O2;
 var _2 = { type: "field", validate(e4, t3) {
   if (!(t3 instanceof RegExp) && "string" != typeof t3) throw new Error(`"${e4.name}" expects value to be a regular expression or a string that represents regular expression`);
 }, parse(e4, r2, o3) {
-  const a4 = "string" == typeof r2 ? new RegExp(r2, o3.query.$options || "") : r2;
-  return new o(e4.name, o3.field, a4);
+  const a5 = "string" == typeof r2 ? new RegExp(r2, o3.query.$options || "") : r2;
+  return new o(e4.name, o3.field, a5);
 } };
 var q = { type: "field", parse: () => s };
 var A = { type: "document", validate: l2("function") };
-var N = Object.freeze({ __proto__: null, $and: c2, $or: f2, $nor: d2, $not: u2, $elemMatch: $, $size: w2, $in: y2, $nin: x2, $all: v2, $mod: h2, $exists: m2, $gte: g, $gt: b, $lt: E, $lte: j2, $eq: O2, $ne: R, $regex: _2, $options: q, $where: A });
+var N = Object.freeze({ __proto__: null, $and: c2, $or: f2, $nor: d2, $not: u2, $elemMatch: $, $size: w2, $in: y2, $nin: x2, $all: v2, $mod: h2, $exists: m2, $gte: g, $gt: b2, $lt: E, $lte: j2, $eq: O2, $ne: R, $regex: _2, $options: q, $where: A });
 var P = class extends j {
   constructor(e4) {
     super(e4, { defaultOperatorName: "$eq", operatorToConditionName: (e5) => e5.slice(1) });
@@ -282,11 +283,11 @@ var p3 = (r2, t3, { interpret: n3 }) => r2.value.some((r3) => n3(r3, t3));
 var g2 = (r2, t3, n3) => !p3(r2, t3, n3);
 var m3 = (r2, t3, { interpret: n3 }) => r2.value.every((r3) => n3(r3, t3));
 var y3 = (r2, t3, { interpret: n3 }) => !n3(r2.value[0], t3);
-var b2 = (r2, t3, { compare: e4, get: o3 }) => {
+var b3 = (r2, t3, { compare: e4, get: o3 }) => {
   const u5 = o3(t3, r2.field);
   return Array.isArray(u5) && !Array.isArray(r2.value) ? n2(u5, r2.value, e4) : 0 === e4(u5, r2.value);
 };
-var A2 = (r2, t3, n3) => !b2(r2, t3, n3);
+var A2 = (r2, t3, n3) => !b3(r2, t3, n3);
 var d3 = u3((r2, t3, n3) => {
   const e4 = n3.compare(t3, r2.value);
   return 0 === e4 || -1 === e4;
@@ -322,7 +323,7 @@ var z2 = (r2, t3, { interpret: n3, get: e4 }) => {
   return Array.isArray(o3) && o3.some((t4) => n3(r2.value, t4));
 };
 var B = (r2, t3) => r2.value.call(t3);
-var E2 = Object.freeze({ __proto__: null, or: p3, nor: g2, and: m3, not: y3, eq: b2, ne: A2, lte: d3, lt: h3, gt: j3, gte: w3, exists: _3, mod: v3, size: x3, regex: O3, within: N2, nin: $2, all: q2, elemMatch: z2, where: B });
+var E2 = Object.freeze({ __proto__: null, or: p3, nor: g2, and: m3, not: y3, eq: b3, ne: A2, lte: d3, lt: h3, gt: j3, gte: w3, exists: _3, mod: v3, size: x3, regex: O3, within: N2, nin: $2, all: q2, elemMatch: z2, where: B });
 var M = Object.assign({}, E2, { in: N2 });
 var S = l3(M);
 
@@ -563,8 +564,8 @@ var PureAbility = class extends Z {
     return !this.can(t3, i4, e4);
   }
 };
-var tt = { $eq: O2, $ne: R, $lt: E, $lte: j2, $gt: b, $gte: g, $in: y2, $nin: x2, $all: v2, $size: w2, $regex: _2, $options: q, $elemMatch: $, $exists: m2 };
-var it = { eq: b2, ne: A2, lt: h3, lte: d3, gt: j3, gte: w3, in: N2, nin: $2, all: q2, size: x3, regex: O3, elemMatch: z2, exists: _3, and: m3 };
+var tt = { $eq: O2, $ne: R, $lt: E, $lte: j2, $gt: b2, $gte: g, $in: y2, $nin: x2, $all: v2, $size: w2, $regex: _2, $options: q, $elemMatch: $, $exists: m2 };
+var it = { eq: b3, ne: A2, lt: h3, lte: d3, gt: j3, gte: w3, in: N2, nin: $2, all: q2, size: x3, regex: O3, elemMatch: z2, exists: _3, and: m3 };
 var st = p4(tt, it);
 var nt = /[-/\\^$+?.()|[\]{}]/g;
 var rt = /\.?\*+\.?/g;
@@ -670,6 +671,17 @@ function h4(t3, n3, r2, e4) {
   }
   return o3.$or ? o3 : null;
 }
+function a4(t3) {
+  if (!t3.ast) throw new Error(`Ability rule "${JSON.stringify(t3)}" does not have "ast" property. So, cannot be used to generate AST`);
+  return t3.inverted ? new r("not", [t3.ast]) : t3.ast;
+}
+function d4(r2, e4, o3) {
+  const i4 = h4(r2, e4, o3, a4);
+  if (i4 === null) return null;
+  if (!i4.$and) return i4.$or ? b(i4.$or) : w([]);
+  if (i4.$or) i4.$and.push(b(i4.$or));
+  return w(i4.$and);
+}
 
 // node_modules/.pnpm/@casl+prisma@1.4.1_@casl+ability@6.7.1_@prisma+client@5.16.2_prisma@5.16.2_/node_modules/@casl/prisma/dist/es6m/runtime.mjs
 var v4 = class extends Error {
@@ -682,10 +694,10 @@ var O5 = (t3) => t3 && (t3.constructor === Object || !t3.constructor);
 var j4 = { type: "field", validate(t3, e4) {
   if (Array.isArray(e4) || O5(e4)) throw new v4(`"${t3.name}" does not supports comparison of arrays and objects`);
 } };
-var N4 = { type: "field", parse(r2, n3, { hasOperators: o3, field: s3, parse: a4 }) {
+var N4 = { type: "field", parse(r2, n3, { hasOperators: o3, field: s3, parse: a5 }) {
   if (O5(n3) && !o3(n3) || Array.isArray(n3)) throw new v4(`"${r2.name}" does not supports comparison of arrays and objects`);
   if (!O5(n3)) return new o("notEquals", s3, n3);
-  return new r("NOT", [a4(n3, { field: s3 })]);
+  return new r("NOT", [a5(n3, { field: s3 })]);
 } };
 var $3 = { type: "field", validate(t3, e4) {
   if (!Array.isArray(e4)) throw v4.invalidArgument(t3.name, e4, "an array");
@@ -729,10 +741,10 @@ var I2 = (r2, n3) => {
     return new r("NOT", [new o(r2, s3.field, o4)]);
   } });
   return Object.assign({}, n3, { parse(t3, n4, s3) {
-    const a4 = o3(t3, n4, s3);
-    if (a4.operator !== t3.name) throw new Error(`Cannot invert "${r2}" operator parser because it returns a complex Condition`);
-    a4.operator = r2;
-    return new r("NOT", [a4]);
+    const a5 = o3(t3, n4, s3);
+    if (a5.operator !== t3.name) throw new Error(`Cannot invert "${r2}" operator parser because it returns a complex Condition`);
+    a5.operator = r2;
+    return new r("NOT", [a5]);
   } });
 };
 var M2 = { equals: j4, not: N4, in: $3, notIn: I2("in", $3), lt: E3, lte: E3, gt: E3, gte: E3, mode: x4, startsWith: T2, endsWith: T2, contains: T2, isEmpty: S3, has: D, hasSome: C2, hasEvery: C2, NOT: W2, AND: W2, OR: W2, every: F, some: F, none: I2("some", F), is: F, isNot: I2("is", F) };
@@ -785,7 +797,7 @@ function Y(t3) {
   return t3 && typeof t3 === "object" ? t3.valueOf() : t3;
 }
 var Z2 = (t3, e4) => a2(Y(t3), Y(e4));
-var tt2 = l3({ equals: b2, notEquals: A2, in: N2, lt: h3, lte: d3, gt: j3, gte: w3, startsWith: _4, istartsWith: J2, endsWith: P3, iendsWith: k, contains: z4, icontains: B3, isEmpty: G2, has: H2, hasSome: K2, hasEvery: L, and: m3, or: p3, AND: m3, OR: p3, NOT: X2, every: Q2, some: U2, is: V2 }, { get: (t3, e4) => t3[e4], compare: Z2 });
+var tt2 = l3({ equals: b3, notEquals: A2, in: N2, lt: h3, lte: d3, gt: j3, gte: w3, startsWith: _4, istartsWith: J2, endsWith: P3, iendsWith: k, contains: z4, icontains: B3, isEmpty: G2, has: H2, hasSome: K2, hasEvery: L, and: m3, or: p3, AND: m3, OR: p3, NOT: X2, every: Q2, some: U2, is: V2 }, { get: (t3, e4) => t3[e4], compare: Z2 });
 var et = new R3();
 var rt2 = v(et.parse, tt2);
 function nt2(t3) {
@@ -1013,9 +1025,105 @@ var applyIncludeSelectQuery = (abilities, args, model) => {
   return args;
 };
 
+// src/applyRuleRelationsQuery.ts
+function getRuleRelationsQuery(model, ast) {
+  const obj = {};
+  if (ast) {
+    if (typeof ast.value === "object") {
+      if (Array.isArray(ast.value)) {
+        ast.value.map((childAst) => {
+          const relation = relationFieldsByModel[model];
+          if (childAst.field) {
+            if (childAst.field in relation) {
+              obj[childAst.field] = {
+                select: getRuleRelationsQuery(relation[childAst.field].type, childAst.value)
+              };
+            } else {
+              obj[childAst.field] = true;
+            }
+          }
+        });
+      } else {
+        const relation = relationFieldsByModel[model];
+        if (ast.field) {
+          if (ast.field in relation) {
+            obj[ast.field] = {
+              select: getRuleRelationsQuery(relation[ast.field].type, ast.value)
+            };
+          } else {
+            obj[ast.field] = true;
+          }
+        }
+      }
+    } else {
+      obj[ast.field] = true;
+    }
+  }
+  return obj;
+}
+function mergeArgsAndRelationQuery(args, relationQuery) {
+  const mask = {};
+  let found = false;
+  ["include", "select"].map((method) => {
+    if (args[method]) {
+      found = true;
+      for (const key in relationQuery) {
+        if (!(key in args[method])) {
+          if (relationQuery[key].select || method === "select") {
+            args[method][key] = relationQuery[key];
+            mask[key] = true;
+          }
+        } else if (args[method][key] && typeof args[method][key] === "object") {
+          const child = relationQuery[key].select ? mergeArgsAndRelationQuery(args[method][key], relationQuery[key].select) : args[method][key];
+          args[method][key] = child.args;
+          mask[key] = child.mask;
+        } else if (args[method][key] === true) {
+          if (relationQuery[key].select) {
+            for (const field in relationQuery[key].select) {
+              if (relationQuery[key].select[field]?.select) {
+                args[method][key] = {
+                  include: {
+                    ...args[method][key]?.include ?? {},
+                    [field]: relationQuery[key].select[field]
+                  }
+                };
+                mask[key] = {
+                  ...mask?.[key] ?? {},
+                  [field]: true
+                };
+              }
+            }
+          }
+        }
+      }
+    }
+  });
+  if (found === false) {
+    Object.entries(relationQuery).forEach(([k2, v5]) => {
+      if (v5?.select) {
+        args.include = {
+          ...args.include ?? {},
+          [k2]: v5
+        };
+        mask[k2] = v5;
+      }
+    });
+  }
+  return {
+    args,
+    mask
+  };
+}
+function applyRuleRelationsQuery(args, abilities, action, model) {
+  const ast = d4(abilities, action, model);
+  const queryRelations = getRuleRelationsQuery(model, ast);
+  return mergeArgsAndRelationQuery(args, queryRelations);
+}
+
 // src/applyCaslToQuery.ts
 function applyCaslToQuery(operation, args, abilities, model) {
   const operationAbility = caslOperationDict[operation];
+  m5(abilities, operationAbility.action)[model];
   if (operationAbility.dataQuery && args.data) {
     args.data = applyDataQuery(abilities, args.data, operationAbility.action, model);
   }
@@ -1028,12 +1136,12 @@ function applyCaslToQuery(operation, args, abilities, model) {
     delete args.include;
     delete args.select;
   }
-  console.dir(args, { depth: null });
-  return args;
+  const result = operationAbility.includeSelectQuery ? applyRuleRelationsQuery(args, abilities, operationAbility.action, model) : { args, mask: void 0 };
+  return result;
 }
 
 // src/filterQueryResults.ts
-function filterQueryResults(result, abilities, model) {
+function filterQueryResults(result, mask, abilities, model) {
   const prismaModel = model in relationFieldsByModel ? model : void 0;
   if (!prismaModel) {
     throw new Error(`Model ${model} does not exist on Prisma Client`);
@@ -1043,22 +1151,29 @@ function filterQueryResults(result, abilities, model) {
       return null;
     }
     const permittedFields = getPermittedFields(abilities, "read", model, entry);
-    console.log(model, entry, permittedFields);
     let hasKeys = false;
     Object.keys(entry).forEach((field) => {
       const relationField = relationFieldsByModel[model][field];
-      if (!permittedFields.includes(field) && !relationField) {
+      if (!permittedFields.includes(field) && !relationField || mask?.[field] === true) {
         delete entry[field];
       } else if (relationField) {
         hasKeys = true;
-        entry[field] = filterQueryResults(entry[field], abilities, relationField.type);
+        entry[field] = filterQueryResults(entry[field], mask?.[field], abilities, relationField.type);
+        if (entry[field] === null) {
+          delete entry[field];
+        }
       } else {
         hasKeys = true;
       }
     });
     return hasKeys ? entry : null;
   };
-  return Array.isArray(result) ? result.map((entry) => filterPermittedFields(entry)).filter((x5) => x5) : filterPermittedFields(result);
+  if (Array.isArray(result)) {
+    const arr = result.map((entry) => filterPermittedFields(entry)).filter((x5) => x5);
+    return arr.length > 0 ? arr : null;
+  } else {
+    return filterPermittedFields(result);
+  }
 }
 
 // src/index.ts
@@ -1067,61 +1182,17 @@ var useCaslAbilities = (getAbilities) => {
     name: "prisma-extension-casl",
     query: {
       $allModels: {
-        create({ args, query, model, operation, ...rest }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
-        },
-        createMany({ args, query, model, operation, ...rest }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
-        },
-        createManyAndReturn({ args, query, model, operation, ...rest }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
-        },
-        upsert({ args, query, model, operation, ...rest }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
-        },
-        findFirst({ args, query, model, operation, ...rest }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
-        },
-        findFirstOrThrow({ args, query, model, operation, ...rest }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
-        },
-        findMany({ args, query, model, operation, ...rest }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
-        },
-        findUnique({ args, query, model, operation, ...rest }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
-        },
-        findUniqueOrThrow({ args, query, model, operation, ...rest }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
-        },
-        aggregate({ args, query, model, operation, ...rest }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
-        },
-        count({ args, query, model, operation, ...rest }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
-        },
-        groupBy({ args, query, model, operation, ...rest }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
-        },
-        update({ args, query, model, operation, ...rest }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
-        },
-        updateMany({ args, query, model, operation, ...rest }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
-        },
-        delete({ args, query, model, operation, ...rest }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
-        },
-        deleteMany({ args, query, model, operation, ...rest }) {
-          return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)));
+        async $allOperations({ args, query, model, operation, ...rest }) {
+          if (!(operation in caslOperationDict)) {
+            return query(args);
+          }
+          const abilities = getAbilities();
+          const caslQuery = applyCaslToQuery(operation, args, abilities, model);
+          return query(caslQuery.args).then((result) => {
+            const res = filterQueryResults(result, caslQuery.mask, abilities, getFluentModel(model, rest));
+            return res;
+          });
         }
-        // async $allOperations<T>({ args, query, model, operation }: { args: any, query: any, model: any, operation: any }) {
-        //     if (!(operation in caslOperationDict)) {
-        //         return query(args)
-        //     }
-        //     args = applyCaslToQuery(operation, args, getAbilities(), model)
-        //     return query(args)
-        // },
       }
     }
   });

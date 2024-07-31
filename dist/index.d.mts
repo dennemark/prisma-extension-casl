@@ -14,7 +14,13 @@ type PrismaCaslOperation = 'create' | 'createMany' | 'createManyAndReturn' | 'up
  * @param model Prisma model
  * @returns Enriched query with casl authorization
  */
-declare function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: Prisma.ModelName): any;
+declare function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: Prisma.ModelName): {
+    args: any;
+    mask: Record<string, any>;
+} | {
+    args: any;
+    mask: undefined;
+};
 
 /**
  * enrich a prisma client to check for CASL abilities even in nested queries
