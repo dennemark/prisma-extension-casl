@@ -1,9 +1,9 @@
 import { AbilityTuple, PureAbility } from "@casl/ability";
-import { PrismaQuery } from "@casl/prisma";
+import { accessibleBy, PrismaQuery } from "@casl/prisma";
 import { Prisma } from "@prisma/client";
 import { getPermittedFields, relationFieldsByModel } from "./helpers";
 
-export function filterQueryResults(result: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: string) {
+export function filterQueryResults(result: any, mask: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: string) {
     const prismaModel = model in relationFieldsByModel ? model as Prisma.ModelName : undefined
     if (!prismaModel) {
         throw new Error(`Model ${model} does not exist on Prisma Client`)
@@ -12,15 +12,18 @@ export function filterQueryResults(result: any, abilities: PureAbility<AbilityTu
     const filterPermittedFields = (entry: any) => {
         if (!entry) { return null }
         const permittedFields = getPermittedFields(abilities, 'read', model, entry)
-        console.log(model, entry, permittedFields)
         let hasKeys = false
         Object.keys(entry).forEach((field) => {
             const relationField = relationFieldsByModel[model][field]
-            if (!permittedFields.includes(field) && !relationField) {
+
+            if ((!permittedFields.includes(field) && !relationField) || mask?.[field] === true) {
                 delete entry[field]
             } else if (relationField) {
                 hasKeys = true
-                entry[field] = filterQueryResults(entry[field], abilities, relationField.type)
+                entry[field] = filterQueryResults(entry[field], mask?.[field], abilities, relationField.type)
+                if (entry[field] === null) {
+                    delete entry[field]
+                }
             } else {
                 hasKeys = true
             }
@@ -28,6 +31,10 @@ export function filterQueryResults(result: any, abilities: PureAbility<AbilityTu
 
         return hasKeys ? entry : null
     }
-    // console.log(model, JSON.stringify(Array.isArray(result) ? result.map((entry)=>filterPermittedFields(entry)) : filterPermittedFields(result)))
-    return Array.isArray(result) ? result.map((entry) => filterPermittedFields(entry)).filter((x) => x) : filterPermittedFields(result)
+    if (Array.isArray(result)) {
+        const arr = result.map((entry) => filterPermittedFields(entry)).filter((x) => x)
+        return arr.length > 0 ? arr : null
+    } else {
+        return filterPermittedFields(result)
+    }
 }

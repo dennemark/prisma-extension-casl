@@ -1,8 +1,9 @@
 import { AbilityTuple, PureAbility } from '@casl/ability'
-import { PrismaQuery } from '@casl/prisma'
+import { accessibleBy, PrismaQuery } from '@casl/prisma'
 import { Prisma } from '@prisma/client'
 import { applyDataQuery } from "./applyDataQuery"
 import { applyIncludeSelectQuery } from "./applyIncludeSelectQuery"
+import { applyRuleRelationsQuery } from './applyRuleRelationsQuery'
 import { applyWhereQuery } from "./applyWhereQuery"
 import { caslOperationDict, PrismaCaslOperation } from "./helpers"
 
@@ -18,7 +19,7 @@ import { caslOperationDict, PrismaCaslOperation } from "./helpers"
 export function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: Prisma.ModelName) {
     const operationAbility = caslOperationDict[operation]
 
-    // accessibleBy(abilities, operationAbility.action)[model]
+    accessibleBy(abilities, operationAbility.action)[model]
 
     if (operationAbility.dataQuery && args.data) {
         args.data = applyDataQuery(abilities, args.data, operationAbility.action, model)
@@ -36,6 +37,10 @@ export function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abil
         delete args.include
         delete args.select
     }
-    console.dir(args, { depth: null })
-    return args
+
+    const result = operationAbility.includeSelectQuery
+        ? applyRuleRelationsQuery(args, abilities, operationAbility.action, model)
+        : { args, mask: undefined }
+
+    return result
 }

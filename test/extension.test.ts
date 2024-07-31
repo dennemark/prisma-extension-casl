@@ -80,14 +80,11 @@ describe('prisma extension casl', () => {
 
             })
 
-            expect(result).toEqual({ author: { email: '1', id: 1 } })
+            expect(result).toEqual({ id: 1, author: { email: '1', id: 1 } })
 
             const result2 = await client.post.findUnique({
                 where: {
-                    id: 1,
-                    thread: {
-                        creatorId: 0
-                    }
+                    id: 0
                 },
                 select: {
                     id: true,
@@ -96,8 +93,10 @@ describe('prisma extension casl', () => {
 
             })
 
-            expect(result2).toEqual({ author: { email: '1', id: 1 } })
+            expect(result2).toEqual({ id: 0, author: { email: '0' } })
         })
+
+
 
         it('does not include nested fields if query does not include properties to check for rules', async () => {
             const { can, build } = abilityBuilder()
@@ -131,7 +130,7 @@ describe('prisma extension casl', () => {
                     }
                 },
             })
-            expect(result).toEqual({ author: { email: '1', posts: [] } })
+            expect(result).toEqual({ author: { email: '1' } })
         })
 
         it('includes nested fields if query does not include properties to check for rules', async () => {
@@ -429,6 +428,22 @@ describe('prisma extension casl', () => {
             )
             const result = await client.post.findMany({ include: { thread: true } })
             expect(result).toEqual([{ authorId: 0, id: 0, text: '', threadId: 0, thread: { id: 0 } }, { authorId: 1, id: 1, text: '', threadId: 0, thread: { id: 0 } }, { authorId: 0, id: 3, text: '', threadId: 2, thread: { id: 2 } }])
+        })
+        it('checks post permission but does not include it in output', async () => {
+            const { can, cannot, build } = abilityBuilder()
+            can('read', 'User', 'email', {
+                posts: {
+                    some: {
+                        authorId: 0
+                    }
+                }
+            })
+            cannot('read', 'Post')
+            const client = seedClient.$extends(
+                useCaslAbilities(build)
+            )
+            const result = await client.user.findMany()
+            expect(result).toEqual([{ email: "0" }])
         })
     })
 

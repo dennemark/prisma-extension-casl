@@ -3,7 +3,7 @@ import { PrismaQuery } from '@casl/prisma'
 import { Prisma } from '@prisma/client'
 import { applyCaslToQuery } from './applyCaslToQuery'
 import { filterQueryResults } from './filterQueryResults'
-import { getFluentModel } from './helpers'
+import { caslOperationDict, getFluentModel } from './helpers'
 
 export { applyCaslToQuery }
 
@@ -25,64 +25,36 @@ export const useCaslAbilities = (getAbilities: () => PureAbility<AbilityTuple, P
         name: "prisma-extension-casl",
         query: {
             $allModels: {
-                create({ args, query, model, operation, ...rest }) {
-                    return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)))
-                },
-                createMany({ args, query, model, operation, ...rest }) {
-                    return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)))
-                },
-                createManyAndReturn({ args, query, model, operation, ...rest }) {
-                    return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)))
-                },
-                upsert({ args, query, model, operation, ...rest }) {
-                    return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)))
-                },
-                findFirst({ args, query, model, operation, ...rest }) {
-                    return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)))
-                },
-                findFirstOrThrow({ args, query, model, operation, ...rest }) {
-                    return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)))
-                },
-                findMany({ args, query, model, operation, ...rest }) {
-                    return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)))
-                },
-                findUnique({ args, query, model, operation, ...rest }) {
-                    return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)))
-                },
-                findUniqueOrThrow({ args, query, model, operation, ...rest }) {
-                    return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)))
-                },
-                aggregate({ args, query, model, operation, ...rest }) {
-                    return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)))
-                },
-                count({ args, query, model, operation, ...rest }) {
-                    return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)))
-                },
-                groupBy({ args, query, model, operation, ...rest }) {
-                    return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)))
-                },
-                update({ args, query, model, operation, ...rest }) {
-                    return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)))
-                },
-                updateMany({ args, query, model, operation, ...rest }) {
-                    return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)))
-                },
-                delete({ args, query, model, operation, ...rest }) {
-                    return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)))
-                },
-                deleteMany({ args, query, model, operation, ...rest }) {
-                    return query(applyCaslToQuery(operation, args, getAbilities(), model)).then((result) => filterQueryResults(result, getAbilities(), getFluentModel(model, rest)))
-                },
-                // async $allOperations<T>({ args, query, model, operation }: { args: any, query: any, model: any, operation: any }) {
+                async $allOperations<T>({ args, query, model, operation, ...rest }: { args: any, query: any, model: any, operation: any }) {
+                    // performance.clearMeasures()
+                    // performance.clearMarks()
+                    if (!(operation in caslOperationDict)) {
+                        return query(args)
+                    }
+                    // performance.mark('start')
+                    const abilities = getAbilities()
+                    // performance.mark('abilities')
+                    const caslQuery = applyCaslToQuery(operation, args, abilities, model)
 
-                //     if (!(operation in caslOperationDict)) {
-                //         return query(args)
-                //     }
+                    // performance.mark('finishCaslQuery')
+                    return query(caslQuery.args).then((result: any) => {
+                        // performance.mark('finishQuery')
 
-                //     args = applyCaslToQuery(operation, args, getAbilities(), model)
-
-                //     return query(args)
-                // },
+                        const res = filterQueryResults(result, caslQuery.mask, abilities, getFluentModel(model, rest))
+                        // performance.mark('finishFiltering')
+                        // console.log(
+                        //     [performance.measure('overall', 'start', 'finishFiltering'),
+                        //     performance.measure('create abilities', 'start', 'abilities'),
+                        //     performance.measure('create casl query', 'abilities', 'finishCaslQuery'),
+                        //     performance.measure('finish query', 'finishCaslQuery', 'finishQuery'),
+                        //     performance.measure('filtering results', 'finishQuery', 'finishFiltering')
+                        //     ].map((measure) => {
+                        //         return `${measure.name}: ${measure.duration}`
+                        //     })
+                        // )
+                        return res
+                    })
+                },
             },
         }
     })

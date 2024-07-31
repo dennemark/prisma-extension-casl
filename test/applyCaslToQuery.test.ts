@@ -18,7 +18,7 @@ describe('apply casl to query', () => {
                 posts: true
             }
         }, abilities, 'User')
-        expect(result).toEqual({
+        expect(result.args).toEqual({
             include: {
                 posts: true
             },
@@ -26,14 +26,16 @@ describe('apply casl to query', () => {
                 id: 1
             }
         })
-
+        expect(result.mask).toEqual({})
     })
 
     it('applies nested select and where', async () => {
         const { can, build } = abilityBuilder()
         can('read', 'Post', ['id'], {
             thread: {
-                creatorId: 0
+                is: {
+                    creatorId: 0
+                }
             }
         })
         can('read', 'User', ['email', 'id'], {
@@ -54,7 +56,7 @@ describe('apply casl to query', () => {
                 }
             },
         }, abilities, 'Post')
-        expect(result).toEqual({
+        expect(result.args).toEqual({
             select: {
                 author: {
                     select: {
@@ -64,12 +66,19 @@ describe('apply casl to query', () => {
                                 AND: [{
                                     OR: [{
                                         thread: {
-                                            creatorId: 0
+                                            is: {
+                                                creatorId: 0
+                                            }
                                         }
                                     }]
                                 }]
                             }
                         }
+                    }
+                },
+                thread: {
+                    select: {
+                        creatorId: true
                     }
                 }
             },
@@ -77,7 +86,9 @@ describe('apply casl to query', () => {
                 AND: [{
                     OR: [{
                         thread: {
-                            creatorId: 0
+                            is: {
+                                creatorId: 0
+                            }
                         }
                     }
                     ]
@@ -85,7 +96,9 @@ describe('apply casl to query', () => {
                 id: 1,
             }
         })
-
+        expect(result.mask).toEqual({
+            thread: true
+        })
     })
     it('ignores conditional rule', () => {
         const { can, build } = abilityBuilder()
@@ -95,28 +108,13 @@ describe('apply casl to query', () => {
         })
         const abilities = build()
         const result = applyCaslToQuery('findUnique', {}, abilities, 'User')
-        expect(result).toEqual({})
+        expect(result.args).toEqual({})
+        expect(result.mask).toEqual({
+
+        })
     })
 
-    // it('applies filter props and ignores weaker can rule', ()=>{
-    //     const { can, build } = abilityBuilder()
-    //     can('read', 'User', {
-    //         id: 0
-    //     })
-    //     can('read', 'User', ['email', 'id'])
-    //     const abilities = build()
-    //     const result = applyCaslToQuery('findUnique', {}, abilities, 'User')
-    //     expect(result).toEqual({})
-    // })
-    // it('allows to see more props on a condition', ()=>{
-    //     const { can, build } = abilityBuilder()
-    //     can('read', 'User', 'email')
-    //     can('read', 'User', ['email', 'id'], {id:0})
-    //     const abilities = build()
-    //     const result = applyCaslToQuery('findUnique', { where: { id: 0 } }, abilities, 'User')
-    //     expect(result).toEqual({ where: { id: 0 }})
-    // })
-    it('applies where condition condition', () => {
+    it('applies where condition', () => {
         const { can, build } = abilityBuilder()
 
         can('read', 'User', 'email', { id: 0 })
@@ -127,7 +125,10 @@ describe('apply casl to query', () => {
             }
 
         }, abilities, 'User')
-        expect(result).toEqual({ where: { AND: [{ OR: [{ id: 0 }] }] }, select: { email: true } })
+        expect(result.args).toEqual({ where: { AND: [{ OR: [{ id: 0 }] }] }, select: { id: true, email: true } })
+        expect(result.mask).toEqual({
+            id: true
+        })
     })
     Object.entries(caslOperationDict).map(([operation, settings]) => {
         it(`${operation} applies ${settings.dataQuery ? 'data' : 'no data'} ${settings.whereQuery ? 'where' : 'no where'} and ${settings.includeSelectQuery ? 'include/select' : 'no include/select'} query`, () => {
@@ -147,21 +148,23 @@ describe('apply casl to query', () => {
 
 
             if (settings.dataQuery) {
-                expect(result.data).toEqual({ id: 0 })
+                expect(result.args.data).toEqual({ id: 0 })
             } else {
-                expect(result.data).toBeUndefined()
+                expect(result.args.data).toBeUndefined()
             }
             if (settings.whereQuery) {
-                expect(result.where).toEqual({ AND: [{ OR: [{ id: 0 }] }] })
+                expect(result.args.where).toEqual({ AND: [{ OR: [{ id: 0 }] }] })
             } else {
-                expect(result.where).toBeUndefined()
+                expect(result.args.where).toBeUndefined()
             }
             if (settings.includeSelectQuery) {
-                expect(result.include).toEqual({ posts: true })
-                expect(result.select).toBeUndefined()
+                expect(result.args.include).toEqual({ posts: true })
+                expect(result.args.select).toBeUndefined()
+                expect(result.mask).toEqual({})
             } else {
-                expect(result.include).toBeUndefined()
-                expect(result.select).toBeUndefined()
+                expect(result.args.include).toBeUndefined()
+                expect(result.args.select).toBeUndefined()
+                expect(result.mask).toBeUndefined()
             }
         })
     })
