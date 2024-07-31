@@ -1,5 +1,12 @@
 
 
+## [0.4.0](https://github.com/dennemark/prisma-extension-casl/compare/0.3.0...0.4.0) (2024-07-31)
+
+
+### Features
+
+* :technologist: add debugCasl flag to query ([12aa007](https://github.com/dennemark/prisma-extension-casl/commit/12aa007cdbb599562ca458ec6f45272d99a2ac9b))
+
 ## [0.3.0](https://github.com/dennemark/prisma-extension-casl/compare/0.2.0...0.3.0) (2024-07-31)
 
 
