@@ -1,5 +1,12 @@
 
 
+## [0.4.1](https://github.com/dennemark/prisma-extension-casl/compare/0.4.0...0.4.1) (2024-08-07)
+
+
+### Bug Fixes
+
+* :bug: query relations even for inverted and conditional rules ([50f62c8](https://github.com/dennemark/prisma-extension-casl/commit/50f62c83b08e693993f665dfee6d66bb9b443094))
+
 ## [0.4.0](https://github.com/dennemark/prisma-extension-casl/compare/0.3.0...0.4.0) (2024-07-31)
 
 
