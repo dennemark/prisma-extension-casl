@@ -48,33 +48,6 @@ export function applyWhereQuery(
         args.where = applyAccessibleQuery(args.where, relation && accessibleQuery ? { [relation]: accessibleQuery } : accessibleQuery)
     }
 
-    if (relation) {
-        // if we add a where clause to a relation
-        // we fake the where query, since it is otherwise buried in AND: [ OR: ...]
-        // to get the select query
-        /*const method = args.include ? "include" : "select"
+    return args
 
-
-        const selectQuery = applySelectPermittedFields(abilities, {
-            ...args[method][relation],
-            where: {
-                ...(args[method][relation].where ?? {}),
-                ...accessibleQuery
-            },
-        }, model)
-        const result = {
-            ...args,
-            [method]: {
-                ...args[method],
-                [relation]: {
-                    ...args[method][relation],
-                    select: selectQuery.select
-                }
-            }
-        }*/
-
-        return args//result
-    } else {
-        return args//applySelectPermittedFields(abilities, args, model)
-    }
 }

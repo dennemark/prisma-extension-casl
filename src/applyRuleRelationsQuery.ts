@@ -1,6 +1,6 @@
 import { AbilityTuple, PureAbility, Subject, ɵvalue } from '@casl/ability';
 import { rulesToAST } from '@casl/ability/extra';
-import { PrismaQuery } from '@casl/prisma';
+import { createPrismaAbility, PrismaQuery } from '@casl/prisma';
 import { Prisma } from '@prisma/client';
 import { relationFieldsByModel } from './helpers';
 
@@ -136,13 +136,18 @@ function mergeArgsAndRelationQuery(args: any, relationQuery: any) {
  */
 export function applyRuleRelationsQuery(args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, action: string, model: Prisma.ModelName) {
 
-  const ast = rulesToAST(abilities, action, model)
+  // rulesToAST won't return conditions
+  // if a rule is inverted and if a can rule exists without condition
+  // we therefore create fake ability here
+  // to get our rule relations query
+  const ability = createPrismaAbility(abilities.rules.filter((rule) => rule.conditions).map((rule) => {
+    return {
+      ...rule,
+      inverted: false
+    }
+  }))
+  const ast = rulesToAST(ability, action, model)
   const queryRelations = getRuleRelationsQuery(model, ast)
-
   return mergeArgsAndRelationQuery(args, queryRelations)
 }
 
-
-
-
-// Maske aussortieren

@@ -15,6 +15,68 @@ beforeEach(async () => {
 describe('prisma extension casl', () => {
     describe('findUnique', () => {
 
+        it('returns only permitted fields  with conditional cannot rule', async () => {
+            const { can, cannot, build } = abilityBuilder()
+            can('read', 'User', ['email', 'id'])
+
+            cannot('read', 'User', ['email'], {
+                posts: {
+                    some: {
+                        threadId: 2
+                    }
+                }
+            })
+            const client = seedClient.$extends(
+                useCaslAbilities(build)
+            )
+
+            const result = await client.user.findUnique({
+                where: {
+                    id: 0
+                }
+            })
+            expect(result).toEqual({ id: 0 })
+            const result2 = await client.user.findUnique({
+                where: {
+                    id: 1
+                }
+            })
+            expect(result2).toEqual({ email: '1', id: 1 })
+        })
+        it('returns only permitted fields with conditional can rule', async () => {
+            const { can, build } = abilityBuilder()
+            can('read', 'User', ['email'])
+
+            can('read', 'User', ['email', 'id'], {
+                posts: {
+                    some: {
+                        threadId: 2
+                    }
+                }
+            })
+            const client = seedClient.$extends(
+                useCaslAbilities(build)
+            )
+            const result = await client.user.findUnique({
+                where: {
+                    id: 0
+                }
+            })
+            expect(result).toEqual({ email: '0', id: 0 })
+            const result2 = await client.user.findUnique({
+                where: {
+                    id: 1
+                }
+            })
+            expect(result2).toEqual({ email: '1' })
+        })
+
+
+
+
+
+
+
         it('returns limited fields only', async () => {
             const { can, build } = abilityBuilder()
             can('read', 'User', ['email', 'id'], {
