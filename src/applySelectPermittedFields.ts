@@ -14,7 +14,7 @@ import { getPermittedFields, relationFieldsByModel } from './helpers'
  * @param model prisma model
  * @returns enriched query with selection of fields considering casl authorization
  */
-export const applySelectPermittedFields = (abilities: PureAbility<AbilityTuple, PrismaQuery>, args: any, model: string) => {
+export function applySelectPermittedFields(abilities: PureAbility<AbilityTuple, PrismaQuery>, args: any, model: string) {
 
     const permittedFields = getPermittedFields(abilities, 'read', model)
     if (permittedFields) {

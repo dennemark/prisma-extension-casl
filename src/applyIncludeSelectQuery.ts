@@ -16,11 +16,11 @@ import { relationFieldsByModel } from './helpers'
  * @param model prisma model
  * @returns enriched query with casl authorization
  */
-export const applyIncludeSelectQuery = (
+export function applyIncludeSelectQuery(
     abilities: PureAbility<AbilityTuple, PrismaQuery>,
     args: any,
     model: string,
-) => {
+) {
     ;["include", "select"].forEach((method) => {
         if (args && args[method]) {
             for (const relation in args[method]) {

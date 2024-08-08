@@ -19,14 +19,19 @@
 Now how does it work?
 
 ```ts
-const { can, build } = abilityBuilder();
-can("read", "Post", {
-  thread: {
-    creatorId: 0,
-  },
-});
-can("read", "Thread", "id");
-const caslClient = prismaClient.$extends(useCaslAbilities(build));
+function builderFactory() {
+  const builder = abilityBuilder();
+  const { can } = builder;
+  can("read", "Post", {
+    thread: {
+      creatorId: 0,
+    },
+  });
+  can("read", "Thread", "id");
+  return builder;
+}
+
+const caslClient = prismaClient.$extends(useCaslAbilities(builderFactory));
 const result = await caslClient.post.findMany({
   include: {
     thread: true,
@@ -52,6 +57,21 @@ const result = await caslClient.post.findMany({
  * and result will be filtered and should look like
  * { id: 0, threadId: 0, thread: { id: 0 } }
  */
+```
+
+Why do we create this builder factory function? It allows us to alter the rules on the client. Let's try with our above client:
+
+```ts
+const result = await caslClient
+  .$casl((extend) => {
+    extend.cannot("read", "Post");
+    return extend;
+  })
+  .post.findMany({
+    include: {
+      thread: true,
+    },
+  }); // will throw an error, since we added an additional cannot rule to post!
 ```
 
 Mutations will only run, if abilities allow it.
