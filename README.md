@@ -77,10 +77,15 @@ const result = await caslClient
 Mutations will only run, if abilities allow it.
 
 ```ts
-const { can, build } = abilityBuilder();
-can("update", "Post");
-cannot("update", "Post", "text");
-const caslClient = prismaClient.$extends(useCaslAbilities(build));
+function builderFactory() {
+  const builder = abilityBuilder();
+
+  const { can, build } = builder;
+  can("update", "Post");
+  cannot("update", "Post", "text");
+  return builder;
+}
+const caslClient = prismaClient.$extends(useCaslAbilities(builderFactory));
 const result = await caslClient.post.update({
   data: { text: "-" },
   where: { id: 0 },
