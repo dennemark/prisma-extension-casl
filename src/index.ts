@@ -24,7 +24,17 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
 
 
     return Prisma.defineExtension((client) => {
-        const caslExtension = (getAbility: () => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => ({
+        let getAbilities = () => getAbilityFactory()
+        return client.$extends({
+            name: "prisma-extension-casl",
+            client: {
+                $casl(extendFactory: (factory: AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) {
+                    const ctx = Prisma.getExtensionContext(this)
+                    // alter the getAblities function shortly
+                    getAbilities = () => extendFactory(getAbilityFactory())
+                    return ctx
+                }
+            },
             query: {
                 $allModels: {
                     async $allOperations<T>({ args, query, model, operation, ...rest }: { args: any, query: any, model: any, operation: any }) {
@@ -51,8 +61,9 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
 
                         perf?.mark('prisma-casl-extension-0')
 
-                        const abilities = getAbility().build()
-
+                        const abilities = getAbilities().build()
+                        // reset alteration of getAblities function
+                        getAbilities = () => getAbilityFactory()
                         perf?.mark('prisma-casl-extension-1')
 
 
@@ -88,19 +99,6 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
                     },
                 },
             }
-        })
-        return client.$extends({
-            name: "prisma-extension-casl",
-            ...caslExtension(getAbilityFactory),
-            client: {
-                $casl(extendFactory: (factory: AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) {
-                    return client.$extends({
-                        name: "prisma-extension-casl-customized",
-                        ...caslExtension(() => extendFactory(getAbilityFactory()))
-                    })
-                }
-            },
-
         })
     })
 }
