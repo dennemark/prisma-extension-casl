@@ -1,5 +1,5 @@
 import * as _prisma_client_runtime_library from '@prisma/client/runtime/library';
-import { PureAbility, AbilityTuple } from '@casl/ability';
+import { PureAbility, AbilityTuple, AbilityBuilder } from '@casl/ability';
 import { PrismaQuery } from '@casl/prisma';
 import { Prisma } from '@prisma/client';
 
@@ -34,9 +34,26 @@ declare function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abi
  *  - this is a function call to instantiate abilities on each prisma query to allow adding i.e. context or claims
  * @returns enriched prisma client
  */
-declare const useCaslAbilities: (getAbilities: () => PureAbility<AbilityTuple, PrismaQuery>) => (client: any) => {
+declare function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>): (client: any) => {
     $extends: {
-        extArgs: _prisma_client_runtime_library.InternalArgs<unknown, unknown, {}, unknown>;
+        extArgs: {
+            result: {};
+            model: {};
+            query: {};
+            client: {
+                $casl: () => (extendFactory: (factory: AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => _prisma_client_runtime_library.DynamicClientExtensionThis<Prisma.TypeMap<_prisma_client_runtime_library.InternalArgs & {
+                    result: {};
+                    model: {};
+                    query: {};
+                    client: {};
+                }, Prisma.PrismaClientOptions>, Prisma.TypeMapCb, {
+                    result: {};
+                    model: {};
+                    query: {};
+                    client: {};
+                }, {}>;
+            };
+        };
     };
 };
 

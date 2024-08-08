@@ -1,5 +1,12 @@
 
 
+## [0.5.0](https://github.com/dennemark/prisma-extension-casl/compare/0.4.3...0.5.0) (2024-08-08)
+
+
+### Features
+
+* :sparkles: add ability to alter abilities before using query ([aeb03fc](https://github.com/dennemark/prisma-extension-casl/commit/aeb03fce399c47c27c8505a55ccbc2e6346a8263))
+
 ## [0.4.3](https://github.com/dennemark/prisma-extension-casl/compare/0.4.2...0.4.3) (2024-08-08)
 
 
