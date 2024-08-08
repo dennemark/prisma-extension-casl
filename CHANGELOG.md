@@ -1,5 +1,12 @@
 
 
+## [0.5.1](https://github.com/dennemark/prisma-extension-casl/compare/0.5.0...0.5.1) (2024-08-08)
+
+
+### Bug Fixes
+
+* :bug: alternative way to alter abilities on prisma client ([a9e22d9](https://github.com/dennemark/prisma-extension-casl/commit/a9e22d91905d05de46809c7f2ecf67e6c54a1564))
+
 ## [0.5.0](https://github.com/dennemark/prisma-extension-casl/compare/0.4.3...0.5.0) (2024-08-08)
 
 

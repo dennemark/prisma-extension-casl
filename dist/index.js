@@ -1182,7 +1182,16 @@ function filterQueryResults(result, mask, abilities, model) {
 // src/index.ts
 function useCaslAbilities(getAbilityFactory) {
   return import_client2.Prisma.defineExtension((client) => {
-    const caslExtension = (getAbility) => ({
+    let getAbilities = () => getAbilityFactory();
+    return client.$extends({
+      name: "prisma-extension-casl",
+      client: {
+        $casl(extendFactory) {
+          const ctx = import_client2.Prisma.getExtensionContext(this);
+          getAbilities = () => extendFactory(getAbilityFactory());
+          return ctx;
+        }
+      },
       query: {
         $allModels: {
           async $allOperations({ args, query, model, operation, ...rest }) {
@@ -1204,7 +1213,8 @@ function useCaslAbilities(getAbilityFactory) {
               return query(args);
             }
             perf?.mark("prisma-casl-extension-0");
-            const abilities = getAbility().build();
+            const abilities = getAbilities().build();
+            getAbilities = () => getAbilityFactory();
             perf?.mark("prisma-casl-extension-1");
             const caslQuery = applyCaslToQuery(operation, args, abilities, model);
             perf?.mark("prisma-casl-extension-2");
@@ -1230,18 +1240,6 @@ function useCaslAbilities(getAbilityFactory) {
               return res;
             });
           }
-        }
-      }
-    });
-    return client.$extends({
-      name: "prisma-extension-casl",
-      ...caslExtension(getAbilityFactory),
-      client: {
-        $casl(extendFactory) {
-          return client.$extends({
-            name: "prisma-extension-casl-customized",
-            ...caslExtension(() => extendFactory(getAbilityFactory()))
-          });
         }
       }
     });
