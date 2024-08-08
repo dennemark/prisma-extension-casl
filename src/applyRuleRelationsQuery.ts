@@ -148,6 +148,14 @@ export function applyRuleRelationsQuery(args: any, abilities: PureAbility<Abilit
   }))
   const ast = rulesToAST(ability, action, model)
   const queryRelations = getRuleRelationsQuery(model, ast)
-  return mergeArgsAndRelationQuery(args, queryRelations)
+  if (!('select' in args) && !('include' in args)) {
+    args.include = {}
+  }
+  const result = mergeArgsAndRelationQuery(args, queryRelations)
+
+  if ('include' in result.args && Object.keys(result.args.include!).length === 0) {
+    delete result.args.include
+  }
+  return result
 }
 

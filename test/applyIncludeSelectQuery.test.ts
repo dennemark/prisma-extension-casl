@@ -103,6 +103,26 @@ describe('apply include select query', () => {
             }
         })
     })
+    it('applies select method on array even if null', () => {
+        const { can, cannot, build } = abilityBuilder()
+        can('read', 'Post', 'id', {
+            threadId: null
+        })
+        const args = applyIncludeSelectQuery(build(), {
+            select: {
+                posts: true
+            }
+        }, 'User')
+        expect(args).toEqual({
+            select: {
+                posts: {
+                    where: {
+                        AND: [{ OR: [{ threadId: null }] }]
+                    }
+                }
+            }
+        })
+    })
     it('applies select method on array and exposes permitted fields on specific query', () => {
         const { can, cannot, build } = abilityBuilder()
         can('read', 'Post', 'id', {

@@ -109,9 +109,7 @@ describe('apply casl to query', () => {
         const abilities = build()
         const result = applyCaslToQuery('findUnique', {}, abilities, 'User')
         expect(result.args).toEqual({})
-        expect(result.mask).toEqual({
-
-        })
+        expect(result.mask).toEqual({})
     })
 
     it('applies where condition', () => {

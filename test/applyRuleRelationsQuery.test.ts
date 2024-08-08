@@ -167,6 +167,38 @@ describe('apply rule relations query', () => {
     })
     expect(mask).toEqual({ thread: { creator: true } })
   })
-
+  it('adds missing select queries also for conditions with value being null', () => {
+    const { can, build } = abilityBuilder()
+    can('read', 'Topic', {
+      threads: {
+        some: {
+          posts: {
+            some: {
+              threadId: null,
+              text: {
+                contains: '-'
+              }
+            }
+          }
+        }
+      }
+    })
+    const { args, mask } = applyRuleRelationsQuery({}, build(), 'read', 'Topic')
+    expect(args).toEqual({
+      include: {
+        threads: {
+          select: {
+            posts: {
+              select: {
+                text: true,
+                threadId: true
+              }
+            }
+          }
+        }
+      }
+    })
+    expect(mask).toEqual({ threads: true })
+  })
 
 })
