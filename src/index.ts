@@ -32,7 +32,7 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
                     const ctx = Prisma.getExtensionContext(this)
                     // alter the getAblities function shortly
                     getAbilities = () => extendFactory(getAbilityFactory())
-                    return ctx
+                    return ctx as typeof client
                 }
             },
             query: {
