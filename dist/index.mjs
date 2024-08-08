@@ -1094,7 +1094,14 @@ function applyRuleRelationsQuery(args, abilities, action, model) {
   }));
   const ast = d4(ability, action, model);
   const queryRelations = getRuleRelationsQuery(model, ast);
-  return mergeArgsAndRelationQuery(args, queryRelations);
+  if (!("select" in args) && !("include" in args)) {
+    args.include = {};
+  }
+  const result = mergeArgsAndRelationQuery(args, queryRelations);
+  if ("include" in result.args && Object.keys(result.args.include).length === 0) {
+    delete result.args.include;
+  }
+  return result;
 }
 
 // src/applyCaslToQuery.ts

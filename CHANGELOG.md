@@ -1,5 +1,12 @@
 
 
+## [0.4.2](https://github.com/dennemark/prisma-extension-casl/compare/0.4.1...0.4.2) (2024-08-08)
+
+
+### Bug Fixes
+
+* :bug: apply rule relations even if no include or select exist ([055f7ed](https://github.com/dennemark/prisma-extension-casl/commit/055f7ed738f9dafa77dddef6b51bd1758ee9b0f8))
+
 ## [0.4.1](https://github.com/dennemark/prisma-extension-casl/compare/0.4.0...0.4.1) (2024-08-07)
 
 
