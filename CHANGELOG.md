@@ -1,5 +1,12 @@
 
 
+## [0.4.3](https://github.com/dennemark/prisma-extension-casl/compare/0.4.2...0.4.3) (2024-08-08)
+
+
+### Bug Fixes
+
+* :bug: consider nested or and and conditions in rule relations ([7f5187f](https://github.com/dennemark/prisma-extension-casl/commit/7f5187fa48a953960cb8cea5ac5018f5c11af715))
+
 ## [0.4.2](https://github.com/dennemark/prisma-extension-casl/compare/0.4.1...0.4.2) (2024-08-08)
 
 

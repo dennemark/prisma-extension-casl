@@ -997,35 +997,29 @@ var applyIncludeSelectQuery = (abilities, args, model) => {
 };
 
 // src/applyRuleRelationsQuery.ts
+function flattenAst(ast) {
+  if (["and", "or"].includes(ast.operator.toLowerCase())) {
+    return ast.value.flatMap((childAst) => flattenAst(childAst));
+  } else {
+    return [ast];
+  }
+}
 function getRuleRelationsQuery(model, ast) {
   const obj = {};
   if (ast) {
     if (typeof ast.value === "object") {
-      if (Array.isArray(ast.value)) {
-        ast.value.map((childAst) => {
-          const relation = relationFieldsByModel[model];
-          if (childAst.field) {
-            if (childAst.field in relation) {
-              obj[childAst.field] = {
-                select: getRuleRelationsQuery(relation[childAst.field].type, childAst.value)
-              };
-            } else {
-              obj[childAst.field] = true;
-            }
-          }
-        });
-      } else {
+      flattenAst(ast).map((childAst) => {
         const relation = relationFieldsByModel[model];
-        if (ast.field) {
-          if (ast.field in relation) {
-            obj[ast.field] = {
-              select: getRuleRelationsQuery(relation[ast.field].type, ast.value)
+        if (childAst.field) {
+          if (childAst.field in relation) {
+            obj[childAst.field] = {
+              select: getRuleRelationsQuery(relation[childAst.field].type, childAst.value)
             };
           } else {
-            obj[ast.field] = true;
+            obj[childAst.field] = true;
           }
         }
-      }
+      });
     } else {
       obj[ast.field] = true;
     }
