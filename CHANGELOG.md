@@ -1,5 +1,12 @@
 
 
+## [0.5.2](https://github.com/dennemark/prisma-extension-casl/compare/0.5.1...0.5.2) (2024-08-08)
+
+
+### Bug Fixes
+
+* :label: try fix type of casl client ([d39c4cc](https://github.com/dennemark/prisma-extension-casl/commit/d39c4cc3e02546975085c08615cb5759fd6c12fa))
+
 ## [0.5.1](https://github.com/dennemark/prisma-extension-casl/compare/0.5.0...0.5.1) (2024-08-08)
 
 
