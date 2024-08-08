@@ -4,35 +4,30 @@ import { createPrismaAbility, PrismaQuery } from '@casl/prisma';
 import { Prisma } from '@prisma/client';
 import { relationFieldsByModel } from './helpers';
 
+function flattenAst(ast: any) {
+  if (['and', 'or'].includes(ast.operator.toLowerCase())) {
+    return ast.value.flatMap((childAst: any) => flattenAst(childAst))
+  } else {
+    return [ast]
+  }
+}
+
 function getRuleRelationsQuery(model: string, ast: any) {
   const obj: Record<string, any> = {}
   if (ast) {
     if (typeof ast.value === 'object') {
-      if (Array.isArray(ast.value)) {
-        ast.value.map((childAst: any) => {
-          const relation = relationFieldsByModel[model]
-          if (childAst.field) {
-            if (childAst.field in relation) {
-              obj[childAst.field] = {
-                select: getRuleRelationsQuery(relation[childAst.field].type, childAst.value)
-              }
-            } else {
-              obj[childAst.field] = true
-            }
-          }
-        })
-      } else {
+      flattenAst(ast).map((childAst: any) => {
         const relation = relationFieldsByModel[model]
-        if (ast.field) {
-          if (ast.field in relation) {
-            obj[ast.field] = {
-              select: getRuleRelationsQuery(relation[ast.field].type, ast.value)
+        if (childAst.field) {
+          if (childAst.field in relation) {
+            obj[childAst.field] = {
+              select: getRuleRelationsQuery(relation[childAst.field].type, childAst.value)
             }
           } else {
-            obj[ast.field] = true
+            obj[childAst.field] = true
           }
         }
-      }
+      })
     } else {
       obj[ast.field] = true
     }

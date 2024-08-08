@@ -201,4 +201,43 @@ describe('apply rule relations query', () => {
     expect(mask).toEqual({ threads: true })
   })
 
+  it('adds missing select queries also for conditions with nested OR / AND condition', () => {
+    const { can, build } = abilityBuilder()
+    //@ts-ignore
+    can('read', 'Thread', {
+      posts: {
+        some: {
+          OR: [{
+            threadId: null,
+            AND: [
+              {
+                text: {
+                  contains: '-'
+                },
+                OR: [{
+                  text: '-'
+                }]
+              }
+            ]
+          },
+          {
+            threadId: null,
+          }]
+        }
+      }
+    })
+    const { args, mask } = applyRuleRelationsQuery({}, build(), 'read', 'Thread')
+    expect(args).toEqual({
+      include: {
+        posts: {
+          select: {
+            text: true,
+            threadId: true
+          }
+        }
+      }
+    })
+    expect(mask).toEqual({ posts: true })
+  })
+
 })
