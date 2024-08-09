@@ -1,12 +1,27 @@
 import { AbilityBuilder, AbilityTuple, PureAbility } from '@casl/ability'
 import { PrismaQuery } from '@casl/prisma'
 import { Prisma } from '@prisma/client'
+import { DynamicClientExtensionThis, DynamicModelExtensionThis, InternalArgs } from '@prisma/client/runtime/library'
 import { applyCaslToQuery } from './applyCaslToQuery'
 import { filterQueryResults } from './filterQueryResults'
 import { caslOperationDict, getFluentModel } from './helpers'
 
 export { applyCaslToQuery }
 
+type CaslExtensionType = DynamicClientExtensionThis<
+    Prisma.TypeMap<InternalArgs & {
+        result: {},
+        model: {},
+        query: {},
+        client: {}
+    }>,
+    Prisma.TypeMapCb,
+    {
+        result: {},
+        model: {},
+        query: {},
+        client: {}
+    }, {}>
 
 /**
  * enrich a prisma client to check for CASL abilities even in nested queries
@@ -32,12 +47,13 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
                     const ctx = Prisma.getExtensionContext(this)
                     // alter the getAblities function shortly
                     getAbilities = () => extendFactory(getAbilityFactory())
-                    return ctx as typeof client
+                    return ctx as CaslExtensionType
+
                 }
             },
             query: {
                 $allModels: {
-                    async $allOperations<T>({ args, query, model, operation, ...rest }: { args: any, query: any, model: any, operation: any }) {
+                    async $allOperations<T>({ args, query, model, operation, extendRules, ...rest }: { args: any, query: any, model: any, operation: any, extendRules?: (factory: AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>> }) {
                         const debug = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' && args.debugCasl
                         delete args.debugCasl
                         const perf = debug ? performance : undefined
@@ -61,7 +77,7 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
 
                         perf?.mark('prisma-casl-extension-0')
 
-                        const abilities = getAbilities().build()
+                        const abilities = extendRules ? extendRules(getAbilityFactory()).build() : getAbilityFactory().build()
                         // reset alteration of getAblities function
                         getAbilities = () => getAbilityFactory()
                         perf?.mark('prisma-casl-extension-1')
