@@ -48,12 +48,11 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
                     // alter the getAblities function shortly
                     getAbilities = () => extendFactory(getAbilityFactory())
                     return ctx as CaslExtensionType
-
                 }
             },
             query: {
                 $allModels: {
-                    async $allOperations<T>({ args, query, model, operation, extendRules, ...rest }: { args: any, query: any, model: any, operation: any, extendRules?: (factory: AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>> }) {
+                    async $allOperations<T>({ args, query, model, operation, ...rest }: { args: any, query: any, model: any, operation: any }) {
                         const debug = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' && args.debugCasl
                         delete args.debugCasl
                         const perf = debug ? performance : undefined
@@ -77,7 +76,7 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
 
                         perf?.mark('prisma-casl-extension-0')
 
-                        const abilities = extendRules ? extendRules(getAbilityFactory()).build() : getAbilityFactory().build()
+                        const abilities = getAbilities().build()
                         // reset alteration of getAblities function
                         getAbilities = () => getAbilityFactory()
                         perf?.mark('prisma-casl-extension-1')
