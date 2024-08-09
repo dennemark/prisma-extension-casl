@@ -15,10 +15,10 @@ importers:
         specifier: ^1.4.1
         version: 1.4.1(@casl/ability@6.7.1)(@prisma/client@5.17.0(prisma@5.17.0))
       '@prisma/client':
-        specifier: ^5.17.0
+        specifier: ^5.14.0
         version: 5.17.0(prisma@5.17.0)
       '@prisma/generator-helper':
-        specifier: ^5.17.0
+        specifier: ^5.14.0
         version: 5.17.0
       '@release-it/conventional-changelog':
         specifier: ^8.0.1
@@ -36,7 +36,7 @@ importers:
         specifier: ^29.7.0
         version: 29.7.0(@types/node@22.1.0)(ts-node@10.9.2(@types/node@22.1.0)(typescript@5.5.4))
       prisma:
-        specifier: ^5.17.0
+        specifier: ^5.14.0
         version: 5.17.0
       release-it:
         specifier: ^17.6.0

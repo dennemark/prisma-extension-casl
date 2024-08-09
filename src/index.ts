@@ -8,20 +8,6 @@ import { caslOperationDict, getFluentModel } from './helpers'
 
 export { applyCaslToQuery }
 
-type CaslExtensionType = DynamicClientExtensionThis<
-    Prisma.TypeMap<InternalArgs & {
-        result: {},
-        model: {},
-        query: {},
-        client: {}
-    }>,
-    Prisma.TypeMapCb,
-    {
-        result: {},
-        model: {},
-        query: {},
-        client: {}
-    }, {}>
 
 /**
  * enrich a prisma client to check for CASL abilities even in nested queries
@@ -47,7 +33,7 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
                     const ctx = Prisma.getExtensionContext(this)
                     // alter the getAblities function shortly
                     getAbilities = () => extendFactory(getAbilityFactory())
-                    return ctx as CaslExtensionType
+                    return ctx as typeof client
                 }
             },
             query: {
