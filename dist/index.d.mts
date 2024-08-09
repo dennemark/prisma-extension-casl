@@ -1,7 +1,8 @@
+import * as _prisma_client_runtime_library from '@prisma/client/runtime/library';
+import { DynamicClientExtensionThis, InternalArgs } from '@prisma/client/runtime/library';
 import { PureAbility, AbilityTuple, AbilityBuilder } from '@casl/ability';
 import { PrismaQuery } from '@casl/prisma';
 import { Prisma } from '@prisma/client';
-import { DynamicClientExtensionThis, InternalArgs } from '@prisma/client/runtime/library';
 
 type PrismaCaslOperation = 'create' | 'createMany' | 'createManyAndReturn' | 'upsert' | 'findFirst' | 'findFirstOrThrow' | 'findMany' | 'findUnique' | 'findUniqueOrThrow' | 'aggregate' | 'count' | 'groupBy' | 'update' | 'updateMany' | 'delete' | 'deleteMany';
 
@@ -22,17 +23,6 @@ declare function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abi
     mask: undefined;
 };
 
-type CaslExtensionType = DynamicClientExtensionThis<Prisma.TypeMap<InternalArgs & {
-    result: {};
-    model: {};
-    query: {};
-    client: {};
-}>, Prisma.TypeMapCb, {
-    result: {};
-    model: {};
-    query: {};
-    client: {};
-}, {}>;
 /**
  * enrich a prisma client to check for CASL abilities even in nested queries
  *
@@ -52,7 +42,7 @@ declare function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAb
             model: {};
             query: {};
             client: {
-                $casl: () => (extendFactory: (factory: AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => CaslExtensionType;
+                $casl: () => (extendFactory: (factory: AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => DynamicClientExtensionThis<Prisma.TypeMap<InternalArgs & _prisma_client_runtime_library.DefaultArgs, Prisma.PrismaClientOptions>, Prisma.TypeMapCb, _prisma_client_runtime_library.DefaultArgs, {}>;
             };
         };
     };
