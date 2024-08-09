@@ -1,5 +1,13 @@
 
 
+## [0.5.3](https://github.com/dennemark/prisma-extension-casl/compare/0.5.2...0.5.3) (2024-08-09)
+
+
+### Bug Fixes
+
+* :bug: correct get abilities function ([a3469fd](https://github.com/dennemark/prisma-extension-casl/commit/a3469fd9f42d636c1ddf57d1ac6c1fe57b925f2e))
+* :label: reproduce type of client for $casl output ([98f66ba](https://github.com/dennemark/prisma-extension-casl/commit/98f66ba42e1ee7157d1cf33bd62a0356debae661))
+
 ## [0.5.2](https://github.com/dennemark/prisma-extension-casl/compare/0.5.1...0.5.2) (2024-08-08)
 
 
