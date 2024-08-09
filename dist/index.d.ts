@@ -42,7 +42,7 @@ declare function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAb
             model: {};
             query: {};
             client: {
-                $casl: () => (extendFactory: (factory: AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => DynamicClientExtensionThis<Prisma.TypeMap<InternalArgs & _prisma_client_runtime_library.DefaultArgs, Prisma.PrismaClientOptions>, Prisma.TypeMapCb, _prisma_client_runtime_library.DefaultArgs, {}>;
+                $casl: () => (extendFactory: (factory: AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => DynamicClientExtensionThis<Prisma.TypeMap<InternalArgs & _prisma_client_runtime_library.DefaultArgs>, Prisma.TypeMapCb, _prisma_client_runtime_library.DefaultArgs>;
             };
         };
     };

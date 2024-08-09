@@ -658,7 +658,7 @@ function d4(r2, e4, o3) {
   return w(i4.$and);
 }
 
-// node_modules/.pnpm/@casl+prisma@1.4.1_@casl+ability@6.7.1_@prisma+client@5.17.0_prisma@5.17.0_/node_modules/@casl/prisma/dist/es6m/runtime.mjs
+// node_modules/.pnpm/@casl+prisma@1.4.1_@casl+ability@6.7.1_@prisma+client@5.14.0_prisma@5.14.0_/node_modules/@casl/prisma/dist/es6m/runtime.mjs
 var v4 = class extends Error {
   static invalidArgument(t3, e4, r2) {
     const n3 = `${typeof e4}(${JSON.stringify(e4, null, 2)})`;
@@ -801,7 +801,7 @@ function createAbilityFactory() {
   return createAbility;
 }
 
-// node_modules/.pnpm/@casl+prisma@1.4.1_@casl+ability@6.7.1_@prisma+client@5.17.0_prisma@5.17.0_/node_modules/@casl/prisma/dist/es6m/index.mjs
+// node_modules/.pnpm/@casl+prisma@1.4.1_@casl+ability@6.7.1_@prisma+client@5.14.0_prisma@5.14.0_/node_modules/@casl/prisma/dist/es6m/index.mjs
 var e3 = createAbilityFactory();
 var m5 = st2();
 

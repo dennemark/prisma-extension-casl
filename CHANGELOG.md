@@ -1,5 +1,12 @@
 
 
+## [0.5.5](https://github.com/dennemark/prisma-extension-casl/compare/0.5.4...0.5.5) (2024-08-09)
+
+
+### Bug Fixes
+
+* :bug: fix version of prisma ([8c00e9d](https://github.com/dennemark/prisma-extension-casl/commit/8c00e9df0826832c5659944e3b93814d1d30479b))
+
 ## [0.5.4](https://github.com/dennemark/prisma-extension-casl/compare/0.5.3...0.5.4) (2024-08-09)
 
 
