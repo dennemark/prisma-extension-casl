@@ -1,13 +1,12 @@
 import { AbilityBuilder, AbilityTuple, PureAbility } from '@casl/ability'
 import { PrismaQuery } from '@casl/prisma'
 import { Prisma } from '@prisma/client'
-import { DynamicClientExtensionThis, DynamicModelExtensionThis, InternalArgs } from '@prisma/client/runtime/library'
+import { DynamicClientExtensionThis, InternalArgs } from '@prisma/client/runtime/library'
 import { applyCaslToQuery } from './applyCaslToQuery'
 import { filterQueryResults } from './filterQueryResults'
 import { caslOperationDict, getFluentModel } from './helpers'
 
 export { applyCaslToQuery }
-
 
 /**
  * enrich a prisma client to check for CASL abilities even in nested queries
