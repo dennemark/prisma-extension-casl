@@ -26,7 +26,9 @@ export function applyDataQuery(
     action: string,
     model: string
 ) {
-    const permittedFields = getPermittedFields(abilities, action, model)
+    // on creation we either have { data/create: input } or { ...input } and we check if fields are permitted.
+    const obj = action === 'update' ? undefined : 'data' in args ? args.data : 'create' in args ? args.create : args
+    const permittedFields = getPermittedFields(abilities, action, model, obj)
 
     const accessibleQuery = accessibleBy(abilities, action)[model as Prisma.ModelName]
     const mutationArgs: any[] = []
@@ -54,7 +56,6 @@ export function applyDataQuery(
             if (mutationArgs.length === 0) {
                 mutationArgs.push(argsEntry)
             }
-
         })
 
     /** now we go trough all mutation args and throw error if they have not permitted fields or continue in nested mutations */
@@ -71,6 +72,7 @@ export function applyDataQuery(
                 return field
             }
         })
+
         queriedFields.forEach((field) => {
             const relationModel = relationFieldsByModel[model][field]
             // omit relation models also through i.e. stat

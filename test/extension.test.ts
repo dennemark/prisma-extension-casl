@@ -837,6 +837,88 @@ describe('prisma extension casl', () => {
             })
             expect(result).toEqual({ email: 'new', posts: [{ id: 0, text: '1' }, { id: 3, text: '' }] })
         })
+        it('can do nested updates with conditions', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+
+                can('read', 'User', 'email')
+                can('update', 'User')
+                can('update', 'Post', {
+                    id: 0
+                })
+                can('read', 'Post')
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            const result = await client.user.update({
+                data: {
+                    email: 'new',
+                    posts: {
+                        update: {
+                            data: {
+                                text: '1'
+                            },
+                            where: {
+                                id: 0
+                            }
+                        }
+                    }
+                },
+                where: {
+                    id: 0
+                },
+                include: {
+                    posts: {
+                        select: { id: true, text: true }
+                    }
+                }
+            })
+            expect(result).toEqual({ email: 'new', posts: [{ id: 0, text: '1' }, { id: 3, text: '' }] })
+        })
+        it('cannot do nested updates with failing conditions', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+
+                can('read', 'User', 'email')
+                can('update', 'User')
+                can('update', 'Post', {
+                    id: 1
+                })
+                can('read', 'Post')
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            await expect(client.user.update({
+                data: {
+                    email: 'new',
+                    posts: {
+                        update: {
+                            data: {
+                                text: '1'
+                            },
+                            where: {
+                                id: 0
+                            }
+                        }
+                    }
+                },
+                where: {
+                    id: 0
+                },
+                include: {
+                    posts: {
+                        select: { id: true, text: true }
+                    }
+                }
+            })).rejects.toThrow()
+
+        })
         it('cannot do nested updates if no ability exists', async () => {
             function builderFactory() {
                 const builder = abilityBuilder()
@@ -1059,6 +1141,94 @@ describe('prisma extension casl', () => {
             })
             expect(await seedClient.user.count()).toBe(1)
         })
+    })
+    describe('create', () => {
+        it('cant do nested create with conditions', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+
+                can('read', 'User', 'email')
+                can('create', 'User')
+                can('update', 'Thread')
+                can('create', 'Post', {
+                    text: '1'
+                })
+                can('read', 'Post')
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            const result = await client.user.create({
+                data: {
+                    email: 'new',
+
+                    posts: {
+                        create: {
+                            threadId: 0,
+                            text: '1'
+                        }
+                    }
+                }
+            })
+            expect(result).toEqual({ email: 'new' })
+        })
+        it('cannot do nested create with conditions', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+
+                can('read', 'User', 'email')
+                can('create', 'User')
+                can('update', 'Thread')
+                can('create', 'Post', {
+                    author: {
+                        is: {
+                            email: 'new'
+                        }
+                    }
+                })
+                can('read', 'Post')
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            await expect(client.user.create({
+                data: {
+                    email: 'new',
+
+                    posts: {
+                        create: {
+                            threadId: 0,
+                            text: '1'
+                        }
+                    }
+                }
+            })).rejects.toThrow()
+        })
+        it('cannot do create with failing conditions', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+
+                can('read', 'User', 'email')
+                can('create', 'User', {
+                    email: 'old'
+                })
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            await expect(client.user.create({
+                data: {
+                    email: 'new',
+                }
+            })).rejects.toThrow()
+        })
+
     })
     describe('fluent api queries', () => {
         it('can do chained queries if abilities exist', async () => {

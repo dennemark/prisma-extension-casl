@@ -19,7 +19,7 @@ describe('apply data query', () => {
         expect(() => applyDataQuery(build(), { data: { authorId: 0 }, where: { id: 0 } }, 'update', 'Post')).toThrow(`It's not allowed to run "update" on "User"`)
     })
         ;['update', 'create'].map((mutation) => {
-            describe('mutation', () => {
+            describe(mutation, () => {
 
                 it('adds where clause to query', () => {
                     const { can, build } = abilityBuilder()
@@ -96,6 +96,7 @@ describe('apply data query', () => {
             can('update', 'Post', {
                 id: 1
             })
+
             const result = applyDataQuery(build(), { data: { id: 1, posts: { connect: [{ id: 0 }] } }, where: { id: 0 } }, 'update', 'User')
             expect(result).toEqual({ data: { id: 1, posts: { connect: [{ id: 0, AND: [{ OR: [{ id: 1 }] }] }] } }, where: { id: 0, AND: [{ OR: [{ id: 0 }] }] } })
         })
@@ -116,7 +117,7 @@ describe('apply data query', () => {
                 id: 0
             })
             can('create', 'Post', {
-                id: 1
+                text: ''
             })
             can('update', 'Post', {
                 id: 2
@@ -146,9 +147,7 @@ describe('apply data query', () => {
             can('update', 'User', {
                 id: 0
             })
-            can('create', 'Post', {
-                id: 1
-            })
+            can('create', 'Post')
             can('update', 'Post', {
                 id: 2
             })
@@ -295,6 +294,7 @@ describe('apply data query', () => {
             }, 'create', 'User'))
                 .toThrow(`It's not allowed to "create" "text" on "Post"`)
         })
+
     })
 })
 

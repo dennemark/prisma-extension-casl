@@ -2,7 +2,7 @@ import { AbilityTuple, PureAbility, Subject, subject } from '@casl/ability'
 import { permittedFieldsOf } from '@casl/ability/extra'
 import { prismaQuery, PrismaQuery } from '@casl/prisma'
 import { Prisma } from '@prisma/client'
-import { DMMF } from '@prisma/generator-helper'
+import type { DMMF } from '@prisma/generator-helper'
 
 type DefaultCaslAction = "create" | "read" | "update" | "delete"
 
