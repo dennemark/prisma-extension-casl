@@ -917,7 +917,8 @@ function getFluentModel(startModel, data) {
 
 // src/applyDataQuery.ts
 function applyDataQuery(abilities, args, action, model) {
-  const permittedFields = getPermittedFields(abilities, action, model);
+  const obj = action === "update" ? void 0 : "data" in args ? args.data : "create" in args ? args.create : args;
+  const permittedFields = getPermittedFields(abilities, action, model, obj);
   const accessibleQuery = m5(abilities, action)[model];
   const mutationArgs = [];
   (Array.isArray(args) ? args : [args]).map((argsEntry) => {

@@ -1,5 +1,12 @@
 
 
+## [0.5.6](https://github.com/dennemark/prisma-extension-casl/compare/0.5.5...0.5.6) (2024-08-14)
+
+
+### Bug Fixes
+
+* :bug: only allow creation if object fits condition ([7a6bd77](https://github.com/dennemark/prisma-extension-casl/commit/7a6bd7747e053420045a99943972715bb5d11514))
+
 ## [0.5.5](https://github.com/dennemark/prisma-extension-casl/compare/0.5.4...0.5.5) (2024-08-09)
 
 
