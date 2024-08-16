@@ -13,6 +13,7 @@
 - Rule conditions are automatically applied via `accessibleBy` and if `include` or `select` are used, this will even be applied to the nested relations.
 - Mutating queries will throw errors in a similar format as CASL. `It's not allowed to "update" "email" on "User"`.
 - On nested `connect`, `disconnect`, `upsert` or `connectOrCreate` mutation queries the client assumes an `update` action for insertion or connection.
+- `update` and `create` are wrapped into a transaction, since `create` abilities will be checked on result of mutation and if it was not allowed the transaction will revert the creation. This limits client transactions to interactive transactions only. Sequential transactions are not supported.
 
 ### Examples
 
@@ -104,6 +105,8 @@ To debug queries add `debugCasl: true` to the query like this `caslClient.post.f
 
 ### Limitations and Constraints
 
+#### Sequential transactions are not supported for `update` or `create` actions
+
 #### Avoid columns with prisma naming
 
 When using prisma probably no one will use columns named `data`, `create`, `update`, `select` or `where`. However, if this should be the case, then this library most probably won't work.
@@ -146,12 +149,12 @@ console.log(result) // [{ email: "-" }]
 
 Here are some performance metrics for the above query for the small test sqlite db:
 
-- plain prisma query: **0.533909**
-- casl prisma query: **3.269526**
-  - create abilities: **0.446727**
-  - enrich query with casl: **1.080605**
-  - prisma query: **1.175109**
-  - filtering query results: **0.567084**
+- plain prisma query: **0.4236**
+- casl prisma query: **3.09900**
+  - create abilities: **0.21132**
+  - enrich query with casl: **0.09345**
+  - prisma query: **2.71646**
+  - filtering query results: **0.07777**
 
 #### Nested fields and wildcards are not supported / tested
 

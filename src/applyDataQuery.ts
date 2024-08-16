@@ -2,6 +2,7 @@ import { AbilityTuple, PureAbility } from '@casl/ability'
 import { accessibleBy, PrismaQuery } from '@casl/prisma'
 import { Prisma } from '@prisma/client'
 import { applyAccessibleQuery } from './applyAccessibleQuery'
+import { CreationTree } from './convertCreationTreeToSelect'
 import { caslNestedOperationDict, getPermittedFields, propertyFieldsByModel, relationFieldsByModel } from './helpers'
 
 /**
@@ -24,11 +25,11 @@ export function applyDataQuery(
     abilities: PureAbility<AbilityTuple, PrismaQuery>,
     args: any,
     action: string,
-    model: string
+    model: string,
+    creationTree: CreationTree = { type: 'create', children: {} }
 ) {
-    // on creation we either have { data/create: input } or { ...input } and we check if fields are permitted.
-    const obj = action === 'update' ? undefined : 'data' in args ? args.data : 'create' in args ? args.create : args
-    const permittedFields = getPermittedFields(abilities, action, model, obj)
+    creationTree.type = action
+    const permittedFields = getPermittedFields(abilities, action, model)
 
     const accessibleQuery = accessibleBy(abilities, action)[model as Prisma.ModelName]
     const mutationArgs: any[] = []
@@ -86,7 +87,9 @@ export function applyDataQuery(
                         const mutationAction = caslNestedOperationDict[nestedAction]
                         const isConnection = nestedAction === 'connect' || nestedAction === 'disconnect'
 
-                        mutation[field][nestedAction] = applyDataQuery(abilities, nestedArgs, mutationAction, relationModel.type)
+                        creationTree.children[field] = { type: mutationAction, children: {} }
+                        const dataQuery = applyDataQuery(abilities, nestedArgs, mutationAction, relationModel.type, creationTree.children[field])
+                        mutation[field][nestedAction] = dataQuery.args
                         // connection works like a where query, so we apply it
                         if (isConnection) {
                             const accessibleQuery = accessibleBy(abilities, mutationAction)[relationModel.type as Prisma.ModelName]
@@ -105,5 +108,5 @@ export function applyDataQuery(
         })
 
     })
-    return args
+    return { args, creationTree }
 }

@@ -2,6 +2,7 @@ import { AbilityTuple, PureAbility, Subject, ɵvalue } from '@casl/ability';
 import { rulesToAST } from '@casl/ability/extra';
 import { createPrismaAbility, PrismaQuery } from '@casl/prisma';
 import { Prisma } from '@prisma/client';
+import { convertCreationTreeToSelect, CreationTree } from './convertCreationTreeToSelect';
 import { relationFieldsByModel } from './helpers';
 
 function flattenAst(ast: any) {
@@ -12,16 +13,17 @@ function flattenAst(ast: any) {
   }
 }
 
-function getRuleRelationsQuery(model: string, ast: any) {
-  const obj: Record<string, any> = {}
+function getRuleRelationsQuery(model: string, ast: any, dataRelationQuery: any = {}) {
+  const obj: Record<string, any> = dataRelationQuery
   if (ast) {
     if (typeof ast.value === 'object') {
       flattenAst(ast).map((childAst: any) => {
         const relation = relationFieldsByModel[model]
         if (childAst.field) {
           if (childAst.field in relation) {
+            const dataInclude = childAst.field in obj ? obj[childAst.field] : {}
             obj[childAst.field] = {
-              select: getRuleRelationsQuery(relation[childAst.field].type, childAst.value)
+              select: getRuleRelationsQuery(relation[childAst.field].type, childAst.value, dataInclude === true ? {} : dataInclude.select)
             }
           } else {
             obj[childAst.field] = true
@@ -52,9 +54,12 @@ function mergeArgsAndRelationQuery(args: any, relationQuery: any) {
       if (args[method]) {
         found = true
         for (const key in relationQuery) {
-          // relations on relationQuery have a select
+          // relations on relationQuery have a select, since it can also have normal fields
           if (!(key in args[method])) {
-            if (relationQuery[key].select || method === 'select') {
+            if (relationQuery[key].select) {
+              args[method][key] = Object.keys(relationQuery[key].select).length === 0 ? true : relationQuery[key]
+              mask[key] = true
+            } else if (method === 'select') {
               args[method][key] = relationQuery[key]
               mask[key] = true
             }
@@ -129,7 +134,9 @@ function mergeArgsAndRelationQuery(args: any, relationQuery: any) {
  * @param model prisma model
  * @returns `{ args: mergedQuery, mask: description of fields that should be removed from result }`
  */
-export function applyRuleRelationsQuery(args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, action: string, model: Prisma.ModelName) {
+export function applyRuleRelationsQuery(args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, action: string, model: Prisma.ModelName, creationTree?: CreationTree) {
+
+
 
   // rulesToAST won't return conditions
   // if a rule is inverted and if a can rule exists without condition
@@ -142,7 +149,11 @@ export function applyRuleRelationsQuery(args: any, abilities: PureAbility<Abilit
     }
   }))
   const ast = rulesToAST(ability, action, model)
-  const queryRelations = getRuleRelationsQuery(model, ast)
+  const creationSelectQuery = creationTree ? convertCreationTreeToSelect(creationTree) ?? {} : {}
+
+  const queryRelations = getRuleRelationsQuery(model, ast, creationSelectQuery === true ? {} : creationSelectQuery)
+
+
   if (!('select' in args) && !('include' in args)) {
     args.include = {}
   }
@@ -151,6 +162,8 @@ export function applyRuleRelationsQuery(args: any, abilities: PureAbility<Abilit
   if ('include' in result.args && Object.keys(result.args.include!).length === 0) {
     delete result.args.include
   }
-  return result
+  return { ...result, creationTree }
 }
+
+
 

@@ -21,8 +21,11 @@ export function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abil
 
     accessibleBy(abilities, operationAbility.action)[model]
 
+    let creationTree = undefined
     if (operationAbility.dataQuery && args.data) {
-        args.data = applyDataQuery(abilities, args.data, operationAbility.action, model)
+        const { args: dataArgs, creationTree: dataCreationTree } = applyDataQuery(abilities, args.data, operationAbility.action, model)
+        creationTree = dataCreationTree
+        args.data = dataArgs
     }
 
 
@@ -39,8 +42,8 @@ export function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abil
     }
 
     const result = operationAbility.includeSelectQuery
-        ? applyRuleRelationsQuery(args, abilities, operationAbility.action, model)
-        : { args, mask: undefined }
+        ? applyRuleRelationsQuery(args, abilities, operationAbility.action, model, creationTree)
+        : { args, mask: undefined, creationTree }
 
     return result
 }

@@ -34,9 +34,9 @@ export const caslOperationDict: Record<
     }
 > = {
     create: { action: 'create', dataQuery: true, whereQuery: false, includeSelectQuery: true },
-    createMany: { action: 'create', dataQuery: true, whereQuery: false, includeSelectQuery: false },
+    createMany: { action: 'create', dataQuery: true, whereQuery: false, includeSelectQuery: true },
     createManyAndReturn: { action: 'create', dataQuery: true, whereQuery: false, includeSelectQuery: true },
-    upsert: { action: 'create', dataQuery: true, whereQuery: true, includeSelectQuery: false },
+    upsert: { action: 'create', dataQuery: true, whereQuery: true, includeSelectQuery: true },
     findFirst: { action: 'read', dataQuery: false, whereQuery: true, includeSelectQuery: true },
     findFirstOrThrow: { action: 'read', dataQuery: false, whereQuery: true, includeSelectQuery: true },
     findMany: { action: 'read', dataQuery: false, whereQuery: true, includeSelectQuery: true },
@@ -115,9 +115,7 @@ export function getPermittedFields(
     obj?: any
 ) {
     const modelFields = Object.keys(propertyFieldsByModel[model])
-    const subjectFields = [...modelFields, ...Object.keys(relationFieldsByModel[model])]
-
-    const permittedFields = permittedFieldsOf(abilities, action, obj ? subject(model, pick(obj, subjectFields)) : model, {
+    const permittedFields = permittedFieldsOf(abilities, action, obj ? getSubject(model, obj) : model, {
         fieldsFrom: rule => {
             return rule.fields || modelFields;
         }
@@ -126,7 +124,17 @@ export function getPermittedFields(
     return permittedFields
 }
 
-
+/**
+ * helper function to get subject for a model
+ * @param model prisma model
+ * @param obj 
+ * @returns 
+ */
+export function getSubject(model: string, obj: any) {
+    const modelFields = Object.keys(propertyFieldsByModel[model])
+    const subjectFields = [...modelFields, ...Object.keys(relationFieldsByModel[model])]
+    return subject(model, pick(obj, subjectFields))
+}
 /**
  * if fluent api is used `client.user.findUnique().post()`
  * we need to get its model

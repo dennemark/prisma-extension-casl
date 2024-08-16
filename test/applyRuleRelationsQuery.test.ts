@@ -3,7 +3,6 @@ import { applyRuleRelationsQuery } from '../src/applyRuleRelationsQuery'
 import { abilityBuilder } from './abilities'
 
 
-
 describe('apply rule relations query', () => {
   it('adds missing select queries for list relation', () => {
     const { can, build } = abilityBuilder()

@@ -1,9 +1,13 @@
 import { AbilityTuple, PureAbility } from "@casl/ability";
 import { accessibleBy, PrismaQuery } from "@casl/prisma";
 import { Prisma } from "@prisma/client";
-import { getPermittedFields, relationFieldsByModel } from "./helpers";
+import { CreationTree } from "./convertCreationTreeToSelect";
+import { getPermittedFields, getSubject, relationFieldsByModel } from "./helpers";
 
-export function filterQueryResults(result: any, mask: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: string) {
+export function filterQueryResults(result: any, mask: any, creationTree: CreationTree | undefined, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: string) {
+    if (typeof result === 'number') {
+        return result
+    }
     const prismaModel = model in relationFieldsByModel ? model as Prisma.ModelName : undefined
     if (!prismaModel) {
         throw new Error(`Model ${model} does not exist on Prisma Client`)
@@ -11,16 +15,24 @@ export function filterQueryResults(result: any, mask: any, abilities: PureAbilit
 
     const filterPermittedFields = (entry: any) => {
         if (!entry) { return null }
+        if (creationTree?.type === 'create') {
+            if (!abilities.can('create', getSubject(model, entry))) {
+                throw new Error(`It's not allowed to create on ${model}`)
+            }
+        }
+
         const permittedFields = getPermittedFields(abilities, 'read', model, entry)
         let hasKeys = false
         Object.keys(entry).forEach((field) => {
             const relationField = relationFieldsByModel[model][field]
-
+            if (relationField) {
+                const nestedCreationTree = creationTree && field in creationTree.children ? creationTree.children[field] : undefined
+                entry[field] = filterQueryResults(entry[field], mask?.[field], nestedCreationTree, abilities, relationField.type)
+            }
             if ((!permittedFields.includes(field) && !relationField) || mask?.[field] === true) {
                 delete entry[field]
             } else if (relationField) {
                 hasKeys = true
-                entry[field] = filterQueryResults(entry[field], mask?.[field], abilities, relationField.type)
                 if (entry[field] === null) {
                     delete entry[field]
                 }

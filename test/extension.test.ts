@@ -34,6 +34,251 @@ describe('prisma extension casl', () => {
             await expect(client.$casl((a) => a).user.findMany()).rejects.toThrow()
         })
     })
+    describe('transaction', () => {
+        it('reverts create within an existing batch transaction', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+
+                can('read', 'User', 'email')
+                can('create', 'User', {
+                    email: 'third-mail'
+                })
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            await expect(client.user.create({
+                data: {
+                    email: 'first-mail',
+                }
+            })).rejects.toThrow()
+            await expect(
+                client.$transaction([
+                    client.user.create({
+                        data: {
+                            email: 'third-mail'
+                        }
+                    }),
+                    client.user.create({
+                        data: {
+                            email: 'second-mail',
+                        }
+                    }),
+                ])
+            ).rejects.toThrow()
+            const firstResult = await client.user.findFirst({
+                where: {
+                    email: 'first-mail'
+                }
+            })
+            const secondResult = await client.user.findFirst({
+                where: {
+                    email: 'second-mail'
+                }
+            })
+            const thirdResult = await client.user.findFirst({
+                where: {
+                    email: 'third-mail'
+                }
+            })
+            expect(firstResult).toBeNull()
+            expect(secondResult).toBeNull()
+            expect(thirdResult).toBeNull()
+        })
+        it('read and delete work with an existing batch transaction', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+
+                can('read', 'User')
+                can('create', 'User')
+                can('delete', 'User')
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            expect(await client.user.count()).toEqual(2)
+            expect(
+                await client.$transaction([
+                    client.user.delete({
+                        where: {
+                            id: 0
+                        }
+                    }),
+                    client.user.findUnique({ where: { id: 0 } }),
+                ])
+            ).toEqual([{ email: '0', id: 0 }, null])
+            expect(await client.user.count()).toEqual(1)
+
+        })
+        it('reverts read and delete if they error with an existing batch transaction', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+
+                can('read', 'User')
+                can('create', 'User')
+                can('delete', 'User')
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            expect(await client.user.count()).toEqual(2)
+            await expect(
+                client.$transaction([
+                    client.user.delete({
+                        where: {
+                            id: 0
+                        }
+                    }),
+                    //@ts-ignore
+                    client.user.findUnique({ where: { email: 0 } }),
+                ])
+            ).rejects.toThrow()
+            expect(await client.user.count()).toEqual(2)
+
+        })
+        it('creates within an existing batch transaction fails', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+
+                can('read', 'User', 'email')
+                can('create', 'User')
+                cannot('create', 'User', {
+                    email: 'first-mail'
+                })
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            await expect(client.user.create({
+                data: {
+                    email: 'first-mail',
+                }
+            })).rejects.toThrow()
+            const firstResult = await client.user.findFirst({
+                where: {
+                    email: 'first-mail'
+                }
+            })
+            expect(firstResult).toBeNull()
+            await expect(
+                client.$transaction([
+                    client.user.create({
+                        data: {
+                            email: 'second-mail',
+                        }
+                    }),
+                    client.user.create({
+                        data: {
+                            email: 'third-mail'
+                        }
+                    })
+                ])
+            ).rejects.toThrow('Sequential transactions are not supported in prisma-extension-casl.')
+        })
+        it('reverts create within an existing interactive transaction', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+
+                can('read', 'User', 'email')
+                can('create', 'User', {
+                    email: 'third-mail'
+                })
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            await expect(client.user.create({
+                data: {
+                    email: 'first-mail',
+                }
+            })).rejects.toThrow()
+            await expect(
+                client.$transaction(async (tx) => {
+                    await tx.user.create({
+                        data: {
+                            email: 'third-mail'
+                        }
+                    }),
+                        await tx.user.create({
+                            data: {
+                                email: 'second-mail',
+                            }
+                        })
+                })
+            ).rejects.toThrow()
+            const firstResult = await client.user.findFirst({
+                where: {
+                    email: 'first-mail'
+                }
+            })
+            const secondResult = await client.user.findFirst({
+                where: {
+                    email: 'second-mail'
+                }
+            })
+            const thirdResult = await client.user.findFirst({
+                where: {
+                    email: 'third-mail'
+                }
+            })
+            expect(firstResult).toBeNull()
+            expect(secondResult).toBeNull()
+            expect(thirdResult).toBeNull()
+        })
+        it('creates within an existing interactive transaction', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+
+                can('read', 'User', 'email')
+                can('create', 'User')
+                cannot('create', 'User', {
+                    email: 'first-mail'
+                })
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            await expect(client.user.create({
+                data: {
+                    email: 'first-mail',
+                }
+            })).rejects.toThrow()
+            const firstResult = await client.user.findFirst({
+                where: {
+                    email: 'first-mail'
+                }
+            })
+            expect(firstResult).toBeNull()
+            expect(await
+                client.$transaction(async (tx) => {
+                    return [await tx.user.create({
+                        data: {
+                            email: 'second-mail',
+                        }
+                    }),
+                    await tx.user.create({
+                        data: {
+                            email: 'third-mail'
+                        }
+                    })]
+                })
+            ).toEqual([{ "email": "second-mail" }, { "email": "third-mail" }])
+
+
+        })
+    })
     describe('findUnique', () => {
 
 
@@ -638,7 +883,21 @@ describe('prisma extension casl', () => {
             const client = seedClient.$extends(
                 useCaslAbilities(builderFactory)
             )
-            const result = await client.user.findMany()
+            const t1 = performance.now()
+            await seedClient.user.findMany({
+                where: {
+                    posts: {
+                        some: {
+                            authorId: 0
+                        }
+                    }
+                }
+            })
+            console.log("plain prisma performance", performance.now() - t1)
+            const result = await client.user.findMany({
+                //@ts-ignore
+                debugCasl: true
+            })
             expect(result).toEqual([{ email: "0" }])
         })
     })
@@ -1185,7 +1444,7 @@ describe('prisma extension casl', () => {
                 can('create', 'Post', {
                     author: {
                         is: {
-                            email: 'new'
+                            email: 'old'
                         }
                     }
                 })
