@@ -4,7 +4,8 @@ import { PrismaQuery } from '@casl/prisma';
 import { Prisma } from '@prisma/client';
 
 type CreationTree = {
-    type: string;
+    action: string;
+    model: Prisma.ModelName;
     children: Record<string, CreationTree>;
 };
 

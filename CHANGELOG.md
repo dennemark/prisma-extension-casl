@@ -1,5 +1,12 @@
 
 
+## [0.5.9](https://github.com/dennemark/prisma-extension-casl/compare/0.5.8...0.5.9) (2024-08-16)
+
+
+### Bug Fixes
+
+* :bug: properly include create relations ([97136c1](https://github.com/dennemark/prisma-extension-casl/commit/97136c1f0226750f2a58bee1b72596051ba2033c))
+
 ## [0.5.8](https://github.com/dennemark/prisma-extension-casl/compare/0.5.7...0.5.8) (2024-08-16)
 
 

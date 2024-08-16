@@ -895,8 +895,8 @@ function getFluentModel(startModel, data) {
 }
 
 // src/applyDataQuery.ts
-function applyDataQuery(abilities, args, action, model, creationTree = { type: "create", children: {} }) {
-  creationTree.type = action;
+function applyDataQuery(abilities, args, action, model, creationTree) {
+  const tree = creationTree ? creationTree : { action, model, children: {} };
   const permittedFields = getPermittedFields(abilities, action, model);
   const accessibleQuery = m5(abilities, action)[model];
   const mutationArgs = [];
@@ -939,8 +939,8 @@ function applyDataQuery(abilities, args, action, model, creationTree = { type: "
           if (nestedAction in caslNestedOperationDict) {
             const mutationAction = caslNestedOperationDict[nestedAction];
             const isConnection = nestedAction === "connect" || nestedAction === "disconnect";
-            creationTree.children[field] = { type: mutationAction, children: {} };
-            const dataQuery = applyDataQuery(abilities, nestedArgs, mutationAction, relationModel.type, creationTree.children[field]);
+            tree.children[field] = { action: mutationAction, model: relationModel.type, children: {} };
+            const dataQuery = applyDataQuery(abilities, nestedArgs, mutationAction, relationModel.type, tree.children[field]);
             mutation[field][nestedAction] = dataQuery.args;
             if (isConnection) {
               const accessibleQuery2 = m5(abilities, mutationAction)[relationModel.type];
@@ -957,7 +957,7 @@ function applyDataQuery(abilities, args, action, model, creationTree = { type: "
       }
     });
   });
-  return { args, creationTree };
+  return { args, creationTree: tree };
 }
 
 // src/applyWhereQuery.ts
@@ -1003,22 +1003,7 @@ function applyIncludeSelectQuery(abilities, args, model) {
   return args;
 }
 
-// src/convertCreationTreeToSelect.ts
-function convertCreationTreeToSelect(relationQuery) {
-  if (Object.keys(relationQuery.children).length === 0) {
-    return relationQuery.type === "create" ? {} : null;
-  }
-  const relationResult = {};
-  for (const key in relationQuery.children) {
-    const childRelation = convertCreationTreeToSelect(relationQuery.children[key]);
-    if (childRelation !== null) {
-      relationResult[key] = { select: childRelation };
-    }
-  }
-  return Object.keys(relationResult).length > 0 ? relationResult : relationQuery.type === "create" ? {} : null;
-}
-
-// src/applyRuleRelationsQuery.ts
+// src/getRuleRelationsQuery.ts
 function flattenAst(ast) {
   if (["and", "or"].includes(ast.operator.toLowerCase())) {
     return ast.value.flatMap((childAst) => flattenAst(childAst));
@@ -1049,6 +1034,27 @@ function getRuleRelationsQuery(model, ast, dataRelationQuery = {}) {
   }
   return obj;
 }
+
+// src/convertCreationTreeToSelect.ts
+function convertCreationTreeToSelect(abilities, relationQuery) {
+  let relationResult = {};
+  if (relationQuery.action === "create") {
+    const ast = d4(abilities, relationQuery.action, relationQuery.model);
+    relationResult = getRuleRelationsQuery(relationQuery.model, ast, {});
+  }
+  if (Object.keys(relationQuery.children).length === 0) {
+    return relationQuery.action === "create" ? relationResult : null;
+  }
+  for (const key in relationQuery.children) {
+    const childRelation = convertCreationTreeToSelect(abilities, relationQuery.children[key]);
+    if (childRelation !== null) {
+      relationResult[key] = { select: childRelation };
+    }
+  }
+  return Object.keys(relationResult).length > 0 ? relationResult : relationQuery.action === "create" ? {} : null;
+}
+
+// src/applyRuleRelationsQuery.ts
 function mergeArgsAndRelationQuery(args, relationQuery) {
   const mask = {};
   let found = false;
@@ -1113,7 +1119,7 @@ function applyRuleRelationsQuery(args, abilities, action, model, creationTree) {
     };
   }));
   const ast = d4(ability, action, model);
-  const creationSelectQuery = creationTree ? convertCreationTreeToSelect(creationTree) ?? {} : {};
+  const creationSelectQuery = creationTree ? convertCreationTreeToSelect(abilities, creationTree) ?? {} : {};
   const queryRelations = getRuleRelationsQuery(model, ast, creationSelectQuery === true ? {} : creationSelectQuery);
   if (!("select" in args) && !("include" in args)) {
     args.include = {};
@@ -1161,7 +1167,7 @@ function filterQueryResults(result, mask, creationTree, abilities, model) {
     if (!entry) {
       return null;
     }
-    if (creationTree?.type === "create") {
+    if (creationTree?.action === "create") {
       try {
         if (!abilities.can("create", getSubject(model, entry))) {
           throw new Error("");
