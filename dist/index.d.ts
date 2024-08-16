@@ -1,8 +1,12 @@
 import * as _prisma_client_runtime_library from '@prisma/client/runtime/library';
-import { DynamicClientExtensionThis, InternalArgs } from '@prisma/client/runtime/library';
 import { PureAbility, AbilityTuple, AbilityBuilder } from '@casl/ability';
 import { PrismaQuery } from '@casl/prisma';
 import { Prisma } from '@prisma/client';
+
+type CreationTree = {
+    type: string;
+    children: Record<string, CreationTree>;
+};
 
 type PrismaCaslOperation = 'create' | 'createMany' | 'createManyAndReturn' | 'upsert' | 'findFirst' | 'findFirstOrThrow' | 'findMany' | 'findUnique' | 'findUniqueOrThrow' | 'aggregate' | 'count' | 'groupBy' | 'update' | 'updateMany' | 'delete' | 'deleteMany';
 
@@ -16,11 +20,13 @@ type PrismaCaslOperation = 'create' | 'createMany' | 'createManyAndReturn' | 'up
  * @returns Enriched query with casl authorization
  */
 declare function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: Prisma.ModelName): {
+    creationTree: CreationTree | undefined;
     args: any;
     mask: Record<string, any>;
 } | {
     args: any;
     mask: undefined;
+    creationTree: CreationTree | undefined;
 };
 
 /**
@@ -42,7 +48,7 @@ declare function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAb
             model: {};
             query: {};
             client: {
-                $casl: () => (extendFactory: (factory: AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => DynamicClientExtensionThis<Prisma.TypeMap<InternalArgs & _prisma_client_runtime_library.DefaultArgs>, Prisma.TypeMapCb, _prisma_client_runtime_library.DefaultArgs>;
+                $casl: () => (extendFactory: (factory: AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => _prisma_client_runtime_library.DynamicClientExtensionThis<Prisma.TypeMap<_prisma_client_runtime_library.InternalArgs & _prisma_client_runtime_library.DefaultArgs>, Prisma.TypeMapCb, _prisma_client_runtime_library.DefaultArgs>;
             };
         };
     };

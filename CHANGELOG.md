@@ -1,5 +1,12 @@
 
 
+## [0.5.7](https://github.com/dennemark/prisma-extension-casl/compare/0.5.6...0.5.7) (2024-08-16)
+
+
+### Bug Fixes
+
+* :bug: fix create queries ([e2f678c](https://github.com/dennemark/prisma-extension-casl/commit/e2f678cbaeff2c3e663f44d081d75ef604dfb864))
+
 ## [0.5.6](https://github.com/dennemark/prisma-extension-casl/compare/0.5.5...0.5.6) (2024-08-14)
 
 

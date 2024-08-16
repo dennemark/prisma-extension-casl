@@ -845,9 +845,9 @@ function applyAccessibleQuery(query, accessibleQuery) {
 var import_client = require("@prisma/client");
 var caslOperationDict = {
   create: { action: "create", dataQuery: true, whereQuery: false, includeSelectQuery: true },
-  createMany: { action: "create", dataQuery: true, whereQuery: false, includeSelectQuery: false },
+  createMany: { action: "create", dataQuery: true, whereQuery: false, includeSelectQuery: true },
   createManyAndReturn: { action: "create", dataQuery: true, whereQuery: false, includeSelectQuery: true },
-  upsert: { action: "create", dataQuery: true, whereQuery: true, includeSelectQuery: false },
+  upsert: { action: "create", dataQuery: true, whereQuery: true, includeSelectQuery: true },
   findFirst: { action: "read", dataQuery: false, whereQuery: true, includeSelectQuery: true },
   findFirstOrThrow: { action: "read", dataQuery: false, whereQuery: true, includeSelectQuery: true },
   findMany: { action: "read", dataQuery: false, whereQuery: true, includeSelectQuery: true },
@@ -895,13 +895,17 @@ function pick(obj, keys) {
 }
 function getPermittedFields(abilities, action, model, obj) {
   const modelFields = Object.keys(propertyFieldsByModel[model]);
-  const subjectFields = [...modelFields, ...Object.keys(relationFieldsByModel[model])];
-  const permittedFields = c4(abilities, action, obj ? R2(model, pick(obj, subjectFields)) : model, {
+  const permittedFields = c4(abilities, action, obj ? getSubject(model, obj) : model, {
     fieldsFrom: (rule) => {
       return rule.fields || modelFields;
     }
   });
   return permittedFields;
+}
+function getSubject(model, obj) {
+  const modelFields = Object.keys(propertyFieldsByModel[model]);
+  const subjectFields = [...modelFields, ...Object.keys(relationFieldsByModel[model])];
+  return R2(model, pick(obj, subjectFields));
 }
 function getFluentModel(startModel, data) {
   const dataPath = data?.__internalParams?.dataPath;
@@ -916,9 +920,9 @@ function getFluentModel(startModel, data) {
 }
 
 // src/applyDataQuery.ts
-function applyDataQuery(abilities, args, action, model) {
-  const obj = action === "update" ? void 0 : "data" in args ? args.data : "create" in args ? args.create : args;
-  const permittedFields = getPermittedFields(abilities, action, model, obj);
+function applyDataQuery(abilities, args, action, model, creationTree = { type: "create", children: {} }) {
+  creationTree.type = action;
+  const permittedFields = getPermittedFields(abilities, action, model);
   const accessibleQuery = m5(abilities, action)[model];
   const mutationArgs = [];
   (Array.isArray(args) ? args : [args]).map((argsEntry) => {
@@ -960,7 +964,9 @@ function applyDataQuery(abilities, args, action, model) {
           if (nestedAction in caslNestedOperationDict) {
             const mutationAction = caslNestedOperationDict[nestedAction];
             const isConnection = nestedAction === "connect" || nestedAction === "disconnect";
-            mutation[field][nestedAction] = applyDataQuery(abilities, nestedArgs, mutationAction, relationModel.type);
+            creationTree.children[field] = { type: mutationAction, children: {} };
+            const dataQuery = applyDataQuery(abilities, nestedArgs, mutationAction, relationModel.type, creationTree.children[field]);
+            mutation[field][nestedAction] = dataQuery.args;
             if (isConnection) {
               const accessibleQuery2 = m5(abilities, mutationAction)[relationModel.type];
               if (Array.isArray(mutation[field][nestedAction])) {
@@ -976,7 +982,7 @@ function applyDataQuery(abilities, args, action, model) {
       }
     });
   });
-  return args;
+  return { args, creationTree };
 }
 
 // src/applyWhereQuery.ts
@@ -1022,6 +1028,21 @@ function applyIncludeSelectQuery(abilities, args, model) {
   return args;
 }
 
+// src/convertCreationTreeToSelect.ts
+function convertCreationTreeToSelect(relationQuery) {
+  if (Object.keys(relationQuery.children).length === 0) {
+    return relationQuery.type === "create" ? {} : null;
+  }
+  const relationResult = {};
+  for (const key in relationQuery.children) {
+    const childRelation = convertCreationTreeToSelect(relationQuery.children[key]);
+    if (childRelation !== null) {
+      relationResult[key] = { select: childRelation };
+    }
+  }
+  return Object.keys(relationResult).length > 0 ? relationResult : relationQuery.type === "create" ? {} : null;
+}
+
 // src/applyRuleRelationsQuery.ts
 function flattenAst(ast) {
   if (["and", "or"].includes(ast.operator.toLowerCase())) {
@@ -1030,16 +1051,17 @@ function flattenAst(ast) {
     return [ast];
   }
 }
-function getRuleRelationsQuery(model, ast) {
-  const obj = {};
+function getRuleRelationsQuery(model, ast, dataRelationQuery = {}) {
+  const obj = dataRelationQuery;
   if (ast) {
     if (typeof ast.value === "object") {
       flattenAst(ast).map((childAst) => {
         const relation = relationFieldsByModel[model];
         if (childAst.field) {
           if (childAst.field in relation) {
+            const dataInclude = childAst.field in obj ? obj[childAst.field] : {};
             obj[childAst.field] = {
-              select: getRuleRelationsQuery(relation[childAst.field].type, childAst.value)
+              select: getRuleRelationsQuery(relation[childAst.field].type, childAst.value, dataInclude === true ? {} : dataInclude.select)
             };
           } else {
             obj[childAst.field] = true;
@@ -1060,7 +1082,10 @@ function mergeArgsAndRelationQuery(args, relationQuery) {
       found = true;
       for (const key in relationQuery) {
         if (!(key in args[method])) {
-          if (relationQuery[key].select || method === "select") {
+          if (relationQuery[key].select) {
+            args[method][key] = Object.keys(relationQuery[key].select).length === 0 ? true : relationQuery[key];
+            mask[key] = true;
+          } else if (method === "select") {
             args[method][key] = relationQuery[key];
             mask[key] = true;
           }
@@ -1105,7 +1130,7 @@ function mergeArgsAndRelationQuery(args, relationQuery) {
     mask
   };
 }
-function applyRuleRelationsQuery(args, abilities, action, model) {
+function applyRuleRelationsQuery(args, abilities, action, model, creationTree) {
   const ability = e3(abilities.rules.filter((rule) => rule.conditions).map((rule) => {
     return {
       ...rule,
@@ -1113,7 +1138,8 @@ function applyRuleRelationsQuery(args, abilities, action, model) {
     };
   }));
   const ast = d4(ability, action, model);
-  const queryRelations = getRuleRelationsQuery(model, ast);
+  const creationSelectQuery = creationTree ? convertCreationTreeToSelect(creationTree) ?? {} : {};
+  const queryRelations = getRuleRelationsQuery(model, ast, creationSelectQuery === true ? {} : creationSelectQuery);
   if (!("select" in args) && !("include" in args)) {
     args.include = {};
   }
@@ -1121,15 +1147,18 @@ function applyRuleRelationsQuery(args, abilities, action, model) {
   if ("include" in result.args && Object.keys(result.args.include).length === 0) {
     delete result.args.include;
   }
-  return result;
+  return { ...result, creationTree };
 }
 
 // src/applyCaslToQuery.ts
 function applyCaslToQuery(operation, args, abilities, model) {
   const operationAbility = caslOperationDict[operation];
   m5(abilities, operationAbility.action)[model];
+  let creationTree = void 0;
   if (operationAbility.dataQuery && args.data) {
-    args.data = applyDataQuery(abilities, args.data, operationAbility.action, model);
+    const { args: dataArgs, creationTree: dataCreationTree } = applyDataQuery(abilities, args.data, operationAbility.action, model);
+    creationTree = dataCreationTree;
+    args.data = dataArgs;
   }
   if (operationAbility.whereQuery) {
     args = applyWhereQuery(abilities, args, operationAbility.action, model);
@@ -1140,12 +1169,15 @@ function applyCaslToQuery(operation, args, abilities, model) {
     delete args.include;
     delete args.select;
   }
-  const result = operationAbility.includeSelectQuery ? applyRuleRelationsQuery(args, abilities, operationAbility.action, model) : { args, mask: void 0 };
+  const result = operationAbility.includeSelectQuery ? applyRuleRelationsQuery(args, abilities, operationAbility.action, model, creationTree) : { args, mask: void 0, creationTree };
   return result;
 }
 
 // src/filterQueryResults.ts
-function filterQueryResults(result, mask, abilities, model) {
+function filterQueryResults(result, mask, creationTree, abilities, model) {
+  if (typeof result === "number") {
+    return result;
+  }
   const prismaModel = model in relationFieldsByModel ? model : void 0;
   if (!prismaModel) {
     throw new Error(`Model ${model} does not exist on Prisma Client`);
@@ -1154,15 +1186,23 @@ function filterQueryResults(result, mask, abilities, model) {
     if (!entry) {
       return null;
     }
+    if (creationTree?.type === "create") {
+      if (!abilities.can("create", getSubject(model, entry))) {
+        throw new Error(`It's not allowed to create on ${model}`);
+      }
+    }
     const permittedFields = getPermittedFields(abilities, "read", model, entry);
     let hasKeys = false;
     Object.keys(entry).forEach((field) => {
       const relationField = relationFieldsByModel[model][field];
+      if (relationField) {
+        const nestedCreationTree = creationTree && field in creationTree.children ? creationTree.children[field] : void 0;
+        entry[field] = filterQueryResults(entry[field], mask?.[field], nestedCreationTree, abilities, relationField.type);
+      }
       if (!permittedFields.includes(field) && !relationField || mask?.[field] === true) {
         delete entry[field];
       } else if (relationField) {
         hasKeys = true;
-        entry[field] = filterQueryResults(entry[field], mask?.[field], abilities, relationField.type);
         if (entry[field] === null) {
           delete entry[field];
         }
@@ -1187,6 +1227,12 @@ function useCaslAbilities(getAbilityFactory) {
     return client.$extends({
       name: "prisma-extension-casl",
       client: {
+        // https://github.com/prisma/prisma/issues/20678
+        // $transaction(...props: Parameters<(typeof client)['$transaction']>): ReturnType<(typeof client)['$transaction']> {
+        //     return transactionStore.run({ alreadyInTransaction: true }, () => {
+        //         return client.$transaction(...props);
+        //     });
+        // },
         $casl(extendFactory) {
           const ctx = import_client2.Prisma.getExtensionContext(this);
           getAbilities = () => extendFactory(getAbilityFactory());
@@ -1196,6 +1242,7 @@ function useCaslAbilities(getAbilityFactory) {
       query: {
         $allModels: {
           async $allOperations({ args, query, model, operation, ...rest }) {
+            const op = operation === "createMany" ? "createManyAndReturn" : operation;
             const debug = process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test" && args.debugCasl;
             delete args.debugCasl;
             const perf = debug ? performance : void 0;
@@ -1210,7 +1257,7 @@ function useCaslAbilities(getAbilityFactory) {
             perf?.clearMarks("prisma-casl-extension-2");
             perf?.clearMarks("prisma-casl-extension-3");
             perf?.clearMarks("prisma-casl-extension-4");
-            if (!(operation in caslOperationDict)) {
+            if (!(op in caslOperationDict)) {
               return query(args);
             }
             perf?.mark("prisma-casl-extension-0");
@@ -1221,9 +1268,9 @@ function useCaslAbilities(getAbilityFactory) {
             perf?.mark("prisma-casl-extension-2");
             logger?.log("Query Args", JSON.stringify(caslQuery.args));
             logger?.log("Query Mask", JSON.stringify(caslQuery.mask));
-            return query(caslQuery.args).then((result) => {
+            const cleanupResults = (result) => {
               perf?.mark("prisma-casl-extension-3");
-              const res = filterQueryResults(result, caslQuery.mask, abilities, getFluentModel(model, rest));
+              const res = filterQueryResults(result, caslQuery.mask, caslQuery.creationTree, abilities, getFluentModel(model, rest));
               if (perf) {
                 perf.mark("prisma-casl-extension-4");
                 logger?.log(
@@ -1238,8 +1285,26 @@ function useCaslAbilities(getAbilityFactory) {
                   })
                 );
               }
-              return res;
-            });
+              return operation === "createMany" ? { count: res.length } : res;
+            };
+            const operationAbility = caslOperationDict[operation];
+            if (operationAbility.action === "update" || operationAbility.action === "create") {
+              if (rest.__internalParams.transaction) {
+                const transaction = rest.__internalParams.transaction;
+                if (transaction.kind === "itx") {
+                  const transactionClient = client._createItxClient(transaction);
+                  return transactionClient[model][op](caslQuery.args).then(cleanupResults);
+                } else if (transaction.kind === "batch") {
+                  throw new Error("Sequential transactions are not supported in prisma-extension-casl.");
+                }
+              } else {
+                return client.$transaction(async (tx) => {
+                  return tx[model][op](caslQuery.args).then(cleanupResults);
+                });
+              }
+            } else {
+              return query(caslQuery.args).then(cleanupResults);
+            }
           }
         }
       }
