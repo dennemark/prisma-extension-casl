@@ -1,5 +1,5 @@
 import { AbilityTuple, PureAbility } from "@casl/ability";
-import { accessibleBy, PrismaQuery } from "@casl/prisma";
+import { PrismaQuery } from "@casl/prisma";
 import { Prisma } from "@prisma/client";
 import { CreationTree } from "./convertCreationTreeToSelect";
 import { getPermittedFields, getSubject, relationFieldsByModel } from "./helpers";
@@ -15,7 +15,7 @@ export function filterQueryResults(result: any, mask: any, creationTree: Creatio
 
     const filterPermittedFields = (entry: any) => {
         if (!entry) { return null }
-        if (creationTree?.type === 'create') {
+        if (creationTree?.action === 'create') {
             try {
                 if (!abilities.can('create', getSubject(model, entry))) {
                     throw new Error('')

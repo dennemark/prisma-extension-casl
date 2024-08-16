@@ -1,19 +1,29 @@
+import { AbilityTuple, PureAbility } from '@casl/ability';
+import { rulesToAST } from '@casl/ability/extra';
+import { PrismaQuery } from '@casl/prisma';
+import { Prisma } from '@prisma/client';
+import { getRuleRelationsQuery } from './getRuleRelationsQuery';
 
-export type CreationTree = { type: string, children: Record<string, CreationTree> }
+export type CreationTree = { action: string, model: Prisma.ModelName, children: Record<string, CreationTree> }
 
-export function convertCreationTreeToSelect(relationQuery: CreationTree): Record<string, any> | true | null {
+export function convertCreationTreeToSelect(abilities: PureAbility<AbilityTuple, PrismaQuery>, relationQuery: CreationTree): Record<string, any> | true | null {
+  // Recursively filter children
+  let relationResult: Record<string, any> = {};
+  if (relationQuery.action === 'create') {
+    const ast = rulesToAST(abilities, relationQuery.action, relationQuery.model)
+    relationResult = getRuleRelationsQuery(relationQuery.model, ast, {})
+  }
 
   // Base case: if there are no children and type is 'create', keep this node
   if (Object.keys(relationQuery.children).length === 0) {
-    return relationQuery.type === 'create' ? {} : null;
+    return relationQuery.action === 'create' ? relationResult : null;
   }
 
-  // Recursively filter children
-  const relationResult: Record<string, any> = {};
+
 
   for (const key in relationQuery.children) {
 
-    const childRelation = convertCreationTreeToSelect(relationQuery.children[key]);
+    const childRelation = convertCreationTreeToSelect(abilities, relationQuery.children[key]);
 
     // If the filtered child is valid, add it to the filtered children
     if (childRelation !== null) {
@@ -23,6 +33,6 @@ export function convertCreationTreeToSelect(relationQuery: CreationTree): Record
   }
   // After filtering children, check if there are any valid children left
   // or if this node itself is a valid 'create' node
-  return Object.keys(relationResult).length > 0 ? relationResult : relationQuery.type === 'create' ? {} : null
+  return Object.keys(relationResult).length > 0 ? relationResult : relationQuery.action === 'create' ? {} : null
 
 }

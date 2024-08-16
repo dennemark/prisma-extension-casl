@@ -26,9 +26,10 @@ export function applyDataQuery(
     args: any,
     action: string,
     model: string,
-    creationTree: CreationTree = { type: 'create', children: {} }
+    creationTree?: CreationTree
 ) {
-    creationTree.type = action
+    const tree = creationTree ? creationTree : { action: action, model: model, children: {} } as CreationTree
+
     const permittedFields = getPermittedFields(abilities, action, model)
 
     const accessibleQuery = accessibleBy(abilities, action)[model as Prisma.ModelName]
@@ -87,8 +88,8 @@ export function applyDataQuery(
                         const mutationAction = caslNestedOperationDict[nestedAction]
                         const isConnection = nestedAction === 'connect' || nestedAction === 'disconnect'
 
-                        creationTree.children[field] = { type: mutationAction, children: {} }
-                        const dataQuery = applyDataQuery(abilities, nestedArgs, mutationAction, relationModel.type, creationTree.children[field])
+                        tree.children[field] = { action: mutationAction, model: relationModel.type as Prisma.ModelName, children: {} }
+                        const dataQuery = applyDataQuery(abilities, nestedArgs, mutationAction, relationModel.type, tree.children[field])
                         mutation[field][nestedAction] = dataQuery.args
                         // connection works like a where query, so we apply it
                         if (isConnection) {
@@ -108,5 +109,5 @@ export function applyDataQuery(
         })
 
     })
-    return { args, creationTree }
+    return { args, creationTree: tree }
 }

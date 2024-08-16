@@ -1,23 +1,37 @@
 import { convertCreationTreeToSelect } from "../src/convertCreationTreeToSelect"
+import { abilityBuilder } from "./abilities"
 
 
 describe('convert creation tree to select query', () => {
   it('correctly builds data query', () => {
-    expect(convertCreationTreeToSelect({
-      type: 'update',
+    const { can, build } = abilityBuilder()
+    can('create', 'Post', {
+      author: {
+        is: {
+          id: 0
+        }
+      }
+    })
+    expect(convertCreationTreeToSelect(build(), {
+      action: 'update',
+      model: 'User',
       children: {
         post: {
-          type: 'create',
+          model: 'Post',
+          action: 'create',
           children: {
             topic: {
-              type: 'connect',
+              action: 'connect',
+              model: 'Topic',
               children: {
                 category: {
-                  type: 'create',
+                  action: 'create',
+                  model: 'Thread',
                   children: {},
                 },
                 tag: {
-                  type: 'update',
+                  action: 'update',
+                  model: 'Thread',
                   children: {},
                 },
               },
@@ -27,15 +41,19 @@ describe('convert creation tree to select query', () => {
 
       },
     })
-    ).toEqual({ post: { select: { topic: { select: { category: { select: {} } } } } } })
+    ).toEqual({ post: { select: { author: { select: { id: true } }, topic: { select: { category: { select: {} } } } } } })
   })
   it('correctly builds data query', () => {
-    expect(convertCreationTreeToSelect({
-      type: 'create',
+    const { build } = abilityBuilder()
+
+    expect(convertCreationTreeToSelect(build(), {
+      action: 'create',
+      model: 'User',
       children: {
         posts: {
-          type: 'create',
-          children: { thread: { type: 'update', children: {} } }
+          action: 'create',
+          model: 'Post',
+          children: { thread: { model: 'Thread', action: 'update', children: {} } }
         }
       }
     })).toEqual({ posts: { select: {} } })

@@ -81,6 +81,7 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
                         perf?.mark('prisma-casl-extension-2')
                         logger?.log('Query Args', JSON.stringify(caslQuery.args))
                         logger?.log('Query Mask', JSON.stringify(caslQuery.mask))
+
                         const cleanupResults = (result: any) => {
 
                             perf?.mark('prisma-casl-extension-3')

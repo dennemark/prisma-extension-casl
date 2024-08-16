@@ -11,7 +11,7 @@ describe('apply data query', () => {
         can('update', 'User')
         const result = applyDataQuery(build(), { data: { authorId: 0 }, where: { id: 0 } }, 'update', 'Post')
         expect(result.args).toEqual({ data: { author: { connect: { id: 0, AND: [{}] } } }, where: { id: 0, AND: [{}] } })
-        expect(result.creationTree).toEqual({ "children": { "author": { "children": {}, "type": "update" } }, "type": "update" })
+        expect(result.creationTree).toEqual({ children: { "author": { children: {}, model: 'User', action: "update" } }, model: 'Post', action: "update" })
     })
     it('throws error if update on connection is not allowed', () => {
         const { can, cannot, build } = abilityBuilder()
@@ -32,7 +32,7 @@ describe('apply data query', () => {
                         data: { id: 0 },
                         where: { id: 1, AND: [{ OR: [{ id: 0 }] }] }
                     })
-                    expect(result.creationTree).toEqual({ "children": {}, "type": mutation })
+                    expect(result.creationTree).toEqual({ children: {}, model: 'User', action: mutation })
                 })
 
                 it('throws error if mutation of property is omitted', () => {
@@ -66,11 +66,13 @@ describe('apply data query', () => {
             const result = applyDataQuery(build(), { data: { creator: { upsert: { create: { email: '-1' }, update: { email: '-1' }, where: { id: 1 } } } }, where: { id: 0 } }, 'update', 'Thread')
             expect(result.args).toEqual({ data: { creator: { upsert: { create: { email: '-1' }, update: { email: '-1' }, where: { id: 1, AND: [{ OR: [{ id: 0 }] }] } } } }, where: { id: 0, AND: [{}] } })
             expect(result.creationTree).toEqual({
-                type: 'update',
+                action: 'update',
+                model: 'Thread',
                 children: {
                     creator: {
                         children: {},
-                        type: 'create'
+                        action: 'create',
+                        model: 'User'
                     }
                 }
             })
@@ -98,7 +100,7 @@ describe('apply data query', () => {
             })
             const result = applyDataQuery(build(), { data: { id: 1, posts: { connect: { id: 0 } } }, where: { id: 0 } }, 'update', 'User')
             expect(result.args).toEqual({ data: { id: 1, posts: { connect: { id: 0, AND: [{ OR: [{ id: 1 }] }] } } }, where: { id: 0, AND: [{ OR: [{ id: 0 }] }] } })
-            expect(result.creationTree).toEqual({ "children": { "posts": { "children": {}, "type": "update" } }, "type": "update" })
+            expect(result.creationTree).toEqual({ children: { posts: { children: {}, action: 'update', model: 'Post', } }, model: 'User', action: "update" })
         })
         it('adds where and connection clause in nested array connection update', () => {
             const { can, build } = abilityBuilder()
@@ -111,7 +113,7 @@ describe('apply data query', () => {
 
             const result = applyDataQuery(build(), { data: { id: 1, posts: { connect: [{ id: 0 }] } }, where: { id: 0 } }, 'update', 'User')
             expect(result.args).toEqual({ data: { id: 1, posts: { connect: [{ id: 0, AND: [{ OR: [{ id: 1 }] }] }] } }, where: { id: 0, AND: [{ OR: [{ id: 0 }] }] } })
-            expect(result.creationTree).toEqual({ "children": { "posts": { "children": {}, "type": "update" } }, "type": "update" })
+            expect(result.creationTree).toEqual({ children: { posts: { children: {}, model: 'Post', action: "update" } }, model: 'User', action: "update" })
         })
         it('throws error if data in nested connection is not allowed', () => {
             const { can, cannot, build } = abilityBuilder()
@@ -153,7 +155,7 @@ describe('apply data query', () => {
             }, 'update', 'User')
 
             expect(result.args).toEqual({ data: { id: 1, posts: { connectOrCreate: { create: { text: '' }, where: { id: 1, AND: [{ OR: [{ id: 2 }] }] } } } }, where: { id: 0, AND: [{ OR: [{ id: 0 }] }] } })
-            expect(result.creationTree).toEqual({ type: 'update', children: { posts: { type: 'create', children: {} } } })
+            expect(result.creationTree).toEqual({ action: 'update', model: 'User', children: { posts: { model: 'Post', action: 'create', children: {} } } })
         })
 
         it('adds where and connection clause in nested array connection update', () => {
@@ -181,7 +183,7 @@ describe('apply data query', () => {
                 }
             }, 'update', 'User')
             expect(result.args).toEqual({ data: { id: 1, posts: { connectOrCreate: [{ create: { text: '' }, where: { id: 0, AND: [{ OR: [{ id: 2 }] }] } }] } }, where: { id: 0, AND: [{ OR: [{ id: 0 }] }] } })
-            expect(result.creationTree).toEqual({ type: 'update', children: { posts: { type: 'create', children: {} } } })
+            expect(result.creationTree).toEqual({ action: 'update', model: 'User', children: { posts: { model: 'Post', action: 'create', children: {} } } })
         })
         it('throws error if data in nested connection is not allowed', () => {
             const { can, cannot, build } = abilityBuilder()
@@ -253,7 +255,7 @@ describe('apply data query', () => {
 
             const result = applyDataQuery(build(), { data: { id: 1, posts: { update: { data: { thread: { update: { id: 0 } } }, where: { id: 0 } } } }, where: { id: 0 } }, 'update', 'User')
             expect(result.args).toEqual({ data: { id: 1, posts: { update: { data: { thread: { update: { id: 0 } } }, where: { id: 0, AND: [{}] } } } }, where: { id: 0, AND: [{}] } })
-            expect(result.creationTree).toEqual({ "children": { "posts": { "children": { "thread": { "children": {}, "type": "update" } }, "type": "update" } }, "type": "update" })
+            expect(result.creationTree).toEqual({ children: { posts: { children: { thread: { children: {}, model: 'Thread', action: "update" } }, model: 'Post', action: "update" } }, model: 'User', action: "update" })
         })
         it('throws error if data in nested nested update is not allowed', () => {
             const { can, cannot, build } = abilityBuilder()
@@ -284,7 +286,7 @@ describe('apply data query', () => {
             }, 'create', 'User')
             expect(result.args)
                 .toEqual({ data: { id: 0, posts: { createMany: { data: { text: '' } } } } })
-            expect(result.creationTree).toEqual({ type: 'create', children: { posts: { type: 'create', children: {} } } })
+            expect(result.creationTree).toEqual({ action: 'create', model: 'User', children: { posts: { model: 'Post', action: 'create', children: {} } } })
         })
         it('throws error if data in nested create is not allowed', () => {
             const { can, cannot, build } = abilityBuilder()

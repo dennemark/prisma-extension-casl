@@ -1,41 +1,11 @@
-import { AbilityTuple, PureAbility, Subject, ɵvalue } from '@casl/ability';
+import { AbilityTuple, PureAbility } from '@casl/ability';
 import { rulesToAST } from '@casl/ability/extra';
 import { createPrismaAbility, PrismaQuery } from '@casl/prisma';
 import { Prisma } from '@prisma/client';
 import { convertCreationTreeToSelect, CreationTree } from './convertCreationTreeToSelect';
-import { relationFieldsByModel } from './helpers';
+import { getRuleRelationsQuery } from './getRuleRelationsQuery';
 
-function flattenAst(ast: any) {
-  if (['and', 'or'].includes(ast.operator.toLowerCase())) {
-    return ast.value.flatMap((childAst: any) => flattenAst(childAst))
-  } else {
-    return [ast]
-  }
-}
 
-function getRuleRelationsQuery(model: string, ast: any, dataRelationQuery: any = {}) {
-  const obj: Record<string, any> = dataRelationQuery
-  if (ast) {
-    if (typeof ast.value === 'object') {
-      flattenAst(ast).map((childAst: any) => {
-        const relation = relationFieldsByModel[model]
-        if (childAst.field) {
-          if (childAst.field in relation) {
-            const dataInclude = childAst.field in obj ? obj[childAst.field] : {}
-            obj[childAst.field] = {
-              select: getRuleRelationsQuery(relation[childAst.field].type, childAst.value, dataInclude === true ? {} : dataInclude.select)
-            }
-          } else {
-            obj[childAst.field] = true
-          }
-        }
-      })
-    } else {
-      obj[ast.field] = true
-    }
-  }
-  return obj
-}
 
 /**
  * takes args query and rule relation query
@@ -137,7 +107,6 @@ function mergeArgsAndRelationQuery(args: any, relationQuery: any) {
 export function applyRuleRelationsQuery(args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, action: string, model: Prisma.ModelName, creationTree?: CreationTree) {
 
 
-
   // rulesToAST won't return conditions
   // if a rule is inverted and if a can rule exists without condition
   // we therefore create fake ability here
@@ -149,7 +118,7 @@ export function applyRuleRelationsQuery(args: any, abilities: PureAbility<Abilit
     }
   }))
   const ast = rulesToAST(ability, action, model)
-  const creationSelectQuery = creationTree ? convertCreationTreeToSelect(creationTree) ?? {} : {}
+  const creationSelectQuery = creationTree ? convertCreationTreeToSelect(abilities, creationTree) ?? {} : {}
 
   const queryRelations = getRuleRelationsQuery(model, ast, creationSelectQuery === true ? {} : creationSelectQuery)
 

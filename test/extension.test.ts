@@ -1433,7 +1433,40 @@ describe('prisma extension casl', () => {
             })
             expect(result).toEqual({ email: 'new' })
         })
-        it('cannot do nested create with conditions', async () => {
+        it('can do nested create with conditions', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+
+                can('read', 'User', 'email')
+                can('create', 'User')
+                can('update', 'Thread')
+                can('create', 'Post', {
+                    author: {
+                        is: {
+                            email: 'old'
+                        }
+                    }
+                })
+                can('read', 'Post')
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            expect(await client.user.create({
+                data: {
+                    email: 'old',
+                    posts: {
+                        create: {
+                            threadId: 0,
+                            text: '1'
+                        }
+                    }
+                }
+            })).toEqual({ email: 'old' })
+        })
+        it('cannot do nested create with failing conditions', async () => {
             function builderFactory() {
                 const builder = abilityBuilder()
                 const { can, cannot } = builder
