@@ -1162,8 +1162,12 @@ function filterQueryResults(result, mask, creationTree, abilities, model) {
       return null;
     }
     if (creationTree?.type === "create") {
-      if (!abilities.can("create", getSubject(model, entry))) {
-        throw new Error(`It's not allowed to create on ${model}`);
+      try {
+        if (!abilities.can("create", getSubject(model, entry))) {
+          throw new Error("");
+        }
+      } catch (e4) {
+        throw new Error(`It's not allowed to create on ${model} ` + e4);
       }
     }
     const permittedFields = getPermittedFields(abilities, "read", model, entry);

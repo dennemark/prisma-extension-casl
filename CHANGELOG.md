@@ -1,5 +1,12 @@
 
 
+## [0.5.8](https://github.com/dennemark/prisma-extension-casl/compare/0.5.7...0.5.8) (2024-08-16)
+
+
+### Bug Fixes
+
+* :bug: improve error message on create ([bffbd83](https://github.com/dennemark/prisma-extension-casl/commit/bffbd836f4bb6a3e0d8aa7408beae51e3f7ab336))
+
 ## [0.5.7](https://github.com/dennemark/prisma-extension-casl/compare/0.5.6...0.5.7) (2024-08-16)
 
 
