@@ -16,8 +16,12 @@ export function filterQueryResults(result: any, mask: any, creationTree: Creatio
     const filterPermittedFields = (entry: any) => {
         if (!entry) { return null }
         if (creationTree?.type === 'create') {
-            if (!abilities.can('create', getSubject(model, entry))) {
-                throw new Error(`It's not allowed to create on ${model}`)
+            try {
+                if (!abilities.can('create', getSubject(model, entry))) {
+                    throw new Error('')
+                }
+            } catch (e) {
+                throw new Error(`It's not allowed to create on ${model} ` + e)
             }
         }
 
