@@ -28,7 +28,7 @@
     "@casl/ability": "^6.7.1",
     "@casl/prisma": "^1.4.1",
     "@prisma/client": "5.14.0",
-    "@prisma/generator-helper": "5.14.0",
+    "@prisma/generator-helper": "5.19.1",
     "@release-it/conventional-changelog": "^8.0.1",
     "@types/jest": "^29.5.12",
     "@types/node": "^22.0.0",
