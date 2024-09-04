@@ -123,12 +123,12 @@ export function applyRuleRelationsQuery(args: any, abilities: PureAbility<Abilit
   const queryRelations = getRuleRelationsQuery(model, ast, creationSelectQuery === true ? {} : creationSelectQuery)
 
 
-  if (!('select' in args) && !('include' in args)) {
+  if (!args.select && !args.include) {
     args.include = {}
   }
   const result = mergeArgsAndRelationQuery(args, queryRelations)
 
-  if ('include' in result.args && Object.keys(result.args.include!).length === 0) {
+  if (result.args.include && Object.keys(result.args.include!).length === 0) {
     delete result.args.include
   }
   return { ...result, creationTree }
