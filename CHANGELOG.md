@@ -1,5 +1,12 @@
 
 
+## [0.5.11](https://github.com/dennemark/prisma-extension-casl/compare/0.5.10...0.5.11) (2024-09-04)
+
+
+### Bug Fixes
+
+* :bug: proper check if include is undefined ([221a78d](https://github.com/dennemark/prisma-extension-casl/commit/221a78d3875825572eb463bb4d77a7dacab9e7eb))
+
 ## [0.5.10](https://github.com/dennemark/prisma-extension-casl/compare/0.5.9...0.5.10) (2024-09-04)
 
 
