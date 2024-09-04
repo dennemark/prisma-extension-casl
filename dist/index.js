@@ -1220,7 +1220,7 @@ function filterQueryResults(result, mask, creationTree, abilities, model) {
         hasKeys = true;
       }
     });
-    return hasKeys ? entry : null;
+    return hasKeys && Object.keys(entry).length > 0 ? entry : null;
   };
   if (Array.isArray(result)) {
     const arr = result.map((entry) => filterPermittedFields(entry)).filter((x5) => x5);

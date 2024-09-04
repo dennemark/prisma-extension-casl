@@ -1,5 +1,12 @@
 
 
+## [0.5.10](https://github.com/dennemark/prisma-extension-casl/compare/0.5.9...0.5.10) (2024-09-04)
+
+
+### Bug Fixes
+
+* :bug: return null if filteredQueryResult has no keys ([099e3c2](https://github.com/dennemark/prisma-extension-casl/commit/099e3c28687d72f95eb934897ab192a1d2e23d12))
+
 ## [0.5.9](https://github.com/dennemark/prisma-extension-casl/compare/0.5.8...0.5.9) (2024-08-16)
 
 
