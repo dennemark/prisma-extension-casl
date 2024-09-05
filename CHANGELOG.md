@@ -1,5 +1,12 @@
 
 
+## [0.5.12](https://github.com/dennemark/prisma-extension-casl/compare/0.5.11...0.5.12) (2024-09-05)
+
+
+### Bug Fixes
+
+* :bug: get nested values to check rules ([9096f6a](https://github.com/dennemark/prisma-extension-casl/commit/9096f6aae45b503e2708b3196ffcb221c8020400))
+
 ## [0.5.11](https://github.com/dennemark/prisma-extension-casl/compare/0.5.10...0.5.11) (2024-09-04)
 
 

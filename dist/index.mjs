@@ -1019,7 +1019,7 @@ function getRuleRelationsQuery(model, ast, dataRelationQuery = {}) {
         const relation = relationFieldsByModel[model];
         if (childAst.field) {
           if (childAst.field in relation) {
-            const dataInclude = childAst.field in obj ? obj[childAst.field] : {};
+            const dataInclude = obj[childAst.field] !== void 0 ? obj[childAst.field] : {};
             obj[childAst.field] = {
               select: getRuleRelationsQuery(relation[childAst.field].type, childAst.value, dataInclude === true ? {} : dataInclude.select)
             };
@@ -1071,7 +1071,7 @@ function mergeArgsAndRelationQuery(args, relationQuery) {
             mask[key] = true;
           }
         } else if (args[method][key] && typeof args[method][key] === "object") {
-          const child = relationQuery[key].select ? mergeArgsAndRelationQuery(args[method][key], relationQuery[key].select) : args[method][key];
+          const child = relationQuery[key].select ? mergeArgsAndRelationQuery(args[method][key], relationQuery[key].select) : { args: args[method][key], mask: true };
           args[method][key] = child.args;
           mask[key] = child.mask;
         } else if (args[method][key] === true) {
@@ -1102,7 +1102,7 @@ function mergeArgsAndRelationQuery(args, relationQuery) {
           ...args.include ?? {},
           [k2]: v5
         };
-        mask[k2] = v5;
+        mask[k2] = removeNestedIncludeSelect(v5.select);
       }
     });
   }
@@ -1111,7 +1111,30 @@ function mergeArgsAndRelationQuery(args, relationQuery) {
     mask
   };
 }
+function removeNestedIncludeSelect(args) {
+  return typeof args === "object" ? Object.fromEntries(Object.entries(args).map(([k2, v5]) => {
+    if (v5?.select) {
+      return [k2, removeNestedIncludeSelect(v5.select)];
+    } else if (v5?.include) {
+      return [k2, removeNestedIncludeSelect(v5.include)];
+    } else {
+      return [k2, v5];
+    }
+  })) : args;
+}
 function applyRuleRelationsQuery(args, abilities, action, model, creationTree) {
+  const creationSelectQuery = creationTree ? convertCreationTreeToSelect(abilities, creationTree) ?? {} : {};
+  const queryRelations = getNestedQueryRelations(args, abilities, action, model, creationSelectQuery === true ? {} : creationSelectQuery);
+  if (!args.select && !args.include) {
+    args.include = {};
+  }
+  const result = mergeArgsAndRelationQuery(args, queryRelations);
+  if ("include" in result.args && Object.keys(result.args.include).length === 0) {
+    delete result.args.include;
+  }
+  return { ...result, creationTree };
+}
+function getNestedQueryRelations(args, abilities, action, model, creationSelectQuery = {}) {
   const ability = e3(abilities.rules.filter((rule) => rule.conditions).map((rule) => {
     return {
       ...rule,
@@ -1119,16 +1142,29 @@ function applyRuleRelationsQuery(args, abilities, action, model, creationTree) {
     };
   }));
   const ast = d4(ability, action, model);
-  const creationSelectQuery = creationTree ? convertCreationTreeToSelect(abilities, creationTree) ?? {} : {};
   const queryRelations = getRuleRelationsQuery(model, ast, creationSelectQuery === true ? {} : creationSelectQuery);
-  if (!args.select && !args.include) {
-    args.include = {};
-  }
-  const result = mergeArgsAndRelationQuery(args, queryRelations);
-  if (result.args.include && Object.keys(result.args.include).length === 0) {
-    delete result.args.include;
-  }
-  return { ...result, creationTree };
+  ["include", "select"].map((method) => {
+    if (args && args[method]) {
+      for (const relation in args[method]) {
+        if (model in relationFieldsByModel && relation in relationFieldsByModel[model]) {
+          const relationField = relationFieldsByModel[model][relation];
+          if (relationField) {
+            const nestedQueryRelations = {
+              ...getNestedQueryRelations(args[method][relation], abilities, "read", relationField.type),
+              ...queryRelations[relation]?.select ?? {}
+            };
+            if (nestedQueryRelations && Object.keys(nestedQueryRelations).length > 0) {
+              queryRelations[relation] = {
+                ...queryRelations[relation] ?? {},
+                select: nestedQueryRelations
+              };
+            }
+          }
+        }
+      }
+    }
+  });
+  return queryRelations;
 }
 
 // src/applyCaslToQuery.ts
