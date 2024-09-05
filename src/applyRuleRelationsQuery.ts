@@ -4,6 +4,7 @@ import { createPrismaAbility, PrismaQuery } from '@casl/prisma';
 import { Prisma } from '@prisma/client';
 import { convertCreationTreeToSelect, CreationTree } from './convertCreationTreeToSelect';
 import { getRuleRelationsQuery } from './getRuleRelationsQuery';
+import { relationFieldsByModel } from './helpers';
 
 
 
@@ -36,7 +37,7 @@ function mergeArgsAndRelationQuery(args: any, relationQuery: any) {
 
           } else if (args[method][key] && typeof args[method][key] === 'object') {
             // if current field is an object, we recurse merging
-            const child = relationQuery[key].select ? mergeArgsAndRelationQuery(args[method][key], relationQuery[key].select) : args[method][key]
+            const child = relationQuery[key].select ? mergeArgsAndRelationQuery(args[method][key], relationQuery[key].select) : { args: args[method][key], mask: true }
             args[method][key] = child.args
             mask[key] = child.mask
           } else if (args[method][key] === true) {
@@ -68,7 +69,6 @@ function mergeArgsAndRelationQuery(args: any, relationQuery: any) {
       }
     })
 
-
   if (found === false) {
     Object.entries(relationQuery).forEach(([k, v]: [string, any]) => {
       if (v?.select) {
@@ -76,7 +76,7 @@ function mergeArgsAndRelationQuery(args: any, relationQuery: any) {
           ...(args.include ?? {}),
           [k]: v
         }
-        mask[k] = v
+        mask[k] = removeNestedIncludeSelect(v.select)
       }
     })
   }
@@ -86,8 +86,24 @@ function mergeArgsAndRelationQuery(args: any, relationQuery: any) {
     mask
   }
 }
-
-
+/**
+ * recursively removes all selects and includes from a select query to get a clean mask
+ *  { posts: { select: { thread: { select: { id: true }}}}}
+ *  { posts: { thread: { id: true }}}
+ * @param args select query
+ * @returns mask
+ */
+function removeNestedIncludeSelect(args: any) {
+  return typeof args === 'object' ? Object.fromEntries((Object.entries(args) as [string, any]).map(([k, v]): [string, any] => {
+    if (v?.select) {
+      return [k, removeNestedIncludeSelect(v.select)]
+    } else if (v?.include) {
+      return [k, removeNestedIncludeSelect(v.include)]
+    } else {
+      return [k, v]
+    }
+  })) : args
+}
 
 
 /**
@@ -106,7 +122,37 @@ function mergeArgsAndRelationQuery(args: any, relationQuery: any) {
  */
 export function applyRuleRelationsQuery(args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, action: string, model: Prisma.ModelName, creationTree?: CreationTree) {
 
+  const creationSelectQuery = creationTree ? convertCreationTreeToSelect(abilities, creationTree) ?? {} : {}
 
+  const queryRelations = getNestedQueryRelations(args, abilities, action, model, creationSelectQuery === true ? {} : creationSelectQuery)
+
+  if (!args.select && !args.include) {
+    args.include = {}
+  }
+
+  // merge rule query relations with current arguments and creates new args and a mask that will be used to remove values that are only necessary to evaluate rules
+  const result = mergeArgsAndRelationQuery(args, queryRelations)
+
+  if ('include' in result.args && Object.keys(result.args.include!).length === 0) {
+    delete result.args.include
+  }
+
+  return { ...result, creationTree }
+}
+
+
+/**
+ * 
+ * gets all query relations that are necessary to evaluate rules later on
+ * 
+ * @param args query
+ * @param abilities Casl prisma abilities
+ * @param action Casl action - preferably create/read/update/delete
+ * @param model prisma model
+ * @param creationSelectQuery 
+ * @returns `{ args: mergedQuery, mask: description of fields that should be removed from result }`
+ */
+function getNestedQueryRelations(args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, action: string, model: Prisma.ModelName, creationSelectQuery: any = {}) {
   // rulesToAST won't return conditions
   // if a rule is inverted and if a can rule exists without condition
   // we therefore create fake ability here
@@ -118,21 +164,30 @@ export function applyRuleRelationsQuery(args: any, abilities: PureAbility<Abilit
     }
   }))
   const ast = rulesToAST(ability, action, model)
-  const creationSelectQuery = creationTree ? convertCreationTreeToSelect(abilities, creationTree) ?? {} : {}
 
   const queryRelations = getRuleRelationsQuery(model, ast, creationSelectQuery === true ? {} : creationSelectQuery)
+    ;['include', 'select'].map((method) => {
+      if (args && args[method]) {
+        for (const relation in args[method]) {
+          if (model in relationFieldsByModel && relation in relationFieldsByModel[model]) {
+            const relationField = relationFieldsByModel[model][relation]
 
+            if (relationField) {
+              const nestedQueryRelations = {
+                ...getNestedQueryRelations(args[method][relation], abilities, 'read', relationField.type as Prisma.ModelName),
+                ...(queryRelations[relation]?.select ?? {})
+              }
+              if (nestedQueryRelations && Object.keys(nestedQueryRelations).length > 0) {
+                queryRelations[relation] = {
+                  ...(queryRelations[relation] ?? {}),
+                  select: nestedQueryRelations
+                }
+              }
+            }
+          }
+        }
+      }
+    })
 
-  if (!args.select && !args.include) {
-    args.include = {}
-  }
-  const result = mergeArgsAndRelationQuery(args, queryRelations)
-
-  if (result.args.include && Object.keys(result.args.include!).length === 0) {
-    delete result.args.include
-  }
-  return { ...result, creationTree }
+  return queryRelations
 }
-
-
-

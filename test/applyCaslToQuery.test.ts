@@ -61,7 +61,15 @@ describe('apply casl to query', () => {
                 author: {
                     select: {
                         email: true,
+                        id: true,
                         posts: {
+                            include: {
+                                thread: {
+                                    select: {
+                                        creatorId: true
+                                    }
+                                }
+                            },
                             where: {
                                 AND: [{
                                     OR: [{
@@ -97,6 +105,14 @@ describe('apply casl to query', () => {
             }
         })
         expect(result.mask).toEqual({
+            author: {
+                id: true,
+                posts: {
+                    thread: {
+                        creatorId: true
+                    }
+                }
+            },
             thread: true
         })
     })

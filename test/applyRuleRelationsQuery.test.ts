@@ -1,4 +1,5 @@
 
+import { applyIncludeSelectQuery } from '../src/applyIncludeSelectQuery'
 import { applyRuleRelationsQuery } from '../src/applyRuleRelationsQuery'
 import { abilityBuilder } from './abilities'
 
@@ -238,5 +239,63 @@ describe('apply rule relations query', () => {
     })
     expect(mask).toEqual({ posts: true })
   })
+  it('applies select method on nested permission', () => {
+    const { can, cannot, build } = abilityBuilder()
+    can('read', 'Post', 'id', {
+      author: {
+        is: {
+          threads: {
+            some: {
+              id: 0
+            }
+          }
+        }
+      }
+    })
 
+    const includeArgs = applyIncludeSelectQuery(build(), { include: { posts: true } }, 'User')
+
+    const { args, mask } = applyRuleRelationsQuery(includeArgs, build(), 'read', 'User')
+    expect(mask).toEqual({
+      posts: {
+        author: {
+          threads: {
+            id: true
+          }
+        }
+      }
+    })
+    expect(args?.include).toEqual({
+      posts: {
+        where: {
+          AND: [{
+            OR: [{
+              author: {
+                is: {
+                  threads: {
+                    some: {
+                      id: 0
+                    }
+                  }
+                }
+              },
+            }]
+          }]
+
+        },
+        include: {
+          author: {
+            select: {
+              threads: {
+                select: {
+                  id: true
+                }
+              }
+            }
+          }
+        }
+
+      }
+    })
+  })
 })

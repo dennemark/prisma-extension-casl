@@ -16,7 +16,7 @@ export function getRuleRelationsQuery(model: string, ast: any, dataRelationQuery
         const relation = relationFieldsByModel[model]
         if (childAst.field) {
           if (childAst.field in relation) {
-            const dataInclude = childAst.field in obj ? obj[childAst.field] : {}
+            const dataInclude = obj[childAst.field] !== undefined ? obj[childAst.field] : {}
             obj[childAst.field] = {
               select: getRuleRelationsQuery(relation[childAst.field].type, childAst.value, dataInclude === true ? {} : dataInclude.select)
             }

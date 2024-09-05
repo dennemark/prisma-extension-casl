@@ -454,7 +454,7 @@ describe('prisma extension casl', () => {
 
 
 
-        it('does not include nested fields if query does not include properties to check for rules', async () => {
+        it('does include nested fields if query does not include properties to check for rules', async () => {
             function builderFactory() {
                 const builder = abilityBuilder()
                 const { can, cannot } = builder
@@ -491,7 +491,7 @@ describe('prisma extension casl', () => {
                     }
                 },
             })
-            expect(result).toEqual({ author: { email: '1' } })
+            expect(result).toEqual({ author: { email: '1', posts: [{ id: 1 }] } })
         })
 
         it('includes nested fields if query does not include properties to check for rules', async () => {
