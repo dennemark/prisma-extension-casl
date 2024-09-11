@@ -144,6 +144,22 @@ describe('apply casl to query', () => {
             id: true
         })
     })
+    it.only('removes where condition on create', () => {
+        const { can, build } = abilityBuilder()
+        can('create', 'Post')
+        can('read', 'User', ['email'], {})
+        can('read', 'User', ['email', 'id'], {
+            id: 0
+        })
+        const abilities = build()
+        const result = applyCaslToQuery('create', {
+            include: {
+                author: true
+            }
+        }, abilities, 'Post')
+        expect(result.args).toEqual({ include: { author: true } })
+        expect(result.mask).toEqual({})
+    })
     Object.entries(caslOperationDict).map(([operation, settings]) => {
         it(`${operation} applies ${settings.dataQuery ? 'data' : 'no data'} ${settings.whereQuery ? 'where' : 'no where'} and ${settings.includeSelectQuery ? 'include/select' : 'no include/select'} query`, () => {
             const { can, build } = abilityBuilder()
