@@ -1,5 +1,12 @@
 
 
+## [0.5.13](https://github.com/dennemark/prisma-extension-casl/compare/0.5.12...0.5.13) (2024-09-11)
+
+
+### Bug Fixes
+
+* :bug: remove where query on creation if it was added by includeSelect ([9ca163d](https://github.com/dennemark/prisma-extension-casl/commit/9ca163dc646dcb2eb204b086db6afc3554e7e8b9))
+
 ## [0.5.12](https://github.com/dennemark/prisma-extension-casl/compare/0.5.11...0.5.12) (2024-09-05)
 
 

@@ -1182,6 +1182,9 @@ function applyCaslToQuery(operation, args, abilities, model) {
   }
   if (operationAbility.includeSelectQuery) {
     args = applyIncludeSelectQuery(abilities, args, model);
+    if (!operationAbility.whereQuery && args.where) {
+      delete args.where;
+    }
   } else {
     delete args.include;
     delete args.select;
