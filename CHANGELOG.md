@@ -1,5 +1,12 @@
 
 
+## [0.5.14](https://github.com/dennemark/prisma-extension-casl/compare/0.5.13...0.5.14) (2024-09-16)
+
+
+### Bug Fixes
+
+* :bug: carry abilities on interactive transaction ([8bd64e0](https://github.com/dennemark/prisma-extension-casl/commit/8bd64e03f30ba70efb22a46b16bb87fb1655422f))
+
 ## [0.5.13](https://github.com/dennemark/prisma-extension-casl/compare/0.5.12...0.5.13) (2024-09-11)
 
 

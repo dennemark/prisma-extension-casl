@@ -1267,6 +1267,7 @@ function useCaslAbilities(getAbilityFactory) {
         $allModels: {
           async $allOperations({ args, query, model, operation, ...rest }) {
             const op = operation === "createMany" ? "createManyAndReturn" : operation;
+            const transaction = rest.__internalParams.transaction;
             const debug = process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test" && args.debugCasl;
             delete args.debugCasl;
             const perf = debug ? performance : void 0;
@@ -1285,7 +1286,10 @@ function useCaslAbilities(getAbilityFactory) {
               return query(args);
             }
             perf?.mark("prisma-casl-extension-0");
-            const abilities = getAbilities().build();
+            const abilities = transaction?.abilities ?? getAbilities().build();
+            if (transaction) {
+              transaction.abilities = abilities;
+            }
             getAbilities = () => getAbilityFactory();
             perf?.mark("prisma-casl-extension-1");
             const caslQuery = applyCaslToQuery(operation, args, abilities, model);
@@ -1313,8 +1317,7 @@ function useCaslAbilities(getAbilityFactory) {
             };
             const operationAbility = caslOperationDict[operation];
             if (operationAbility.action === "update" || operationAbility.action === "create") {
-              if (rest.__internalParams.transaction) {
-                const transaction = rest.__internalParams.transaction;
+              if (transaction) {
                 if (transaction.kind === "itx") {
                   const transactionClient = client._createItxClient(transaction);
                   return transactionClient[model][op](caslQuery.args).then(cleanupResults);
