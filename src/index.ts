@@ -45,7 +45,7 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
                 $allModels: {
                     async $allOperations<T>({ args, query, model, operation, ...rest }: { args: any, query: any, model: any, operation: any }) {
                         const op = operation === 'createMany' ? 'createManyAndReturn' : operation
-
+                        const transaction = (rest as any).__internalParams.transaction
                         const debug = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' && args.debugCasl
                         delete args.debugCasl
                         const perf = debug ? performance : undefined
@@ -61,15 +61,16 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
                         perf?.clearMarks('prisma-casl-extension-3')
                         perf?.clearMarks('prisma-casl-extension-4')
 
-
                         if (!(op in caslOperationDict)) {
                             return query(args)
                         }
 
 
                         perf?.mark('prisma-casl-extension-0')
-
-                        const abilities = getAbilities().build()
+                        const abilities = transaction?.abilities ?? getAbilities().build()
+                        if (transaction) {
+                            transaction.abilities = abilities
+                        }
                         // reset alteration of getAblities function
                         getAbilities = () => getAbilityFactory()
                         perf?.mark('prisma-casl-extension-1')
@@ -114,8 +115,7 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
                          * for reads and deletes we skip the transaction
                          */
                         if (operationAbility.action === 'update' || operationAbility.action === 'create') {
-                            if ((rest as any).__internalParams.transaction) {
-                                const transaction = (rest as any).__internalParams.transaction
+                            if (transaction) {
                                 if (transaction.kind === 'itx') {
                                     const transactionClient = (client as any)._createItxClient(transaction)
                                     return transactionClient[model][op](caslQuery.args).then(cleanupResults)

@@ -278,6 +278,36 @@ describe('prisma extension casl', () => {
 
 
         })
+        it('creates within an existing interactive transaction with $casl application on transaction', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            expect(await
+                client.$casl((abilities) => {
+                    abilities.can('read', 'User', 'email')
+                    abilities.can('create', 'User')
+                    return abilities
+                }).$transaction(async (tx) => {
+                    return [await tx.user.create({
+                        data: {
+                            email: 'second-mail',
+                        }
+                    }),
+                    await tx.user.create({
+                        data: {
+                            email: 'third-mail'
+                        }
+                    })]
+                })
+            ).toEqual([{ "email": "second-mail" }, { "email": "third-mail" }])
+
+
+        })
     })
     describe('findUnique', () => {
 
