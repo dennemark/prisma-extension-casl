@@ -66,9 +66,12 @@ export function applyDataQuery(
         // get all mutation arg fields and if they are short code connect (userId instead of user: { connect: id }), we convert it
         const queriedFields = (mutation ? Object.keys(mutation) : []).map((field) => {
             const relationModelId = propertyFieldsByModel[model][field]
-            if (relationModelId) {
-                mutation[relationModelId] = { connect: { id: mutation[field] } }
-                delete mutation[field]
+            if (relationModelId && mutation[field] !== null) {
+                const fieldId = relationFieldsByModel[model][relationModelId].relationToFields?.[0]
+                if (fieldId) {
+                    mutation[relationModelId] = { connect: { [fieldId]: mutation[field] } }
+                    delete mutation[field]
+                }
                 return relationModelId
             } else {
                 return field
