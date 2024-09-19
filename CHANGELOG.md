@@ -1,5 +1,12 @@
 
 
+## [0.5.16](https://github.com/dennemark/prisma-extension-casl/compare/0.5.15...0.5.16) (2024-09-19)
+
+
+### Bug Fixes
+
+* :bug: filter empty accessibly Query ([ed06804](https://github.com/dennemark/prisma-extension-casl/commit/ed068048cfb016140c1036dd6669c2f60d50fb97))
+
 ## [0.5.15](https://github.com/dennemark/prisma-extension-casl/compare/0.5.14...0.5.15) (2024-09-19)
 
 

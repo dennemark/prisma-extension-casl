@@ -807,13 +807,17 @@ var m5 = st2();
 
 // src/applyAccessibleQuery.ts
 function applyAccessibleQuery(query, accessibleQuery) {
-  return {
-    ...query,
-    AND: [
-      ...query.AND ?? [],
-      accessibleQuery
-    ]
-  };
+  if (accessibleQuery && Object.keys(accessibleQuery).length > 0) {
+    return {
+      ...query,
+      AND: [
+        ...query.AND ?? [],
+        accessibleQuery
+      ]
+    };
+  } else {
+    return query;
+  }
 }
 
 // src/helpers.ts
