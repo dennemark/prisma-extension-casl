@@ -9,12 +9,16 @@
  * @returns enriched query
  */
 export function applyAccessibleQuery(query: any, accessibleQuery: any) {
-    return {
-        ...query,
-        AND: [
-            ...(query.AND ?? []),
-            accessibleQuery
-        ]
+    if (accessibleQuery && Object.keys(accessibleQuery).length > 0) {
+        return {
+            ...query,
+            AND: [
+                ...(query.AND ?? []),
+                accessibleQuery
+            ]
 
+        }
+    } else {
+        return query
     }
 }

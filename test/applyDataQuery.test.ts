@@ -10,7 +10,7 @@ describe('apply data query', () => {
         can('update', 'Post')
         can('update', 'User')
         const result = applyDataQuery(build(), { data: { authorId: 0 }, where: { id: 0 } }, 'update', 'Post')
-        expect(result.args).toEqual({ data: { author: { connect: { id: 0, AND: [{}] } } }, where: { id: 0, AND: [{}] } })
+        expect(result.args).toEqual({ data: { author: { connect: { id: 0, } } }, where: { id: 0, } })
         expect(result.creationTree).toEqual({ children: { "author": { children: {}, model: 'User', action: "update" } }, model: 'Post', action: "update" })
     })
     it('throws error if update on connection is not allowed', () => {
@@ -64,7 +64,7 @@ describe('apply data query', () => {
             can('update', 'User', { id: 0 })
             can('create', 'User')
             const result = applyDataQuery(build(), { data: { creator: { upsert: { create: { email: '-1' }, update: { email: '-1' }, where: { id: 1 } } } }, where: { id: 0 } }, 'update', 'Thread')
-            expect(result.args).toEqual({ data: { creator: { upsert: { create: { email: '-1' }, update: { email: '-1' }, where: { id: 1, AND: [{ OR: [{ id: 0 }] }] } } } }, where: { id: 0, AND: [{}] } })
+            expect(result.args).toEqual({ data: { creator: { upsert: { create: { email: '-1' }, update: { email: '-1' }, where: { id: 1, AND: [{ OR: [{ id: 0 }] }] } } } }, where: { id: 0, } })
             expect(result.creationTree).toEqual({
                 action: 'update',
                 model: 'Thread',
@@ -254,7 +254,7 @@ describe('apply data query', () => {
             can('update', 'Thread')
 
             const result = applyDataQuery(build(), { data: { id: 1, posts: { update: { data: { thread: { update: { id: 0 } } }, where: { id: 0 } } } }, where: { id: 0 } }, 'update', 'User')
-            expect(result.args).toEqual({ data: { id: 1, posts: { update: { data: { thread: { update: { id: 0 } } }, where: { id: 0, AND: [{}] } } } }, where: { id: 0, AND: [{}] } })
+            expect(result.args).toEqual({ data: { id: 1, posts: { update: { data: { thread: { update: { id: 0 } } }, where: { id: 0, } } } }, where: { id: 0, } })
             expect(result.creationTree).toEqual({ children: { posts: { children: { thread: { children: {}, model: 'Thread', action: "update" } }, model: 'Post', action: "update" } }, model: 'User', action: "update" })
         })
         it('throws error if data in nested nested update is not allowed', () => {
