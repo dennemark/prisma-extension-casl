@@ -1,5 +1,12 @@
 
 
+## [0.5.18](https://github.com/dennemark/prisma-extension-casl/compare/0.5.17...0.5.18) (2024-09-19)
+
+
+### Bug Fixes
+
+* :bug: rule relation selection bing null ([0300772](https://github.com/dennemark/prisma-extension-casl/commit/03007724dc9f7693052ba44376dfe537903913b6))
+
 ## [0.5.17](https://github.com/dennemark/prisma-extension-casl/compare/0.5.16...0.5.17) (2024-09-19)
 
 
