@@ -1,5 +1,12 @@
 
 
+## [0.5.17](https://github.com/dennemark/prisma-extension-casl/compare/0.5.16...0.5.17) (2024-09-19)
+
+
+### Bug Fixes
+
+* :bug: allow null query ([119ba28](https://github.com/dennemark/prisma-extension-casl/commit/119ba2821b498187a2b5dff3df2cae33c757aeca))
+
 ## [0.5.16](https://github.com/dennemark/prisma-extension-casl/compare/0.5.15...0.5.16) (2024-09-19)
 
 

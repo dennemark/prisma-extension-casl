@@ -926,9 +926,12 @@ function applyDataQuery(abilities, args, action, model, creationTree) {
   mutationArgs.map((mutation) => {
     const queriedFields = (mutation ? Object.keys(mutation) : []).map((field) => {
       const relationModelId = propertyFieldsByModel[model][field];
-      if (relationModelId) {
-        mutation[relationModelId] = { connect: { id: mutation[field] } };
-        delete mutation[field];
+      if (relationModelId && mutation[field] !== null) {
+        const fieldId = relationFieldsByModel[model][relationModelId].relationToFields?.[0];
+        if (fieldId) {
+          mutation[relationModelId] = { connect: { [fieldId]: mutation[field] } };
+          delete mutation[field];
+        }
         return relationModelId;
       } else {
         return field;
