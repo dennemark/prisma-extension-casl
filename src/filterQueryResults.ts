@@ -31,7 +31,8 @@ export function filterQueryResults(result: any, mask: any, creationTree: Creatio
             const relationField = relationFieldsByModel[model][field]
             if (relationField) {
                 const nestedCreationTree = creationTree && field in creationTree.children ? creationTree.children[field] : undefined
-                entry[field] = filterQueryResults(entry[field], mask?.[field], nestedCreationTree, abilities, relationField.type)
+                const res = filterQueryResults(entry[field], mask?.[field], nestedCreationTree, abilities, relationField.type)
+                entry[field] = Array.isArray(res) ? res.length > 0 ? res : null : res
             }
             if ((!permittedFields.includes(field) && !relationField) || mask?.[field] === true) {
                 delete entry[field]
@@ -48,8 +49,7 @@ export function filterQueryResults(result: any, mask: any, creationTree: Creatio
         return hasKeys && Object.keys(entry).length > 0 ? entry : null
     }
     if (Array.isArray(result)) {
-        const arr = result.map((entry) => filterPermittedFields(entry)).filter((x) => x)
-        return arr.length > 0 ? arr : null
+        return result.map((entry) => filterPermittedFields(entry)).filter((x) => x)
     } else {
         return filterPermittedFields(result)
     }

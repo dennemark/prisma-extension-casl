@@ -144,7 +144,7 @@ describe('apply casl to query', () => {
             id: true
         })
     })
-    it.only('removes where condition on create', () => {
+    it('removes where condition on create', () => {
         const { can, build } = abilityBuilder()
         can('create', 'Post')
         can('read', 'User', ['email'], {})
