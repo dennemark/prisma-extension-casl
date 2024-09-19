@@ -1,5 +1,12 @@
 
 
+## [0.5.15](https://github.com/dennemark/prisma-extension-casl/compare/0.5.14...0.5.15) (2024-09-19)
+
+
+### Bug Fixes
+
+* :bug: allow return of empty array ([0129cd6](https://github.com/dennemark/prisma-extension-casl/commit/0129cd6f21bf4bc34278fcf717550ae4f176ec53))
+
 ## [0.5.14](https://github.com/dennemark/prisma-extension-casl/compare/0.5.13...0.5.14) (2024-09-16)
 
 

@@ -1246,7 +1246,8 @@ function filterQueryResults(result, mask, creationTree, abilities, model) {
       const relationField = relationFieldsByModel[model][field];
       if (relationField) {
         const nestedCreationTree = creationTree && field in creationTree.children ? creationTree.children[field] : void 0;
-        entry[field] = filterQueryResults(entry[field], mask?.[field], nestedCreationTree, abilities, relationField.type);
+        const res = filterQueryResults(entry[field], mask?.[field], nestedCreationTree, abilities, relationField.type);
+        entry[field] = Array.isArray(res) ? res.length > 0 ? res : null : res;
       }
       if (!permittedFields.includes(field) && !relationField || mask?.[field] === true) {
         delete entry[field];
@@ -1262,8 +1263,7 @@ function filterQueryResults(result, mask, creationTree, abilities, model) {
     return hasKeys && Object.keys(entry).length > 0 ? entry : null;
   };
   if (Array.isArray(result)) {
-    const arr = result.map((entry) => filterPermittedFields(entry)).filter((x5) => x5);
-    return arr.length > 0 ? arr : null;
+    return result.map((entry) => filterPermittedFields(entry)).filter((x5) => x5);
   } else {
     return filterPermittedFields(result);
   }
