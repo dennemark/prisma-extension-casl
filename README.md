@@ -159,3 +159,9 @@ Here are some performance metrics for the above query for the small test sqlite 
 #### Nested fields and wildcards are not supported / tested
 
 `can('read', 'User', ['nested.field', 'field.*'])` probably won't work.
+
+#### Combined relation fields are not supported
+
+`entry Relation @relation(fields: [entryIdA, entryIdB], references: [refA, refB])` does not work.
+`entry Relation @relation(fields: [entryId], references: [ref])` does work.
+Since internally a relation like `entryId: someId` might be replaced by `entry: { connect: { ref: someId, ...caslConditions } }`

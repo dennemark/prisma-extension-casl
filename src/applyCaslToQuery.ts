@@ -6,6 +6,7 @@ import { applyIncludeSelectQuery } from "./applyIncludeSelectQuery"
 import { applyRuleRelationsQuery } from './applyRuleRelationsQuery'
 import { applyWhereQuery } from "./applyWhereQuery"
 import { caslOperationDict, PrismaCaslOperation } from "./helpers"
+import { transformDataToWhereQuery } from "./transformDataToWhereQuery"
 
 /**
  * Applies CASL authorization logic to prisma query
@@ -26,6 +27,9 @@ export function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abil
         const { args: dataArgs, creationTree: dataCreationTree } = applyDataQuery(abilities, args.data, operationAbility.action, model)
         creationTree = dataCreationTree
         args.data = dataArgs
+        if (operation === 'updateMany') {
+            args = transformDataToWhereQuery(args, model)
+        }
     }
 
 
