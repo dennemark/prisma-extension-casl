@@ -1,5 +1,12 @@
 
 
+## [0.5.19](https://github.com/dennemark/prisma-extension-casl/compare/0.5.18...0.5.19) (2024-09-20)
+
+
+### Bug Fixes
+
+* :bug: retransform data query on updateMany query ([a327b0e](https://github.com/dennemark/prisma-extension-casl/commit/a327b0e7d8f5b8987fd18281cc5330f5ab29d8b9))
+
 ## [0.5.18](https://github.com/dennemark/prisma-extension-casl/compare/0.5.17...0.5.18) (2024-09-19)
 
 

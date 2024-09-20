@@ -1204,6 +1204,38 @@ function getNestedQueryRelations(args, abilities, action, model, creationSelectQ
   return queryRelations;
 }
 
+// src/transformDataToWhereQuery.ts
+function transformDataToWhereQuery(args, model) {
+  ;
+  ["connect", "disconnect"].forEach((action) => {
+    Object.entries(args.data).forEach(([relation, obj]) => {
+      if (typeof obj === "object" && !Array.isArray(obj) && obj[action]) {
+        const ANDArgs = { AND: [...obj[action].AND ?? [], ...args.where[relation]?.AND ?? []] };
+        const relationTo = relationFieldsByModel[model][relation].relationToFields?.[0];
+        const relationFrom = relationFieldsByModel[model][relation].relationFromFields?.[0];
+        if (!relationTo || !relationFrom) {
+          throw new Error("Cannot find correct relations to transform updateMany to casl query.");
+        }
+        args.where = {
+          ...args.where ?? {},
+          [relation]: {
+            ...args.where[relation] ?? {},
+            ...obj[action],
+            ...ANDArgs.AND.length > 0 ? ANDArgs : {}
+          }
+        };
+        args.data = {
+          ...args.data,
+          [relationFrom]: obj[action][relationTo]
+        };
+        delete args.data[relation];
+        delete args.where[relation][relationTo];
+      }
+    });
+  });
+  return args;
+}
+
 // src/applyCaslToQuery.ts
 function applyCaslToQuery(operation, args, abilities, model) {
   const operationAbility = caslOperationDict[operation];
@@ -1213,6 +1245,9 @@ function applyCaslToQuery(operation, args, abilities, model) {
     const { args: dataArgs, creationTree: dataCreationTree } = applyDataQuery(abilities, args.data, operationAbility.action, model);
     creationTree = dataCreationTree;
     args.data = dataArgs;
+    if (operation === "updateMany") {
+      args = transformDataToWhereQuery(args, model);
+    }
   }
   if (operationAbility.whereQuery) {
     args = applyWhereQuery(abilities, args, operationAbility.action, model);
