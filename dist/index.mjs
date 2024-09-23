@@ -947,14 +947,16 @@ function applyDataQuery(abilities, args, action, model, creationTree) {
             const mutationAction = caslNestedOperationDict[nestedAction];
             const isConnection = nestedAction === "connect" || nestedAction === "disconnect";
             tree.children[field] = { action: mutationAction, model: relationModel.type, children: {} };
-            const dataQuery = applyDataQuery(abilities, nestedArgs, mutationAction, relationModel.type, tree.children[field]);
-            mutation[field][nestedAction] = dataQuery.args;
-            if (isConnection) {
-              const accessibleQuery2 = m5(abilities, mutationAction)[relationModel.type];
-              if (Array.isArray(mutation[field][nestedAction])) {
-                mutation[field][nestedAction] = mutation[field][nestedAction].map((q4) => applyAccessibleQuery(q4, accessibleQuery2));
-              } else {
-                mutation[field][nestedAction] = applyAccessibleQuery(mutation[field][nestedAction], accessibleQuery2);
+            if (nestedAction !== "disconnect" && nestedArgs !== true) {
+              const dataQuery = applyDataQuery(abilities, nestedArgs, mutationAction, relationModel.type, tree.children[field]);
+              mutation[field][nestedAction] = dataQuery.args;
+              if (isConnection) {
+                const accessibleQuery2 = m5(abilities, mutationAction)[relationModel.type];
+                if (Array.isArray(mutation[field][nestedAction])) {
+                  mutation[field][nestedAction] = mutation[field][nestedAction].map((q4) => applyAccessibleQuery(q4, accessibleQuery2));
+                } else {
+                  mutation[field][nestedAction] = applyAccessibleQuery(mutation[field][nestedAction], accessibleQuery2);
+                }
               }
             }
           } else {

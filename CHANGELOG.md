@@ -1,5 +1,12 @@
 
 
+## [0.5.20](https://github.com/dennemark/prisma-extension-casl/compare/0.5.19...0.5.20) (2024-09-23)
+
+
+### Bug Fixes
+
+* :bug: disconnect equals true for one to one relationship ([43d884d](https://github.com/dennemark/prisma-extension-casl/commit/43d884d359f17aeb5c8d07a4e2245b443634a11f))
+
 ## [0.5.19](https://github.com/dennemark/prisma-extension-casl/compare/0.5.18...0.5.19) (2024-09-20)
 
 
