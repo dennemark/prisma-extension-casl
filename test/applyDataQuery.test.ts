@@ -125,6 +125,20 @@ describe('apply data query', () => {
         })
 
     })
+    describe('disconnect', () => {
+        it('accepts disconnect: true', () => {
+            const { can, build } = abilityBuilder()
+            can('update', 'User', {
+                id: 0
+            })
+            can('update', 'Post', {
+                id: 1
+            })
+            const result = applyDataQuery(build(), { data: { id: 1, posts: { disconnect: true } }, where: { id: 0 } }, 'update', 'User')
+            expect(result.args).toEqual({ data: { id: 1, posts: { disconnect: true } }, where: { id: 0, AND: [{ OR: [{ id: 0 }] }] } })
+            expect(result.creationTree).toEqual({ children: { posts: { children: {}, action: 'update', model: 'Post', } }, model: 'User', action: "update" })
+        })
+    })
     describe('connectOrCreate', () => {
         it('adds where and connection clause in nested connection update', () => {
             const { can, build } = abilityBuilder()

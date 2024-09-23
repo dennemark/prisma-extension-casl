@@ -92,16 +92,18 @@ export function applyDataQuery(
                         const isConnection = nestedAction === 'connect' || nestedAction === 'disconnect'
 
                         tree.children[field] = { action: mutationAction, model: relationModel.type as Prisma.ModelName, children: {} }
-                        const dataQuery = applyDataQuery(abilities, nestedArgs, mutationAction, relationModel.type, tree.children[field])
-                        mutation[field][nestedAction] = dataQuery.args
-                        // connection works like a where query, so we apply it
-                        if (isConnection) {
-                            const accessibleQuery = accessibleBy(abilities, mutationAction)[relationModel.type as Prisma.ModelName]
+                        if (nestedAction !== 'disconnect' && nestedArgs !== true) {
+                            const dataQuery = applyDataQuery(abilities, nestedArgs, mutationAction, relationModel.type, tree.children[field])
+                            mutation[field][nestedAction] = dataQuery.args
+                            // connection works like a where query, so we apply it
+                            if (isConnection) {
+                                const accessibleQuery = accessibleBy(abilities, mutationAction)[relationModel.type as Prisma.ModelName]
 
-                            if (Array.isArray(mutation[field][nestedAction])) {
-                                mutation[field][nestedAction] = mutation[field][nestedAction].map((q) => applyAccessibleQuery(q, accessibleQuery))
-                            } else {
-                                mutation[field][nestedAction] = applyAccessibleQuery(mutation[field][nestedAction], accessibleQuery)
+                                if (Array.isArray(mutation[field][nestedAction])) {
+                                    mutation[field][nestedAction] = mutation[field][nestedAction].map((q) => applyAccessibleQuery(q, accessibleQuery))
+                                } else {
+                                    mutation[field][nestedAction] = applyAccessibleQuery(mutation[field][nestedAction], accessibleQuery)
+                                }
                             }
                         }
                     } else {
