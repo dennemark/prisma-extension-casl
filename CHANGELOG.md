@@ -1,5 +1,12 @@
 
 
+## [0.6.1](https://github.com/dennemark/prisma-extension-casl/compare/0.6.0...0.6.1) (2024-09-24)
+
+
+### Bug Fixes
+
+* :bug: debug only when debugCasl true ([89970dd](https://github.com/dennemark/prisma-extension-casl/commit/89970dd18cd58bf8f85655b33be8ff7f13c82790))
+
 ## [0.6.0](https://github.com/dennemark/prisma-extension-casl/compare/0.5.20...0.6.0) (2024-09-24)
 
 

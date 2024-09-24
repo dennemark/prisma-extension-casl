@@ -1342,7 +1342,7 @@ function useCaslAbilities(getAbilityFactory, permissionField) {
           async $allOperations({ args, query, model, operation, ...rest }) {
             const op = operation === "createMany" ? "createManyAndReturn" : operation;
             const transaction = rest.__internalParams.transaction;
-            const debug = process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test" && args.debugCasl;
+            const debug = (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") && args.debugCasl;
             delete args.debugCasl;
             const perf = debug ? performance : void 0;
             const logger = debug ? console : void 0;
