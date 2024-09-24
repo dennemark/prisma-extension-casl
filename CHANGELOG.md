@@ -1,5 +1,12 @@
 
 
+## [0.6.0](https://github.com/dennemark/prisma-extension-casl/compare/0.5.20...0.6.0) (2024-09-24)
+
+
+### Features
+
+* :sparkles: add possibility to store simplified crud rights on model ([7130a33](https://github.com/dennemark/prisma-extension-casl/commit/7130a3367c9fe0810cc5406f861eee1e0991098c))
+
 ## [0.5.20](https://github.com/dennemark/prisma-extension-casl/compare/0.5.19...0.5.20) (2024-09-23)
 
 

@@ -1152,6 +1152,7 @@ function getNestedQueryRelations(args, abilities, action, model, creationSelectQ
   const ability = e3(abilities.rules.filter((rule) => rule.conditions).map((rule) => {
     return {
       ...rule,
+      action: action === "all" ? action : rule.action,
       inverted: false
     };
   }));
@@ -1214,7 +1215,7 @@ function transformDataToWhereQuery(args, model) {
 }
 
 // src/applyCaslToQuery.ts
-function applyCaslToQuery(operation, args, abilities, model) {
+function applyCaslToQuery(operation, args, abilities, model, queryAllRuleRelations) {
   const operationAbility = caslOperationDict[operation];
   m5(abilities, operationAbility.action)[model];
   let creationTree = void 0;
@@ -1238,12 +1239,35 @@ function applyCaslToQuery(operation, args, abilities, model) {
     delete args.include;
     delete args.select;
   }
-  const result = operationAbility.includeSelectQuery ? applyRuleRelationsQuery(args, abilities, operationAbility.action, model, creationTree) : { args, mask: void 0, creationTree };
+  const result = operationAbility.includeSelectQuery ? applyRuleRelationsQuery(args, abilities, queryAllRuleRelations ? "all" : operationAbility.action, model, creationTree) : { args, mask: void 0, creationTree };
   return result;
 }
 
+// src/storePermissions.ts
+function storePermissions(result, abilities, model, prop) {
+  if (prop === void 0) {
+    return result;
+  }
+  const actions = ["create", "read", "update", "delete"];
+  const storeProp = (entry) => {
+    entry[prop] = [];
+    actions.forEach((action) => {
+      if (abilities.can(action, getSubject(model, entry))) {
+        entry[prop].push(action);
+      }
+    });
+    return entry;
+  };
+  if (Array.isArray(result)) {
+    const res = result.map(storeProp);
+    return res;
+  } else {
+    return storeProp(result);
+  }
+}
+
 // src/filterQueryResults.ts
-function filterQueryResults(result, mask, creationTree, abilities, model) {
+function filterQueryResults(result, mask, creationTree, abilities, model, permissionField) {
   if (typeof result === "number") {
     return result;
   }
@@ -1266,7 +1290,7 @@ function filterQueryResults(result, mask, creationTree, abilities, model) {
     }
     const permittedFields = getPermittedFields(abilities, "read", model, entry);
     let hasKeys = false;
-    Object.keys(entry).forEach((field) => {
+    Object.keys(entry).filter((field) => field !== permissionField).forEach((field) => {
       const relationField = relationFieldsByModel[model][field];
       if (relationField) {
         const nestedCreationTree = creationTree && field in creationTree.children ? creationTree.children[field] : void 0;
@@ -1286,15 +1310,16 @@ function filterQueryResults(result, mask, creationTree, abilities, model) {
     });
     return hasKeys && Object.keys(entry).length > 0 ? entry : null;
   };
-  if (Array.isArray(result)) {
-    return result.map((entry) => filterPermittedFields(entry)).filter((x5) => x5);
+  const permissionResult = storePermissions(result, abilities, model, permissionField);
+  if (Array.isArray(permissionResult)) {
+    return permissionResult.map((entry) => filterPermittedFields(entry)).filter((x5) => x5);
   } else {
-    return filterPermittedFields(result);
+    return filterPermittedFields(permissionResult);
   }
 }
 
 // src/index.ts
-function useCaslAbilities(getAbilityFactory) {
+function useCaslAbilities(getAbilityFactory, permissionField) {
   return Prisma2.defineExtension((client) => {
     let getAbilities = () => getAbilityFactory();
     return client.$extends({
@@ -1341,13 +1366,13 @@ function useCaslAbilities(getAbilityFactory) {
             }
             getAbilities = () => getAbilityFactory();
             perf?.mark("prisma-casl-extension-1");
-            const caslQuery = applyCaslToQuery(operation, args, abilities, model);
+            const caslQuery = applyCaslToQuery(operation, args, abilities, model, permissionField ? true : false);
             perf?.mark("prisma-casl-extension-2");
             logger?.log("Query Args", JSON.stringify(caslQuery.args));
             logger?.log("Query Mask", JSON.stringify(caslQuery.mask));
             const cleanupResults = (result) => {
               perf?.mark("prisma-casl-extension-3");
-              const res = filterQueryResults(result, caslQuery.mask, caslQuery.creationTree, abilities, getFluentModel(model, rest));
+              const filteredResult = filterQueryResults(result, caslQuery.mask, caslQuery.creationTree, abilities, getFluentModel(model, rest), permissionField);
               if (perf) {
                 perf.mark("prisma-casl-extension-4");
                 logger?.log(
@@ -1362,7 +1387,7 @@ function useCaslAbilities(getAbilityFactory) {
                   })
                 );
               }
-              return operation === "createMany" ? { count: res.length } : res;
+              return operation === "createMany" ? { count: filteredResult.length } : filteredResult;
             };
             const operationAbility = caslOperationDict[operation];
             if (operationAbility.action === "update" || operationAbility.action === "create") {

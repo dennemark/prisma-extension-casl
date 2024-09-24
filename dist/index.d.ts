@@ -20,7 +20,7 @@ type PrismaCaslOperation = 'create' | 'createMany' | 'createManyAndReturn' | 'up
  * @param model Prisma model
  * @returns Enriched query with casl authorization
  */
-declare function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: Prisma.ModelName): {
+declare function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: Prisma.ModelName, queryAllRuleRelations?: boolean): {
     creationTree: CreationTree | undefined;
     args: any;
     mask: Record<string, any>;
@@ -42,7 +42,7 @@ declare function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abi
  *  - this is a function call to instantiate abilities on each prisma query to allow adding i.e. context or claims
  * @returns enriched prisma client
  */
-declare function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>): (client: any) => {
+declare function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>, permissionField?: string): (client: any) => {
     $extends: {
         extArgs: {
             result: {};
