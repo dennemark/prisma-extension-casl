@@ -46,7 +46,7 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
                     async $allOperations<T>({ args, query, model, operation, ...rest }: { args: any, query: any, model: any, operation: any }) {
                         const op = operation === 'createMany' ? 'createManyAndReturn' : operation
                         const transaction = (rest as any).__internalParams.transaction
-                        const debug = process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test' && args.debugCasl
+                        const debug = (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') && args.debugCasl
                         delete args.debugCasl
                         const perf = debug ? performance : undefined
                         const logger = debug ? console : undefined
