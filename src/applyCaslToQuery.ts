@@ -17,7 +17,7 @@ import { transformDataToWhereQuery } from "./transformDataToWhereQuery"
  * @param model Prisma model
  * @returns Enriched query with casl authorization
  */
-export function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: Prisma.ModelName) {
+export function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: Prisma.ModelName, queryAllRuleRelations?: boolean) {
     const operationAbility = caslOperationDict[operation]
 
     accessibleBy(abilities, operationAbility.action)[model]
@@ -49,7 +49,7 @@ export function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abil
     }
 
     const result = operationAbility.includeSelectQuery
-        ? applyRuleRelationsQuery(args, abilities, operationAbility.action, model, creationTree)
+        ? applyRuleRelationsQuery(args, abilities, queryAllRuleRelations ? 'all' : operationAbility.action, model, creationTree)
         : { args, mask: undefined, creationTree }
 
     return result

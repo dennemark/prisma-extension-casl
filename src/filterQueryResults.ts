@@ -3,8 +3,9 @@ import { PrismaQuery } from "@casl/prisma";
 import { Prisma } from "@prisma/client";
 import { CreationTree } from "./convertCreationTreeToSelect";
 import { getPermittedFields, getSubject, relationFieldsByModel } from "./helpers";
+import { storePermissions } from "./storePermissions";
 
-export function filterQueryResults(result: any, mask: any, creationTree: CreationTree | undefined, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: string) {
+export function filterQueryResults(result: any, mask: any, creationTree: CreationTree | undefined, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: string, permissionField?: string) {
     if (typeof result === 'number') {
         return result
     }
@@ -27,7 +28,7 @@ export function filterQueryResults(result: any, mask: any, creationTree: Creatio
 
         const permittedFields = getPermittedFields(abilities, 'read', model, entry)
         let hasKeys = false
-        Object.keys(entry).forEach((field) => {
+        Object.keys(entry).filter((field) => field !== permissionField).forEach((field) => {
             const relationField = relationFieldsByModel[model][field]
             if (relationField) {
                 const nestedCreationTree = creationTree && field in creationTree.children ? creationTree.children[field] : undefined
@@ -48,9 +49,10 @@ export function filterQueryResults(result: any, mask: any, creationTree: Creatio
 
         return hasKeys && Object.keys(entry).length > 0 ? entry : null
     }
-    if (Array.isArray(result)) {
-        return result.map((entry) => filterPermittedFields(entry)).filter((x) => x)
+    const permissionResult = storePermissions(result, abilities, model, permissionField)
+    if (Array.isArray(permissionResult)) {
+        return permissionResult.map((entry) => filterPermittedFields(entry)).filter((x) => x)
     } else {
-        return filterPermittedFields(result)
+        return filterPermittedFields(permissionResult)
     }
 }

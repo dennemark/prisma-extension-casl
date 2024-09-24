@@ -20,7 +20,7 @@ export { applyCaslToQuery }
  *  - this is a function call to instantiate abilities on each prisma query to allow adding i.e. context or claims
  * @returns enriched prisma client
  */
-export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) {
+export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>, permissionField?: string) {
 
 
     return Prisma.defineExtension((client) => {
@@ -76,7 +76,7 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
                         perf?.mark('prisma-casl-extension-1')
 
 
-                        const caslQuery = applyCaslToQuery(operation, args, abilities, model)
+                        const caslQuery = applyCaslToQuery(operation, args, abilities, model, permissionField ? true : false)
 
 
                         perf?.mark('prisma-casl-extension-2')
@@ -87,8 +87,7 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
 
                             perf?.mark('prisma-casl-extension-3')
 
-
-                            const res = filterQueryResults(result, caslQuery.mask, caslQuery.creationTree, abilities, getFluentModel(model, rest))
+                            const filteredResult = filterQueryResults(result, caslQuery.mask, caslQuery.creationTree, abilities, getFluentModel(model, rest), permissionField)
 
                             if (perf) {
                                 perf.mark('prisma-casl-extension-4')
@@ -104,7 +103,7 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
                                 )
                             }
 
-                            return operation === 'createMany' ? { count: res.length } : res
+                            return operation === 'createMany' ? { count: filteredResult.length } : filteredResult
                         }
                         const operationAbility = caslOperationDict[operation as PrismaCaslOperation]
                         /** 

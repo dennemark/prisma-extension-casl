@@ -136,7 +136,6 @@ export function applyRuleRelationsQuery(args: any, abilities: PureAbility<Abilit
   if ('include' in result.args && Object.keys(result.args.include!).length === 0) {
     delete result.args.include
   }
-
   return { ...result, creationTree }
 }
 
@@ -157,9 +156,11 @@ function getNestedQueryRelations(args: any, abilities: PureAbility<AbilityTuple,
   // if a rule is inverted and if a can rule exists without condition
   // we therefore create fake ability here
   // to get our rule relations query
+  // furthermore if we query for action = 'all' we rename rule action to 'all'
   const ability = createPrismaAbility(abilities.rules.filter((rule) => rule.conditions).map((rule) => {
     return {
       ...rule,
+      action: action === 'all' ? action : rule.action,
       inverted: false
     }
   }))

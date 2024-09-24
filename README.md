@@ -14,6 +14,7 @@
 - Mutating queries will throw errors in a similar format as CASL. `It's not allowed to "update" "email" on "User"`.
 - On nested `connect`, `disconnect`, `upsert` or `connectOrCreate` mutation queries the client assumes an `update` action for insertion or connection.
 - `update` and `create` are wrapped into a transaction, since `create` abilities will be checked on result of mutation and if it was not allowed the transaction will revert the creation. This limits client transactions to interactive transactions only. Sequential transactions are not supported.
+- optionally add a `permissionField` to `useCaslAbilities` to get an array of crud rights of the queried model: `['create', 'read', 'update', 'delete']` which can be used to check abilities client-side conveniently without all the necessary relation queries
 
 ### Examples
 
@@ -32,7 +33,9 @@ function builderFactory() {
   return builder;
 }
 
-const caslClient = prismaClient.$extends(useCaslAbilities(builderFactory));
+const caslClient = prismaClient.$extends(
+  useCaslAbilities(builderFactory, "casl")
+);
 const result = await caslClient.post.findMany({
   include: {
     thread: true,
@@ -56,7 +59,7 @@ const result = await caslClient.post.findMany({
  *    }
  *
  * and result will be filtered and should look like
- * { id: 0, threadId: 0, thread: { id: 0 } }
+ * { id: 0, threadId: 0, thread: { id: 0 }, casl: ['read'] }
  */
 ```
 
