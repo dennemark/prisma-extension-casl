@@ -1,5 +1,12 @@
 
 
+## [0.6.2](https://github.com/dennemark/prisma-extension-casl/compare/0.6.1...0.6.2) (2024-09-25)
+
+
+### Bug Fixes
+
+* :bug: fluent model masking ([0ad74b6](https://github.com/dennemark/prisma-extension-casl/commit/0ad74b6fa04073115537208299ea4726ca3838e3))
+
 ## [0.6.1](https://github.com/dennemark/prisma-extension-casl/compare/0.6.0...0.6.1) (2024-09-24)
 
 

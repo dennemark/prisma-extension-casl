@@ -1372,7 +1372,12 @@ function useCaslAbilities(getAbilityFactory, permissionField) {
             logger?.log("Query Mask", JSON.stringify(caslQuery.mask));
             const cleanupResults = (result) => {
               perf?.mark("prisma-casl-extension-3");
-              const filteredResult = filterQueryResults(result, caslQuery.mask, caslQuery.creationTree, abilities, getFluentModel(model, rest), permissionField);
+              const fluentModel = getFluentModel(model, rest);
+              if (fluentModel !== model && caslQuery.mask) {
+                const relation = Object.entries(relationFieldsByModel[model]).find(([k2, v5]) => v5.type === fluentModel)?.[0];
+                caslQuery.mask = relation && relation in caslQuery.mask ? caslQuery.mask[relation] : {};
+              }
+              const filteredResult = filterQueryResults(result, caslQuery.mask, caslQuery.creationTree, abilities, fluentModel, permissionField);
               if (perf) {
                 perf.mark("prisma-casl-extension-4");
                 logger?.log(
