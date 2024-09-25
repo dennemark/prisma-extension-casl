@@ -482,8 +482,6 @@ describe('prisma extension casl', () => {
             expect(result2).toEqual({ id: 0, author: { email: '0' } })
         })
 
-
-
         it('does include nested fields if query does not include properties to check for rules', async () => {
             function builderFactory() {
                 const builder = abilityBuilder()
@@ -1558,7 +1556,9 @@ describe('prisma extension casl', () => {
                 const builder = abilityBuilder()
                 const { can, cannot } = builder
 
-                can('read', 'User')
+                can('read', 'User', {
+                    id: 0
+                })
                 can('read', 'Thread')
                 can('read', 'Post', { id: 0 })
                 return builder
@@ -1567,7 +1567,7 @@ describe('prisma extension casl', () => {
                 useCaslAbilities(builderFactory)
             )
             const result = await client.user.findUnique({ where: { id: 0 } }).posts()
-            expect(result).toEqual([{ authorId: 0, id: 0, text: '', threadId: 0 }])
+            expect(result).toEqual([{ authorId: 0, text: '', id: 0, threadId: 0 }])
         })
         it('can do chained queries if abilities exist', async () => {
             function builderFactory() {
@@ -1583,6 +1583,7 @@ describe('prisma extension casl', () => {
             await expect(client.user.findUnique({ where: { id: 0 } }).posts()).rejects.toThrow()
 
         })
+
     })
     describe('store permissions', () => {
         it('has permissions on custom prop on chained queries', async () => {

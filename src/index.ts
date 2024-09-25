@@ -3,7 +3,7 @@ import { PrismaQuery } from '@casl/prisma'
 import { Prisma } from '@prisma/client'
 import { applyCaslToQuery } from './applyCaslToQuery'
 import { filterQueryResults } from './filterQueryResults'
-import { caslOperationDict, getFluentModel, PrismaCaslOperation } from './helpers'
+import { caslOperationDict, getFluentModel, PrismaCaslOperation, propertyFieldsByModel, relationFieldsByModel } from './helpers'
 
 export { applyCaslToQuery }
 
@@ -86,8 +86,14 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
                         const cleanupResults = (result: any) => {
 
                             perf?.mark('prisma-casl-extension-3')
+                            const fluentModel = getFluentModel(model, rest)
 
-                            const filteredResult = filterQueryResults(result, caslQuery.mask, caslQuery.creationTree, abilities, getFluentModel(model, rest), permissionField)
+                            if (fluentModel !== model && caslQuery.mask) {
+                                // on fluent models we need to take mask of the relation
+                                const relation = Object.entries(relationFieldsByModel[model]).find(([k, v]) => v.type === fluentModel)?.[0]
+                                caslQuery.mask = relation && relation in caslQuery.mask ? caslQuery.mask[relation] : {}
+                            }
+                            const filteredResult = filterQueryResults(result, caslQuery.mask, caslQuery.creationTree, abilities, fluentModel, permissionField)
 
                             if (perf) {
                                 perf.mark('prisma-casl-extension-4')
