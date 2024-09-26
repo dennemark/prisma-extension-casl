@@ -1,5 +1,12 @@
 
 
+## [0.6.3](https://github.com/dennemark/prisma-extension-casl/compare/0.6.2...0.6.3) (2024-09-26)
+
+
+### Bug Fixes
+
+* :bug: store permission on null not possible ([3a57167](https://github.com/dennemark/prisma-extension-casl/commit/3a5716789f72cbd2557a88582f5d2234c7e29c9d))
+
 ## [0.6.2](https://github.com/dennemark/prisma-extension-casl/compare/0.6.1...0.6.2) (2024-09-25)
 
 

@@ -1250,12 +1250,14 @@ function storePermissions(result, abilities, model, prop) {
   }
   const actions = ["create", "read", "update", "delete"];
   const storeProp = (entry) => {
-    entry[prop] = [];
-    actions.forEach((action) => {
-      if (abilities.can(action, getSubject(model, entry))) {
-        entry[prop].push(action);
-      }
-    });
+    if (entry) {
+      entry[prop] = [];
+      actions.forEach((action) => {
+        if (abilities.can(action, getSubject(model, entry))) {
+          entry[prop].push(action);
+        }
+      });
+    }
     return entry;
   };
   if (Array.isArray(result)) {
