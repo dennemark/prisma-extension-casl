@@ -8,12 +8,14 @@ export function storePermissions(result: any, abilities: PureAbility<AbilityTupl
   }
   const actions = ['create', 'read', 'update', 'delete'] as const
   const storeProp = (entry: any) => {
-    entry[prop] = []
-    actions.forEach((action) => {
-      if (abilities.can(action, getSubject(model, entry))) {
-        entry[prop].push(action)
-      }
-    })
+    if (entry) {
+      entry[prop] = []
+      actions.forEach((action) => {
+        if (abilities.can(action, getSubject(model, entry))) {
+          entry[prop].push(action)
+        }
+      })
+    }
     return entry
   }
   if (Array.isArray(result)) {
