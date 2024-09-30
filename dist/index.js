@@ -1348,7 +1348,80 @@ function filterQueryResults(result, mask, creationTree, abilities, model, permis
 // src/index.ts
 function useCaslAbilities(getAbilityFactory, permissionField) {
   return import_client2.Prisma.defineExtension((client) => {
-    let getAbilities = () => getAbilityFactory();
+    const allOperations = (getAbilities) => ({
+      async $allOperations({ args, query, model, operation, ...rest }) {
+        const op = operation === "createMany" ? "createManyAndReturn" : operation;
+        const transaction = rest.__internalParams.transaction;
+        const debug = (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") && args.debugCasl;
+        delete args.debugCasl;
+        const perf = debug ? performance : void 0;
+        const logger = debug ? console : void 0;
+        perf?.clearMeasures("prisma-casl-extension-Overall");
+        perf?.clearMeasures("prisma-casl-extension-Create Abilities");
+        perf?.clearMeasures("prisma-casl-extension-Create Casl Query");
+        perf?.clearMeasures("prisma-casl-extension-Finish Query");
+        perf?.clearMeasures("prisma-casl-extension-Filtering Results");
+        perf?.clearMarks("prisma-casl-extension-0");
+        perf?.clearMarks("prisma-casl-extension-1");
+        perf?.clearMarks("prisma-casl-extension-2");
+        perf?.clearMarks("prisma-casl-extension-3");
+        perf?.clearMarks("prisma-casl-extension-4");
+        if (!(op in caslOperationDict)) {
+          return query(args);
+        }
+        perf?.mark("prisma-casl-extension-0");
+        const abilities = transaction?.abilities ?? getAbilities().build();
+        if (transaction) {
+          transaction.abilities = abilities;
+        }
+        perf?.mark("prisma-casl-extension-1");
+        const caslQuery = applyCaslToQuery(operation, args, abilities, model, permissionField ? true : false);
+        perf?.mark("prisma-casl-extension-2");
+        logger?.log("Query Args", JSON.stringify(caslQuery.args));
+        logger?.log("Query Mask", JSON.stringify(caslQuery.mask));
+        const cleanupResults = (result) => {
+          perf?.mark("prisma-casl-extension-3");
+          const fluentModel = getFluentModel(model, rest);
+          if (fluentModel !== model && caslQuery.mask) {
+            const relation = Object.entries(relationFieldsByModel[model]).find(([k2, v5]) => v5.type === fluentModel)?.[0];
+            caslQuery.mask = relation && relation in caslQuery.mask ? caslQuery.mask[relation] : {};
+          }
+          const filteredResult = filterQueryResults(result, caslQuery.mask, caslQuery.creationTree, abilities, fluentModel, permissionField);
+          if (perf) {
+            perf.mark("prisma-casl-extension-4");
+            logger?.log(
+              [
+                perf.measure("prisma-casl-extension-Overall", "prisma-casl-extension-0", "prisma-casl-extension-4"),
+                perf.measure("prisma-casl-extension-Create Abilities", "prisma-casl-extension-0", "prisma-casl-extension-1"),
+                perf.measure("prisma-casl-extension-Create Casl Query", "prisma-casl-extension-1", "prisma-casl-extension-2"),
+                perf.measure("prisma-casl-extension-Finish Query", "prisma-casl-extension-2", "prisma-casl-extension-3"),
+                perf.measure("prisma-casl-extension-Filtering Results", "prisma-casl-extension-3", "prisma-casl-extension-4")
+              ].map((measure) => {
+                return `${measure.name.replace("prisma-casl-extension-", "")}: ${measure.duration}`;
+              })
+            );
+          }
+          return operation === "createMany" ? { count: filteredResult.length } : filteredResult;
+        };
+        const operationAbility = caslOperationDict[operation];
+        if (operationAbility.action === "update" || operationAbility.action === "create") {
+          if (transaction) {
+            if (transaction.kind === "itx") {
+              const transactionClient = client._createItxClient(transaction);
+              return transactionClient[model][op](caslQuery.args).then(cleanupResults);
+            } else if (transaction.kind === "batch") {
+              throw new Error("Sequential transactions are not supported in prisma-extension-casl.");
+            }
+          } else {
+            return client.$transaction(async (tx) => {
+              return tx[model][op](caslQuery.args).then(cleanupResults);
+            });
+          }
+        } else {
+          return query(caslQuery.args).then(cleanupResults);
+        }
+      }
+    });
     return client.$extends({
       name: "prisma-extension-casl",
       client: {
@@ -1359,86 +1432,18 @@ function useCaslAbilities(getAbilityFactory, permissionField) {
         //     });
         // },
         $casl(extendFactory) {
-          const ctx = import_client2.Prisma.getExtensionContext(this);
-          getAbilities = () => extendFactory(getAbilityFactory());
-          return ctx;
+          return client.$extends({
+            query: {
+              $allModels: {
+                ...allOperations(() => extendFactory(getAbilityFactory()))
+              }
+            }
+          });
         }
       },
       query: {
         $allModels: {
-          async $allOperations({ args, query, model, operation, ...rest }) {
-            const op = operation === "createMany" ? "createManyAndReturn" : operation;
-            const transaction = rest.__internalParams.transaction;
-            const debug = (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") && args.debugCasl;
-            delete args.debugCasl;
-            const perf = debug ? performance : void 0;
-            const logger = debug ? console : void 0;
-            perf?.clearMeasures("prisma-casl-extension-Overall");
-            perf?.clearMeasures("prisma-casl-extension-Create Abilities");
-            perf?.clearMeasures("prisma-casl-extension-Create Casl Query");
-            perf?.clearMeasures("prisma-casl-extension-Finish Query");
-            perf?.clearMeasures("prisma-casl-extension-Filtering Results");
-            perf?.clearMarks("prisma-casl-extension-0");
-            perf?.clearMarks("prisma-casl-extension-1");
-            perf?.clearMarks("prisma-casl-extension-2");
-            perf?.clearMarks("prisma-casl-extension-3");
-            perf?.clearMarks("prisma-casl-extension-4");
-            if (!(op in caslOperationDict)) {
-              return query(args);
-            }
-            perf?.mark("prisma-casl-extension-0");
-            const abilities = transaction?.abilities ?? getAbilities().build();
-            if (transaction) {
-              transaction.abilities = abilities;
-            }
-            getAbilities = () => getAbilityFactory();
-            perf?.mark("prisma-casl-extension-1");
-            const caslQuery = applyCaslToQuery(operation, args, abilities, model, permissionField ? true : false);
-            perf?.mark("prisma-casl-extension-2");
-            logger?.log("Query Args", JSON.stringify(caslQuery.args));
-            logger?.log("Query Mask", JSON.stringify(caslQuery.mask));
-            const cleanupResults = (result) => {
-              perf?.mark("prisma-casl-extension-3");
-              const fluentModel = getFluentModel(model, rest);
-              if (fluentModel !== model && caslQuery.mask) {
-                const relation = Object.entries(relationFieldsByModel[model]).find(([k2, v5]) => v5.type === fluentModel)?.[0];
-                caslQuery.mask = relation && relation in caslQuery.mask ? caslQuery.mask[relation] : {};
-              }
-              const filteredResult = filterQueryResults(result, caslQuery.mask, caslQuery.creationTree, abilities, fluentModel, permissionField);
-              if (perf) {
-                perf.mark("prisma-casl-extension-4");
-                logger?.log(
-                  [
-                    perf.measure("prisma-casl-extension-Overall", "prisma-casl-extension-0", "prisma-casl-extension-4"),
-                    perf.measure("prisma-casl-extension-Create Abilities", "prisma-casl-extension-0", "prisma-casl-extension-1"),
-                    perf.measure("prisma-casl-extension-Create Casl Query", "prisma-casl-extension-1", "prisma-casl-extension-2"),
-                    perf.measure("prisma-casl-extension-Finish Query", "prisma-casl-extension-2", "prisma-casl-extension-3"),
-                    perf.measure("prisma-casl-extension-Filtering Results", "prisma-casl-extension-3", "prisma-casl-extension-4")
-                  ].map((measure) => {
-                    return `${measure.name.replace("prisma-casl-extension-", "")}: ${measure.duration}`;
-                  })
-                );
-              }
-              return operation === "createMany" ? { count: filteredResult.length } : filteredResult;
-            };
-            const operationAbility = caslOperationDict[operation];
-            if (operationAbility.action === "update" || operationAbility.action === "create") {
-              if (transaction) {
-                if (transaction.kind === "itx") {
-                  const transactionClient = client._createItxClient(transaction);
-                  return transactionClient[model][op](caslQuery.args).then(cleanupResults);
-                } else if (transaction.kind === "batch") {
-                  throw new Error("Sequential transactions are not supported in prisma-extension-casl.");
-                }
-              } else {
-                return client.$transaction(async (tx) => {
-                  return tx[model][op](caslQuery.args).then(cleanupResults);
-                });
-              }
-            } else {
-              return query(caslQuery.args).then(cleanupResults);
-            }
-          }
+          ...allOperations(getAbilityFactory)
         }
       }
     });

@@ -1,5 +1,12 @@
 
 
+## [0.6.4](https://github.com/dennemark/prisma-extension-casl/compare/0.6.3...0.6.4) (2024-09-30)
+
+
+### Bug Fixes
+
+* :bug: create correct extended instance  of getAbilities ([83f45e0](https://github.com/dennemark/prisma-extension-casl/commit/83f45e0713ced33b874d2e6737e980adfaaa6ab0))
+
 ## [0.6.3](https://github.com/dennemark/prisma-extension-casl/compare/0.6.2...0.6.3) (2024-09-26)
 
 
