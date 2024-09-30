@@ -1583,7 +1583,31 @@ describe('prisma extension casl', () => {
             await expect(client.user.findUnique({ where: { id: 0 } }).posts()).rejects.toThrow()
 
         })
+        it('can do chained queries with local abilities', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+                can('read', 'User')
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            // await expect(await client.user.findUnique({ where: { id: 0 } }).posts()).rejects.toThrow()
 
+            const result = await client.$casl((abilities) => {
+                abilities.can('read', 'Post')
+                return abilities
+            }).user.findUnique({ where: { id: 0 } }).posts()
+            expect(result).toEqual([{ authorId: 0, text: '', id: 0, threadId: 0 },
+            {
+                authorId: 0,
+                id: 3,
+                text: '',
+                threadId: 2,
+            },
+            ])
+        })
     })
     describe('store permissions', () => {
         it('has permissions on custom prop on chained queries', async () => {
