@@ -970,7 +970,7 @@ function applyDataQuery(abilities, args, action, model, creationTree) {
 }
 
 // src/applyWhereQuery.ts
-function applyWhereQuery(abilities, args, action, model, relation) {
+function applyWhereQuery(abilities, args, action, model, relation, requiredRelation) {
   const prismaModel = model in relationFieldsByModel ? model : void 0;
   if (!prismaModel) {
     throw new Error(`Model ${model} does not exist on Prisma Client`);
@@ -983,7 +983,8 @@ function applyWhereQuery(abilities, args, action, model, relation) {
     if (!args.where) {
       args.where = {};
     }
-    args.where = applyAccessibleQuery(args.where, relation && accessibleQuery ? { [relation]: accessibleQuery } : accessibleQuery);
+    const relationQuery = relation && accessibleQuery ? requiredRelation ? { [relation]: accessibleQuery } : { OR: [{ [relation]: null }, { [relation]: accessibleQuery }] } : accessibleQuery;
+    args.where = applyAccessibleQuery(args.where, relationQuery);
   }
   return args;
 }
@@ -1001,7 +1002,7 @@ function applyIncludeSelectQuery(abilities, args, model) {
               const methodQuery = applyWhereQuery(abilities, args[method][relation], "read", relationField.type);
               args[method][relation] = methodQuery.select && Object.keys(methodQuery.select).length === 0 ? false : methodQuery;
             } else {
-              args = applyWhereQuery(abilities, args, "read", relationField.type, relation);
+              args = applyWhereQuery(abilities, args, "read", relationField.type, relation, relationField.isRequired);
             }
             args[method][relation] = applyIncludeSelectQuery(abilities, args[method][relation], relationField.type);
           }

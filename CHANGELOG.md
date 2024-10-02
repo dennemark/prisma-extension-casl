@@ -1,5 +1,12 @@
 
 
+## [0.6.5](https://github.com/dennemark/prisma-extension-casl/compare/0.6.4...0.6.5) (2024-10-02)
+
+
+### Bug Fixes
+
+* :bug: correct optional include query ([195f5a4](https://github.com/dennemark/prisma-extension-casl/commit/195f5a49d5612c01d03bd2a9e5d967752e0d6c02))
+
 ## [0.6.4](https://github.com/dennemark/prisma-extension-casl/compare/0.6.3...0.6.4) (2024-09-30)
 
 
