@@ -55,7 +55,35 @@ describe('apply include select query', () => {
             }
         })
     })
+    it('applies select method for non-required relation', () => {
+        const { can, cannot, build } = abilityBuilder()
+        can('read', 'Thread', {
+            id: 1
+        })
+        const args = applyIncludeSelectQuery(build(), {
+            select: {
+                thread: true
+            }
+        }, 'Post')
+        expect(args).toEqual({
+            select: {
+                thread: true
+            },
+            where: {
+                AND: [{
+                    OR: [{
+                        thread: null
+                    },
+                    {
+                        thread: {
+                            OR: [{ id: 1 }],
+                        }
 
+                    }]
+                }]
+            }
+        })
+    })
     it('applies select method and does not allow reading of field', () => {
         const { can, cannot, build } = abilityBuilder()
         can('read', 'User')

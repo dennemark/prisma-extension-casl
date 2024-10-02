@@ -26,7 +26,8 @@ export function applyWhereQuery(
     args: any,
     action: string,
     model: string,
-    relation?: string
+    relation?: string,
+    requiredRelation?: boolean
 ) {
     const prismaModel = model in relationFieldsByModel ? model as Prisma.ModelName : undefined
     if (!prismaModel) {
@@ -44,8 +45,12 @@ export function applyWhereQuery(
             args.where = {}
         }
 
+
+        const relationQuery = relation && accessibleQuery ? requiredRelation ? { [relation]: accessibleQuery }
+            : { OR: [{ [relation]: null }, { [relation]: accessibleQuery }] }
+            : accessibleQuery
         // Add the accessibleBy conditions to the where clause
-        args.where = applyAccessibleQuery(args.where, relation && accessibleQuery ? { [relation]: accessibleQuery } : accessibleQuery)
+        args.where = applyAccessibleQuery(args.where, relationQuery)
     }
 
     return args

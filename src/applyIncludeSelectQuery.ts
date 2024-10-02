@@ -32,7 +32,7 @@ export function applyIncludeSelectQuery(
                             // if select function is empty, we do not query the relation
                             args[method][relation] = methodQuery.select && Object.keys(methodQuery.select).length === 0 ? false : methodQuery
                         } else {
-                            args = applyWhereQuery(abilities, args, 'read', relationField.type, relation)
+                            args = applyWhereQuery(abilities, args, 'read', relationField.type, relation, relationField.isRequired)
                         }
 
                         args[method][relation] = applyIncludeSelectQuery(abilities, args[method][relation], relationField.type)
