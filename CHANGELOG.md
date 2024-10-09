@@ -1,5 +1,12 @@
 
 
+## [0.6.6](https://github.com/dennemark/prisma-extension-casl/compare/0.6.5...0.6.6) (2024-10-09)
+
+
+### Bug Fixes
+
+* :bug: return null or empty arry on missing read ability instead of error ([afdc77e](https://github.com/dennemark/prisma-extension-casl/commit/afdc77e2ba8334f0e4554c360ab5b27c4482d350))
+
 ## [0.6.5](https://github.com/dennemark/prisma-extension-casl/compare/0.6.4...0.6.5) (2024-10-02)
 
 

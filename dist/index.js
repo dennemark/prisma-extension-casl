@@ -1352,6 +1352,8 @@ function useCaslAbilities(getAbilityFactory, permissionField) {
     const allOperations = (getAbilities) => ({
       async $allOperations({ args, query, model, operation, ...rest }) {
         const op = operation === "createMany" ? "createManyAndReturn" : operation;
+        const fluentModel = getFluentModel(model, rest);
+        const [fluentRelationModel, fluentRelationField] = (fluentModel !== model ? Object.entries(relationFieldsByModel[model]).find(([k2, v5]) => v5.type === fluentModel) : void 0) ?? [void 0, void 0];
         const transaction = rest.__internalParams.transaction;
         const debug = (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") && args.debugCasl;
         delete args.debugCasl;
@@ -1376,16 +1378,30 @@ function useCaslAbilities(getAbilityFactory, permissionField) {
           transaction.abilities = abilities;
         }
         perf?.mark("prisma-casl-extension-1");
-        const caslQuery = applyCaslToQuery(operation, args, abilities, model, permissionField ? true : false);
+        function getCaslQuery() {
+          try {
+            return applyCaslToQuery(operation, args, abilities, model, permissionField ? true : false);
+          } catch (e4) {
+            if (args.debugCasl || caslOperationDict[operation].action !== "read") {
+              throw e4;
+            }
+          }
+        }
+        const caslQuery = getCaslQuery();
+        if (!caslQuery) {
+          if (operation === "findMany" || fluentRelationField?.isList) {
+            return [];
+          } else {
+            return null;
+          }
+        }
         perf?.mark("prisma-casl-extension-2");
         logger?.log("Query Args", JSON.stringify(caslQuery.args));
         logger?.log("Query Mask", JSON.stringify(caslQuery.mask));
         const cleanupResults = (result) => {
           perf?.mark("prisma-casl-extension-3");
-          const fluentModel = getFluentModel(model, rest);
-          if (fluentModel !== model && caslQuery.mask) {
-            const relation = Object.entries(relationFieldsByModel[model]).find(([k2, v5]) => v5.type === fluentModel)?.[0];
-            caslQuery.mask = relation && relation in caslQuery.mask ? caslQuery.mask[relation] : {};
+          if (fluentRelationModel && caslQuery.mask) {
+            caslQuery.mask = fluentRelationModel && fluentRelationModel in caslQuery.mask ? caslQuery.mask[fluentRelationModel] : {};
           }
           const filteredResult = filterQueryResults(result, caslQuery.mask, caslQuery.creationTree, abilities, fluentModel, permissionField);
           if (perf) {
