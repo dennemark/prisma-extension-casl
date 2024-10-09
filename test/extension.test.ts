@@ -30,8 +30,8 @@ describe('prisma extension casl', () => {
                 return a
             }).user.findMany()
             expect(result.length).toEqual(2)
-            await expect(client.user.findMany()).rejects.toThrow()
-            await expect(client.$casl((a) => a).user.findMany()).rejects.toThrow()
+            expect(await client.user.findMany()).toEqual([])
+            expect(await client.$casl((a) => a).user.findMany()).toEqual([])
         })
     })
     describe('transaction', () => {
@@ -759,7 +759,7 @@ describe('prisma extension casl', () => {
             const client = seedClient.$extends(
                 useCaslAbilities(builderFactory)
             )
-            await expect(client.post.findUnique({ where: { id: 0 }, include: { thread: true } })).rejects.toThrow()
+            expect(await client.post.findUnique({ where: { id: 0 }, include: { thread: true } })).toBeNull()
         })
         it('cannot findUnique if nested id is not correct and included', async () => {
             function builderFactory() {
@@ -1580,7 +1580,7 @@ describe('prisma extension casl', () => {
             const client = seedClient.$extends(
                 useCaslAbilities(builderFactory)
             )
-            await expect(client.user.findUnique({ where: { id: 0 } }).posts()).rejects.toThrow()
+            expect(await client.user.findUnique({ where: { id: 0 } }).posts()).toEqual([])
 
         })
         it('can do chained queries with local abilities', async () => {

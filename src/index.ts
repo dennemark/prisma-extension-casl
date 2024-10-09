@@ -27,6 +27,9 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
         const allOperations = (getAbilities: () => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => ({
             async $allOperations<T>({ args, query, model, operation, ...rest }: { args: any, query: any, model: any, operation: any }) {
                 const op = operation === 'createMany' ? 'createManyAndReturn' : operation
+                const fluentModel = getFluentModel(model, rest)
+
+                const [fluentRelationModel, fluentRelationField] = (fluentModel !== model ? Object.entries(relationFieldsByModel[model]).find(([k, v]) => v.type === fluentModel) : undefined) ?? [undefined, undefined]
                 const transaction = (rest as any).__internalParams.transaction
                 const debug = (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') && args.debugCasl
                 delete args.debugCasl
@@ -56,9 +59,31 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
                 perf?.mark('prisma-casl-extension-1')
 
 
-                const caslQuery = applyCaslToQuery(operation, args, abilities, model, permissionField ? true : false)
+                /**
+                 * for read actions we return null, if casl has an error
+                 * except we use debugCasl
+                 */
+                function getCaslQuery() {
+                    try {
+                        return applyCaslToQuery(operation, args, abilities, model, permissionField ? true : false)
+                    }
+                    catch (e) {
+                        if (args.debugCasl || caslOperationDict[operation as PrismaCaslOperation].action !== 'read') {
+                            throw e
+                        }
 
+                    }
+                }
+                const caslQuery = getCaslQuery()
 
+                if (!caslQuery) {
+                    /** if casl query did not return a result we return either null or an empty array for findMany or list relation */
+                    if (operation === 'findMany' || fluentRelationField?.isList) {
+                        return []
+                    } else {
+                        return null
+                    }
+                }
                 perf?.mark('prisma-casl-extension-2')
                 logger?.log('Query Args', JSON.stringify(caslQuery.args))
                 logger?.log('Query Mask', JSON.stringify(caslQuery.mask))
@@ -66,12 +91,10 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
                 const cleanupResults = (result: any) => {
 
                     perf?.mark('prisma-casl-extension-3')
-                    const fluentModel = getFluentModel(model, rest)
 
-                    if (fluentModel !== model && caslQuery.mask) {
+                    if (fluentRelationModel && caslQuery.mask) {
                         // on fluent models we need to take mask of the relation
-                        const relation = Object.entries(relationFieldsByModel[model]).find(([k, v]) => v.type === fluentModel)?.[0]
-                        caslQuery.mask = relation && relation in caslQuery.mask ? caslQuery.mask[relation] : {}
+                        caslQuery.mask = fluentRelationModel && fluentRelationModel in caslQuery.mask ? caslQuery.mask[fluentRelationModel] : {}
                     }
                     const filteredResult = filterQueryResults(result, caslQuery.mask, caslQuery.creationTree, abilities, fluentModel, permissionField)
 
