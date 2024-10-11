@@ -59,7 +59,7 @@ export function applyDataQuery(
                             }))
 
                             const nestedAbilities = createPrismaAbility(abilities.rules.filter((rule) => {
-                                if (rule.fields) {
+                                if (rule.fields && rule.subject === model) {
                                     if (rule.inverted) {
                                         const hasNoForbiddenFields = argFields.isDisjointFrom(new Set(rule.fields))
                                         if (!rule.conditions && !hasNoForbiddenFields) {
