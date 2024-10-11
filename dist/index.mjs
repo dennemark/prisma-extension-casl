@@ -965,7 +965,11 @@ function applyDataQuery(abilities, args, action, model, creationTree) {
           const nestedAbilities = e3(abilities.rules.filter((rule) => {
             if (rule.fields) {
               if (rule.inverted) {
-                return argFields.isDisjointFrom(new Set(rule.fields));
+                const hasNoForbiddenFields = argFields.isDisjointFrom(new Set(rule.fields));
+                if (!rule.conditions && !hasNoForbiddenFields) {
+                  throw new Error(`It's not allowed to "${action}" "${rule.fields.toString()}" on "${model}"`);
+                }
+                return hasNoForbiddenFields;
               } else {
                 return argFields.isSubsetOf(new Set(Array.isArray(rule.fields) ? rule.fields : [rule.fields]));
               }

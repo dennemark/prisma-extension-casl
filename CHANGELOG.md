@@ -1,5 +1,12 @@
 
 
+## [0.7.2](https://github.com/dennemark/prisma-extension-casl/compare/0.7.1...0.7.2) (2024-10-11)
+
+
+### Bug Fixes
+
+* :bug: throw error when trying to update forbidden fields ([bd8647a](https://github.com/dennemark/prisma-extension-casl/commit/bd8647a9ab11c6c78ea77e144f6e392ba4136b0e))
+
 ## [0.7.1](https://github.com/dennemark/prisma-extension-casl/compare/0.7.0...0.7.1) (2024-10-11)
 
 
