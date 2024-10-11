@@ -1,5 +1,12 @@
 
 
+## [0.7.1](https://github.com/dennemark/prisma-extension-casl/compare/0.7.0...0.7.1) (2024-10-11)
+
+
+### Bug Fixes
+
+* :bug: consider restricted fields not only on nested but also direct mutation ([6e6bc41](https://github.com/dennemark/prisma-extension-casl/commit/6e6bc412e36a3870879ad7b6f95af620b936faa2))
+
 ## [0.7.0](https://github.com/dennemark/prisma-extension-casl/compare/0.6.6...0.7.0) (2024-10-11)
 
 

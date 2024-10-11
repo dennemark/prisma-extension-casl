@@ -927,6 +927,26 @@ function getFluentModel(startModel, data) {
   }
 }
 
+// src/applyWhereQuery.ts
+function applyWhereQuery(abilities, args, action, model, relation, requiredRelation) {
+  const prismaModel = model in relationFieldsByModel ? model : void 0;
+  if (!prismaModel) {
+    throw new Error(`Model ${model} does not exist on Prisma Client`);
+  }
+  const accessibleQuery = m5(abilities, action)[prismaModel];
+  if (Object.keys(accessibleQuery).length > 0) {
+    if (args === true) {
+      args = {};
+    }
+    if (!args.where) {
+      args.where = {};
+    }
+    const relationQuery = relation && accessibleQuery ? requiredRelation ? { [relation]: accessibleQuery } : { OR: [{ [relation]: null }, { [relation]: accessibleQuery }] } : accessibleQuery;
+    args.where = applyAccessibleQuery(args.where, relationQuery);
+  }
+  return args;
+}
+
 // src/polyfills.ts
 if (!Set.prototype.isSubsetOf) {
   Set.prototype.isSubsetOf = function(set) {
@@ -978,11 +998,7 @@ function applyDataQuery(abilities, args, action, model, creationTree) {
               return true;
             }
           }));
-          const nestedAccessibleQuery = nestedAction !== "update" && nestedAction !== "create" ? m5(nestedAbilities, action)[model] : m5(nestedAbilities, "update")[model];
-          argsEntry.where = applyAccessibleQuery(
-            argsEntry.where,
-            nestedAccessibleQuery
-          );
+          applyWhereQuery(nestedAbilities, argsEntry, nestedAction !== "update" && nestedAction !== "create" ? action : "update", model);
         }
       }
     });
@@ -1034,26 +1050,6 @@ function applyDataQuery(abilities, args, action, model, creationTree) {
     });
   });
   return { args, creationTree: tree };
-}
-
-// src/applyWhereQuery.ts
-function applyWhereQuery(abilities, args, action, model, relation, requiredRelation) {
-  const prismaModel = model in relationFieldsByModel ? model : void 0;
-  if (!prismaModel) {
-    throw new Error(`Model ${model} does not exist on Prisma Client`);
-  }
-  const accessibleQuery = m5(abilities, action)[prismaModel];
-  if (Object.keys(accessibleQuery).length > 0) {
-    if (args === true) {
-      args = {};
-    }
-    if (!args.where) {
-      args.where = {};
-    }
-    const relationQuery = relation && accessibleQuery ? requiredRelation ? { [relation]: accessibleQuery } : { OR: [{ [relation]: null }, { [relation]: accessibleQuery }] } : accessibleQuery;
-    args.where = applyAccessibleQuery(args.where, relationQuery);
-  }
-  return args;
 }
 
 // src/applyIncludeSelectQuery.ts
@@ -1288,14 +1284,16 @@ function applyCaslToQuery(operation, args, abilities, model, queryAllRuleRelatio
   m5(abilities, operationAbility.action)[model];
   let creationTree = void 0;
   if (operationAbility.dataQuery && args.data) {
-    const { args: dataArgs, creationTree: dataCreationTree } = applyDataQuery(abilities, args.data, operationAbility.action, model);
+    if (operationAbility.whereQuery && !args.where) {
+      args.where = {};
+    }
+    const { args: dataArgs, creationTree: dataCreationTree } = applyDataQuery(abilities, args, operationAbility.action, model);
     creationTree = dataCreationTree;
-    args.data = dataArgs;
+    args = dataArgs;
     if (operation === "updateMany") {
       args = transformDataToWhereQuery(args, model);
     }
-  }
-  if (operationAbility.whereQuery) {
+  } else if (operationAbility.whereQuery) {
     args = applyWhereQuery(abilities, args, operationAbility.action, model);
   }
   if (operationAbility.includeSelectQuery) {
