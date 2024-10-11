@@ -13,10 +13,10 @@ importers:
         version: 6.7.1
       '@casl/prisma':
         specifier: ^1.5.0
-        version: 1.5.0(@casl/ability@6.7.1)(@prisma/client@5.14.0(prisma@5.14.0))
+        version: 1.5.0(@casl/ability@6.7.1)(@prisma/client@5.20.0(prisma@5.14.0))
       '@prisma/client':
-        specifier: 5.14.0
-        version: 5.14.0(prisma@5.14.0)
+        specifier: 5.20.0
+        version: 5.20.0(prisma@5.14.0)
       '@prisma/generator-helper':
         specifier: 5.14.0
         version: 5.14.0
@@ -730,8 +730,8 @@ packages:
     resolution: {integrity: sha512-UA91GwWPhFExt3IizW6bOeY/pQ0BkuNwKjk9iQW9KqxluGCrg4VenZ0/L+2Y0+ZOtme72EVvg6v0zo3AMQRCeA==}
     engines: {node: '>=12'}
 
-  '@prisma/client@5.14.0':
-    resolution: {integrity: sha512-akMSuyvLKeoU4LeyBAUdThP/uhVP3GuLygFE3MlYzaCb3/J8SfsYBE5PkaFuLuVpLyA6sFoW+16z/aPhNAESqg==}
+  '@prisma/client@5.20.0':
+    resolution: {integrity: sha512-CLv55ZuMuUawMsxoqxGtLT3bEZoa2W8L3Qnp6rDIFWy+ZBrUcOFKdoeGPSnbBqxc3SkdxJrF+D1veN/WNynZYA==}
     engines: {node: '>=16.13'}
     peerDependencies:
       prisma: '*'
@@ -3215,10 +3215,10 @@ snapshots:
     dependencies:
       '@ucast/mongo2js': 1.3.4
 
-  '@casl/prisma@1.5.0(@casl/ability@6.7.1)(@prisma/client@5.14.0(prisma@5.14.0))':
+  '@casl/prisma@1.5.0(@casl/ability@6.7.1)(@prisma/client@5.20.0(prisma@5.14.0))':
     dependencies:
       '@casl/ability': 6.7.1
-      '@prisma/client': 5.14.0(prisma@5.14.0)
+      '@prisma/client': 5.20.0(prisma@5.14.0)
       '@ucast/core': 1.10.2
       '@ucast/js': 3.0.4
 
@@ -3674,7 +3674,7 @@ snapshots:
       '@pnpm/network.ca-file': 1.0.2
       config-chain: 1.1.13
 
-  '@prisma/client@5.14.0(prisma@5.14.0)':
+  '@prisma/client@5.20.0(prisma@5.14.0)':
     optionalDependencies:
       prisma: 5.14.0
 
