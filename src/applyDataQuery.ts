@@ -2,6 +2,7 @@ import { AbilityTuple, PureAbility } from '@casl/ability'
 import { accessibleBy, createPrismaAbility, PrismaQuery } from '@casl/prisma'
 import { Prisma } from '@prisma/client'
 import { applyAccessibleQuery } from './applyAccessibleQuery'
+import { applyWhereQuery } from './applyWhereQuery'
 import { CreationTree } from './convertCreationTreeToSelect'
 import { caslNestedOperationDict, getPermittedFields, propertyFieldsByModel, relationFieldsByModel } from './helpers'
 import './polyfills'
@@ -72,13 +73,8 @@ export function applyDataQuery(
                             // if nestedAction is update, we probably have upsert
                             // if nestedAction is create, we probably have connectOrCreate
                             // therefore we check for 'update' accessibleQuery
-                            const nestedAccessibleQuery = nestedAction !== 'update' && nestedAction !== 'create'
-                                ? accessibleBy(nestedAbilities, action)[model as Prisma.ModelName]
-                                : accessibleBy(nestedAbilities, 'update')[model as Prisma.ModelName]
+                            applyWhereQuery(nestedAbilities, argsEntry, nestedAction !== 'update' && nestedAction !== 'create' ? action : 'update', model)
 
-                            argsEntry.where = applyAccessibleQuery(argsEntry.where,
-                                nestedAccessibleQuery
-                            )
                         }
                     }
                 })
