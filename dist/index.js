@@ -683,8 +683,8 @@ function d4(r2, e4, o3) {
   return w(i4.$and);
 }
 
-// node_modules/.pnpm/@casl+prisma@1.4.1_@casl+ability@6.7.1_@prisma+client@5.14.0_prisma@5.14.0_/node_modules/@casl/prisma/dist/es6m/runtime.mjs
-var v4 = class extends Error {
+// node_modules/.pnpm/@casl+prisma@1.5.0_@casl+ability@6.7.1_@prisma+client@5.14.0_prisma@5.14.0_/node_modules/@casl/prisma/dist/es6m/runtime.mjs
+var A3 = class extends Error {
   static invalidArgument(t3, e4, r2) {
     const n3 = `${typeof e4}(${JSON.stringify(e4, null, 2)})`;
     return new this(`"${t3}" expects to receive ${r2} but instead got "${n3}"`);
@@ -692,47 +692,47 @@ var v4 = class extends Error {
 };
 var O5 = (t3) => t3 && (t3.constructor === Object || !t3.constructor);
 var j4 = { type: "field", validate(t3, e4) {
-  if (Array.isArray(e4) || O5(e4)) throw new v4(`"${t3.name}" does not supports comparison of arrays and objects`);
+  if (Array.isArray(e4) || O5(e4)) throw new A3(`"${t3.name}" does not supports comparison of arrays and objects`);
 } };
 var N4 = { type: "field", parse(r2, n3, { hasOperators: o3, field: s3, parse: a5 }) {
-  if (O5(n3) && !o3(n3) || Array.isArray(n3)) throw new v4(`"${r2.name}" does not supports comparison of arrays and objects`);
+  if (O5(n3) && !o3(n3) || Array.isArray(n3)) throw new A3(`"${r2.name}" does not supports comparison of arrays and objects`);
   if (!O5(n3)) return new o("notEquals", s3, n3);
   return new r("NOT", [a5(n3, { field: s3 })]);
 } };
 var $3 = { type: "field", validate(t3, e4) {
-  if (!Array.isArray(e4)) throw v4.invalidArgument(t3.name, e4, "an array");
+  if (!Array.isArray(e4)) throw A3.invalidArgument(t3.name, e4, "an array");
 } };
 var E3 = { type: "field", validate(t3, e4) {
   const r2 = typeof e4;
   const n3 = r2 === "string" || r2 === "number" && Number.isFinite(e4) || e4 instanceof Date;
-  if (!n3) throw v4.invalidArgument(t3.name, e4, "comparable value");
+  if (!n3) throw A3.invalidArgument(t3.name, e4, "comparable value");
 } };
 var q3 = /* @__PURE__ */ new Set(["insensitive", "default"]);
 var x4 = { type: "field", validate(t3, e4) {
-  if (!q3.has(e4)) throw v4.invalidArgument(t3.name, e4, `one of ${Array.from(q3).join(", ")}`);
+  if (!q3.has(e4)) throw A3.invalidArgument(t3.name, e4, `one of ${Array.from(q3).join(", ")}`);
 }, parse: () => s };
-var T2 = { type: "field", validate(t3, e4) {
-  if (typeof e4 !== "string") throw v4.invalidArgument(t3.name, e4, "string");
+var S3 = { type: "field", validate(t3, e4) {
+  if (typeof e4 !== "string") throw A3.invalidArgument(t3.name, e4, "string");
 }, parse(e4, r2, { query: n3, field: o3 }) {
   const s3 = n3.mode === "insensitive" ? `i${e4.name}` : e4.name;
   return new o(s3, o3, r2);
 } };
-var W2 = { type: "compound", validate(t3, e4) {
-  if (!e4 || typeof e4 !== "object") throw v4.invalidArgument(t3.name, e4, "an array or object");
+var T2 = { type: "compound", validate(t3, e4) {
+  if (!e4 || typeof e4 !== "object") throw A3.invalidArgument(t3.name, e4, "an array or object");
 }, parse(t3, r2, { parse: n3 }) {
   const o3 = Array.isArray(r2) ? r2 : [r2];
   const s3 = o3.map((t4) => n3(t4));
   return new r(t3.name, s3);
 } };
-var S3 = { type: "field", validate(t3, e4) {
-  if (typeof e4 !== "boolean") throw v4.invalidArgument(t3.name, e4, "a boolean");
+var W2 = { type: "field", validate(t3, e4) {
+  if (typeof e4 !== "boolean") throw A3.invalidArgument(t3.name, e4, "a boolean");
 } };
 var D = { type: "field" };
 var C2 = { type: "field", validate(t3, e4) {
-  if (!Array.isArray(e4)) throw v4.invalidArgument(t3.name, e4, "an array");
+  if (!Array.isArray(e4)) throw A3.invalidArgument(t3.name, e4, "an array");
 } };
 var F = { type: "field", parse(e4, r2, { field: n3, parse: o3 }) {
-  if (!O5(r2)) throw v4.invalidArgument(e4.name, r2, "a query for nested relation");
+  if (!O5(r2)) throw A3.invalidArgument(e4.name, r2, "a query for nested relation");
   return new o(e4.name, n3, o3(r2));
 } };
 var I2 = (r2, n3) => {
@@ -747,7 +747,7 @@ var I2 = (r2, n3) => {
     return new r("NOT", [a5]);
   } });
 };
-var M2 = { equals: j4, not: N4, in: $3, notIn: I2("in", $3), lt: E3, lte: E3, gt: E3, gte: E3, mode: x4, startsWith: T2, endsWith: T2, contains: T2, isEmpty: S3, has: D, hasSome: C2, hasEvery: C2, NOT: W2, AND: W2, OR: W2, every: F, some: F, none: I2("some", F), is: F, isNot: I2("is", F) };
+var M2 = { equals: j4, not: N4, in: $3, notIn: I2("in", $3), lt: E3, lte: E3, gt: E3, gte: E3, mode: x4, startsWith: S3, endsWith: S3, contains: S3, isEmpty: W2, has: D, hasSome: C2, hasEvery: C2, NOT: T2, AND: T2, OR: T2, every: F, some: F, none: I2("some", F), is: F, isNot: I2("is", F), isSet: W2 };
 var R3 = class extends j {
   constructor() {
     super(M2, { defaultOperatorName: "equals" });
@@ -793,18 +793,22 @@ var V2 = (t3, e4, { get: r2, interpret: n3 }) => {
   return o3 && typeof o3 === "object" && n3(t3.value, o3);
 };
 var X2 = (t3, e4, { interpret: r2 }) => t3.value.every((t4) => !r2(t4, e4));
-function Y(t3) {
+var Y = (t3, e4, { get: r2 }) => {
+  const n3 = r2(e4, t3.field);
+  return n3 !== void 0;
+};
+function Z2(t3) {
   return t3 && typeof t3 === "object" ? t3.valueOf() : t3;
 }
-var Z2 = (t3, e4) => a2(Y(t3), Y(e4));
-var tt2 = l3({ equals: b3, notEquals: A2, in: N2, lt: h3, lte: d3, gt: j3, gte: w3, startsWith: _4, istartsWith: J2, endsWith: P3, iendsWith: k, contains: z4, icontains: B3, isEmpty: G2, has: H2, hasSome: K2, hasEvery: L, and: m3, or: p3, AND: m3, OR: p3, NOT: X2, every: Q2, some: U2, is: V2 }, { get: (t3, e4) => t3[e4], compare: Z2 });
-var et = new R3();
-var rt2 = v(et.parse, tt2);
-function nt2(t3) {
+var tt2 = (t3, e4) => a2(Z2(t3), Z2(e4));
+var et = l3({ equals: b3, notEquals: A2, in: N2, lt: h3, lte: d3, gt: j3, gte: w3, startsWith: _4, istartsWith: J2, endsWith: P3, iendsWith: k, contains: z4, icontains: B3, isEmpty: G2, has: H2, hasSome: K2, hasEvery: L, and: m3, or: p3, AND: m3, OR: p3, NOT: X2, every: Q2, some: U2, is: V2, isSet: Y }, { get: (t3, e4) => t3[e4], compare: tt2 });
+var rt2 = new R3();
+var nt2 = v(rt2.parse, et);
+function ot2(t3) {
   return t3.inverted ? { NOT: t3.conditions } : t3.conditions;
 }
-var ot2 = { get(t3, e4) {
-  const r2 = h4(t3.t, t3.o, e4, nt2);
+var st2 = { get(t3, e4) {
+  const r2 = h4(t3.t, t3.o, e4, ot2);
   if (r2 === null) {
     const r3 = ForbiddenError.from(t3.t).setMessage(`It's not allowed to run "${t3.o}" on "${e4}"`);
     r3.action = t3.o;
@@ -816,19 +820,19 @@ var ot2 = { get(t3, e4) {
   if (r2.$and) n3.AND = r2.$and;
   return n3;
 } };
-var st2 = () => function t3(e4, r2 = "read") {
-  return new Proxy({ t: e4, o: r2 }, ot2);
+var at2 = () => function t3(e4, r2 = "read") {
+  return new Proxy({ t: e4, o: r2 }, st2);
 };
 function createAbilityFactory() {
   function createAbility(t3 = [], e4 = {}) {
-    return new PureAbility(t3, Object.assign({}, e4, { conditionsMatcher: rt2, fieldMatcher: at }));
+    return new PureAbility(t3, Object.assign({}, e4, { conditionsMatcher: nt2, fieldMatcher: at }));
   }
   return createAbility;
 }
 
-// node_modules/.pnpm/@casl+prisma@1.4.1_@casl+ability@6.7.1_@prisma+client@5.14.0_prisma@5.14.0_/node_modules/@casl/prisma/dist/es6m/index.mjs
+// node_modules/.pnpm/@casl+prisma@1.5.0_@casl+ability@6.7.1_@prisma+client@5.14.0_prisma@5.14.0_/node_modules/@casl/prisma/dist/es6m/index.mjs
 var e3 = createAbilityFactory();
-var m5 = st2();
+var m5 = at2();
 
 // src/applyAccessibleQuery.ts
 function applyAccessibleQuery(query, accessibleQuery) {
@@ -923,23 +927,61 @@ function getFluentModel(startModel, data) {
   }
 }
 
+// src/polyfills.ts
+if (!Set.prototype.isSubsetOf) {
+  Set.prototype.isSubsetOf = function(set) {
+    for (let elem of this) {
+      if (!set.has(elem)) {
+        return false;
+      }
+    }
+    return true;
+  };
+}
+if (!Set.prototype.isDisjointFrom) {
+  Set.prototype.isDisjointFrom = function(set) {
+    for (let elem of this) {
+      if (set.has(elem)) {
+        return false;
+      }
+    }
+    return true;
+  };
+}
+
 // src/applyDataQuery.ts
 function applyDataQuery(abilities, args, action, model, creationTree) {
   const tree = creationTree ? creationTree : { action, model, children: {} };
   const permittedFields = getPermittedFields(abilities, action, model);
-  const accessibleQuery = m5(abilities, action)[model];
   const mutationArgs = [];
   (Array.isArray(args) ? args : [args]).map((argsEntry) => {
     let hasWhereQuery = false;
     ["update", "create", "data"].forEach((nestedAction) => {
       if (nestedAction in argsEntry) {
-        const nestedArgs = argsEntry[nestedAction];
-        Array.isArray(nestedArgs) ? mutationArgs.push(...nestedArgs) : mutationArgs.push(nestedArgs);
+        const nestedArgs = Array.isArray(argsEntry[nestedAction]) ? argsEntry[nestedAction] : [argsEntry[nestedAction]];
+        mutationArgs.push(...nestedArgs);
         if (!hasWhereQuery && "where" in argsEntry) {
           hasWhereQuery = true;
+          const argFields = new Set(nestedArgs.flatMap((arg) => {
+            return Object.keys(arg).filter((field) => {
+              return field in propertyFieldsByModel[model];
+            });
+          }));
+          const nestedAbilities = e3(abilities.rules.filter((rule) => {
+            if (rule.fields) {
+              if (rule.inverted) {
+                return argFields.isDisjointFrom(new Set(rule.fields));
+              } else {
+                return argFields.isSubsetOf(new Set(Array.isArray(rule.fields) ? rule.fields : [rule.fields]));
+              }
+            } else {
+              return true;
+            }
+          }));
+          const nestedAccessibleQuery = nestedAction !== "update" && nestedAction !== "create" ? m5(nestedAbilities, action)[model] : m5(nestedAbilities, "update")[model];
           argsEntry.where = applyAccessibleQuery(
             argsEntry.where,
-            nestedAction !== "update" && nestedAction !== "create" ? accessibleQuery : m5(abilities, "update")[model]
+            nestedAccessibleQuery
           );
         }
       }
@@ -976,11 +1018,11 @@ function applyDataQuery(abilities, args, action, model, creationTree) {
               const dataQuery = applyDataQuery(abilities, nestedArgs, mutationAction, relationModel.type, tree.children[field]);
               mutation[field][nestedAction] = dataQuery.args;
               if (isConnection) {
-                const accessibleQuery2 = m5(abilities, mutationAction)[relationModel.type];
+                const accessibleQuery = m5(abilities, mutationAction)[relationModel.type];
                 if (Array.isArray(mutation[field][nestedAction])) {
-                  mutation[field][nestedAction] = mutation[field][nestedAction].map((q4) => applyAccessibleQuery(q4, accessibleQuery2));
+                  mutation[field][nestedAction] = mutation[field][nestedAction].map((q4) => applyAccessibleQuery(q4, accessibleQuery));
                 } else {
-                  mutation[field][nestedAction] = applyAccessibleQuery(mutation[field][nestedAction], accessibleQuery2);
+                  mutation[field][nestedAction] = applyAccessibleQuery(mutation[field][nestedAction], accessibleQuery);
                 }
               }
             }
@@ -1136,13 +1178,13 @@ function mergeArgsAndRelationQuery(args, relationQuery) {
     }
   });
   if (found === false) {
-    Object.entries(relationQuery).forEach(([k2, v5]) => {
-      if (v5?.select) {
+    Object.entries(relationQuery).forEach(([k2, v4]) => {
+      if (v4?.select) {
         args.include = {
           ...args.include ?? {},
-          [k2]: v5
+          [k2]: v4
         };
-        mask[k2] = removeNestedIncludeSelect(v5.select);
+        mask[k2] = removeNestedIncludeSelect(v4.select);
       }
     });
   }
@@ -1152,13 +1194,13 @@ function mergeArgsAndRelationQuery(args, relationQuery) {
   };
 }
 function removeNestedIncludeSelect(args) {
-  return typeof args === "object" ? Object.fromEntries(Object.entries(args).map(([k2, v5]) => {
-    if (v5?.select) {
-      return [k2, removeNestedIncludeSelect(v5.select)];
-    } else if (v5?.include) {
-      return [k2, removeNestedIncludeSelect(v5.include)];
+  return typeof args === "object" ? Object.fromEntries(Object.entries(args).map(([k2, v4]) => {
+    if (v4?.select) {
+      return [k2, removeNestedIncludeSelect(v4.select)];
+    } else if (v4?.include) {
+      return [k2, removeNestedIncludeSelect(v4.include)];
     } else {
-      return [k2, v5];
+      return [k2, v4];
     }
   })) : args;
 }
@@ -1353,7 +1395,7 @@ function useCaslAbilities(getAbilityFactory, permissionField) {
       async $allOperations({ args, query, model, operation, ...rest }) {
         const op = operation === "createMany" ? "createManyAndReturn" : operation;
         const fluentModel = getFluentModel(model, rest);
-        const [fluentRelationModel, fluentRelationField] = (fluentModel !== model ? Object.entries(relationFieldsByModel[model]).find(([k2, v5]) => v5.type === fluentModel) : void 0) ?? [void 0, void 0];
+        const [fluentRelationModel, fluentRelationField] = (fluentModel !== model ? Object.entries(relationFieldsByModel[model]).find(([k2, v4]) => v4.type === fluentModel) : void 0) ?? [void 0, void 0];
         const transaction = rest.__internalParams.transaction;
         const debug = (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") && args.debugCasl;
         delete args.debugCasl;

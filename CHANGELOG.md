@@ -1,5 +1,17 @@
 
 
+## [0.7.0](https://github.com/dennemark/prisma-extension-casl/compare/0.6.6...0.7.0) (2024-10-11)
+
+
+### Features
+
+* :package: update versions and add set polyfills ([056ae52](https://github.com/dennemark/prisma-extension-casl/commit/056ae5272ace68e5e0ec59af092b7f59ca674f93))
+
+
+### Bug Fixes
+
+* :bug: use correct conditions when restricted fields are used ([6a76f97](https://github.com/dennemark/prisma-extension-casl/commit/6a76f97299c72cf47105875c8dc5acdee7dc1e62))
+
 ## [0.6.6](https://github.com/dennemark/prisma-extension-casl/compare/0.6.5...0.6.6) (2024-10-09)
 
 
