@@ -926,6 +926,32 @@ function getFluentModel(startModel, data) {
     return startModel;
   }
 }
+function isSubset(obj1, obj2) {
+  if (obj1 === obj2) return true;
+  if (typeof obj1 === "object" && typeof obj2 === "object") {
+    if (Array.isArray(obj1) && Array.isArray(obj2)) {
+      for (const item1 of obj1) {
+        let found = false;
+        for (const item2 of obj2) {
+          if (isSubset(item1, item2)) {
+            found = true;
+            break;
+          }
+        }
+        if (!found) return false;
+      }
+      return true;
+    } else {
+      for (const key in obj1) {
+        if (!(key in obj2) || !isSubset(obj1[key], obj2[key])) {
+          return false;
+        }
+      }
+      return true;
+    }
+  }
+  return false;
+}
 
 // src/applyWhereQuery.ts
 function applyWhereQuery(abilities, args, action, model, relation, requiredRelation) {
@@ -971,7 +997,7 @@ if (!Set.prototype.isDisjointFrom) {
 
 // src/applyDataQuery.ts
 function applyDataQuery(abilities, args, action, model, creationTree) {
-  const tree = creationTree ? creationTree : { action, model, children: {} };
+  const tree = creationTree ? creationTree : { action, model, children: {}, mutation: [] };
   const permittedFields = getPermittedFields(abilities, action, model);
   const mutationArgs = [];
   (Array.isArray(args) ? args : [args]).map((argsEntry) => {
@@ -987,14 +1013,11 @@ function applyDataQuery(abilities, args, action, model, creationTree) {
               return field in propertyFieldsByModel[model];
             });
           }));
+          tree.mutation.push({ fields: [...argFields], where: argsEntry.where });
           const nestedAbilities = e3(abilities.rules.filter((rule) => {
             if (rule.fields && rule.subject === model) {
               if (rule.inverted) {
-                const hasNoForbiddenFields = argFields.isDisjointFrom(new Set(rule.fields));
-                if (!rule.conditions && !hasNoForbiddenFields) {
-                  throw new Error(`It's not allowed to "${action}" "${rule.fields.toString()}" on "${model}"`);
-                }
-                return hasNoForbiddenFields;
+                return argFields.isDisjointFrom(new Set(rule.fields));
               } else {
                 return argFields.isSubsetOf(new Set(Array.isArray(rule.fields) ? rule.fields : [rule.fields]));
               }
@@ -1033,7 +1056,7 @@ function applyDataQuery(abilities, args, action, model, creationTree) {
           if (nestedAction in caslNestedOperationDict) {
             const mutationAction = caslNestedOperationDict[nestedAction];
             const isConnection = nestedAction === "connect" || nestedAction === "disconnect";
-            tree.children[field] = { action: mutationAction, model: relationModel.type, children: {} };
+            tree.children[field] = { action: mutationAction, model: relationModel.type, children: {}, mutation: [] };
             if (nestedAction !== "disconnect" && nestedArgs !== true) {
               const dataQuery = applyDataQuery(abilities, nestedArgs, mutationAction, relationModel.type, tree.children[field]);
               mutation[field][nestedAction] = dataQuery.args;
@@ -1359,6 +1382,21 @@ function filterQueryResults(result, mask, creationTree, abilities, model, permis
       } catch (e4) {
         throw new Error(`It's not allowed to create on ${model} ` + e4);
       }
+    }
+    if (creationTree?.action === "update" && creationTree.mutation.length > 0) {
+      creationTree.mutation.forEach(({ fields, where }) => {
+        fields.forEach((field) => {
+          if (isSubset(where, entry)) {
+            try {
+              if (!abilities.can("update", getSubject(model, entry), field)) {
+                throw new Error(field);
+              }
+            } catch (e4) {
+              throw new Error(`It's not allowed to update ${field} on ${model} ` + e4);
+            }
+          }
+        });
+      });
     }
     const permittedFields = getPermittedFields(abilities, "read", model, entry);
     let hasKeys = false;

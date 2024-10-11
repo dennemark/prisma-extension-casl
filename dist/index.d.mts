@@ -7,6 +7,19 @@ type CreationTree = {
     action: string;
     model: Prisma.ModelName;
     children: Record<string, CreationTree>;
+    /**
+     * mutation query for creation / update
+     * with fields that are modified on mutation
+     * and the where query
+     *
+     * we use the where query to see which entries have been modified
+     * and the check accessibleBy per field
+     * to see if mutations are forbidden
+     */
+    mutation: {
+        fields: string[];
+        where: any;
+    }[];
 };
 
 type PrismaCaslOperation = 'create' | 'createMany' | 'createManyAndReturn' | 'upsert' | 'findFirst' | 'findFirstOrThrow' | 'findMany' | 'findUnique' | 'findUniqueOrThrow' | 'aggregate' | 'count' | 'groupBy' | 'update' | 'updateMany' | 'delete' | 'deleteMany';

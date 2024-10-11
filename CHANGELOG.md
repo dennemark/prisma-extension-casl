@@ -1,5 +1,12 @@
 
 
+## [0.7.4](https://github.com/dennemark/prisma-extension-casl/compare/0.7.3...0.7.4) (2024-10-11)
+
+
+### Bug Fixes
+
+* :bug: correct accessible check of updated models ([53ed04b](https://github.com/dennemark/prisma-extension-casl/commit/53ed04b54fb399a01c83659d574dc964baceacd8))
+
 ## [0.7.3](https://github.com/dennemark/prisma-extension-casl/compare/0.7.2...0.7.3) (2024-10-11)
 
 
