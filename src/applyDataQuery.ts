@@ -1,9 +1,10 @@
 import { AbilityTuple, PureAbility } from '@casl/ability'
-import { accessibleBy, PrismaQuery } from '@casl/prisma'
+import { accessibleBy, createPrismaAbility, PrismaQuery } from '@casl/prisma'
 import { Prisma } from '@prisma/client'
 import { applyAccessibleQuery } from './applyAccessibleQuery'
 import { CreationTree } from './convertCreationTreeToSelect'
 import { caslNestedOperationDict, getPermittedFields, propertyFieldsByModel, relationFieldsByModel } from './helpers'
+import './polyfills'
 
 /**
  * checks if mutation query is authorized by CASL
@@ -32,7 +33,6 @@ export function applyDataQuery(
 
     const permittedFields = getPermittedFields(abilities, action, model)
 
-    const accessibleQuery = accessibleBy(abilities, action)[model as Prisma.ModelName]
     const mutationArgs: any[] = []
         ; (Array.isArray(args) ? args : [args]).map((argsEntry) => {
             let hasWhereQuery = false
@@ -40,16 +40,44 @@ export function applyDataQuery(
                 // order is important for where query
                 ;['update', 'create', 'data'].forEach((nestedAction) => {
                     if (nestedAction in argsEntry) {
-                        const nestedArgs = argsEntry[nestedAction]
-                        Array.isArray(nestedArgs) ? mutationArgs.push(...nestedArgs) : mutationArgs.push(nestedArgs)
+                        const nestedArgs = Array.isArray(argsEntry[nestedAction]) ? argsEntry[nestedAction] : [argsEntry[nestedAction]]
+                        mutationArgs.push(...nestedArgs)
                         // if the mutation are not within args, we might also have a where query that needs to consider abilities
                         if (!hasWhereQuery && 'where' in argsEntry) {
                             hasWhereQuery = true
+                            /** 
+                             * for our where query we only want to consider conditions
+                             * that match the fields of our mutation args
+                             * 
+                             * i.e. {field: 'a', anotherField:'b'} should not consider conditions of a rule which is only applied on 'field'
+                             */
+                            const argFields = new Set(nestedArgs.flatMap((arg) => {
+                                return Object.keys(arg).filter((field) => {
+                                    return field in propertyFieldsByModel[model]
+                                })
+                            }))
+
+                            const nestedAbilities = createPrismaAbility(abilities.rules.filter((rule) => {
+                                if (rule.fields) {
+                                    if (rule.inverted) {
+                                        return argFields.isDisjointFrom(new Set(rule.fields))
+                                    } else {
+                                        return argFields.isSubsetOf(new Set(Array.isArray(rule.fields) ? rule.fields : [rule.fields]))
+                                    }
+                                } else {
+                                    return true
+                                }
+                            }))
+
                             // if nestedAction is update, we probably have upsert
                             // if nestedAction is create, we probably have connectOrCreate
                             // therefore we check for 'update' accessibleQuery
+                            const nestedAccessibleQuery = nestedAction !== 'update' && nestedAction !== 'create'
+                                ? accessibleBy(nestedAbilities, action)[model as Prisma.ModelName]
+                                : accessibleBy(nestedAbilities, 'update')[model as Prisma.ModelName]
+
                             argsEntry.where = applyAccessibleQuery(argsEntry.where,
-                                nestedAction !== 'update' && nestedAction !== 'create' ? accessibleQuery : accessibleBy(abilities, 'update')[model as Prisma.ModelName]
+                                nestedAccessibleQuery
                             )
                         }
                     }

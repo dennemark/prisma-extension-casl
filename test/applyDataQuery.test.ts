@@ -17,7 +17,7 @@ describe('apply data query', () => {
         const { can, cannot, build } = abilityBuilder()
         can('update', 'Post')
         cannot('update', 'User')
-        expect(() => applyDataQuery(build(), { data: { authorId: 0 }, where: { id: 0 } }, 'update', 'Post')).toThrow(`It's not allowed to run "update" on "User"`)
+        expect(() => applyDataQuery(build(), { data: { authorId: 0 }, where: { id: 0 } }, 'update', 'Post')).toThrow(`It's not allowed to "update" "id" on "User"`)
     })
         ;['update', 'create'].map((mutation) => {
             describe(mutation, () => {
@@ -53,7 +53,7 @@ describe('apply data query', () => {
                         data: { email: '-1' }, where: {
                             id: 0
                         }
-                    }, mutation, 'User')).toThrow(`It's not allowed to "${mutation}" "email" on "User"`)
+                    }, mutation, 'User')).toThrow(`It's not allowed to run "${mutation}" on "User"`)
                 })
             })
         })
@@ -121,7 +121,7 @@ describe('apply data query', () => {
 
             cannot('update', 'Post')
             expect(() => applyDataQuery(build(), { data: { id: 1, posts: { connect: { id: 0 } } }, where: { id: 0 } }, 'update', 'User'))
-                .toThrow(`It's not allowed to run "update" on "Post"`)
+                .toThrow(`It's not allowed to "update" "id" on "Post"`)
         })
 
     })
@@ -227,7 +227,7 @@ describe('apply data query', () => {
                     id: 0
                 }
             }, 'update', 'User'))
-                .toThrow(`It's not allowed to run "create" on "Post"`)
+                .toThrow(`It's not allowed to "create" "text" on "Post"`)
         })
         it('throws error if data in nested create property in connection is not allowed', () => {
             const { can, build } = abilityBuilder()
@@ -278,7 +278,7 @@ describe('apply data query', () => {
             cannot('update', 'Thread')
 
             expect(() => applyDataQuery(build(), { data: { id: 1, posts: { update: { data: { thread: { update: { id: 0 } } }, where: { id: 0 } } } }, where: { id: 0 } }, 'update', 'User'))
-                .toThrow(`It's not allowed to run "update" on "Thread"`)
+                .toThrow(`It's not allowed to "update" "id" on "Thread"`)
         })
     })
     describe('createMany', () => {

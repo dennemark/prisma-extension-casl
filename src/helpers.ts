@@ -120,7 +120,6 @@ export function getPermittedFields(
             return rule.fields || modelFields;
         }
     })
-
     return permittedFields
 }
 
