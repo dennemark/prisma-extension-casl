@@ -61,7 +61,11 @@ export function applyDataQuery(
                             const nestedAbilities = createPrismaAbility(abilities.rules.filter((rule) => {
                                 if (rule.fields) {
                                     if (rule.inverted) {
-                                        return argFields.isDisjointFrom(new Set(rule.fields))
+                                        const hasNoForbiddenFields = argFields.isDisjointFrom(new Set(rule.fields))
+                                        if (!rule.conditions && !hasNoForbiddenFields) {
+                                            throw new Error(`It's not allowed to "${action}" "${rule.fields.toString()}" on "${model}"`)
+                                        }
+                                        return hasNoForbiddenFields
                                     } else {
                                         return argFields.isSubsetOf(new Set(Array.isArray(rule.fields) ? rule.fields : [rule.fields]))
                                     }
@@ -69,7 +73,6 @@ export function applyDataQuery(
                                     return true
                                 }
                             }))
-
                             // if nestedAction is update, we probably have upsert
                             // if nestedAction is create, we probably have connectOrCreate
                             // therefore we check for 'update' accessibleQuery

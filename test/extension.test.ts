@@ -1129,8 +1129,6 @@ describe('prisma extension casl', () => {
                 const builder = abilityBuilder()
                 const { can, cannot } = builder
 
-                can('read', 'User', 'email')
-                can('update', 'User')
                 can('update', 'Thread', 'id')
                 can('update', 'Post', ['threadId'], {
                     id: 0
@@ -1162,6 +1160,32 @@ describe('prisma extension casl', () => {
                     id: 0
                 }
             })).toEqual({ id: 0, text: "", threadId: 1, authorId: 0 })
+        })
+        it('cannot do updates on restricted fields with conditions', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+
+                can('update', 'Thread', 'id')
+                cannot('update', 'Post', ['text'])
+                can('update', 'Post', {
+                    id: 0
+                })
+                can('read', 'Post')
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+
+            await expect(client.post.update({
+                data: {
+                    text: '1'
+                },
+                where: {
+                    id: 0
+                }
+            })).rejects.toThrow()
         })
         it('can do nested updates with conditions', async () => {
             function builderFactory() {
