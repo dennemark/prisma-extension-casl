@@ -963,7 +963,7 @@ function applyDataQuery(abilities, args, action, model, creationTree) {
             });
           }));
           const nestedAbilities = e3(abilities.rules.filter((rule) => {
-            if (rule.fields) {
+            if (rule.fields && rule.subject === model) {
               if (rule.inverted) {
                 const hasNoForbiddenFields = argFields.isDisjointFrom(new Set(rule.fields));
                 if (!rule.conditions && !hasNoForbiddenFields) {

@@ -1,5 +1,12 @@
 
 
+## [0.7.3](https://github.com/dennemark/prisma-extension-casl/compare/0.7.2...0.7.3) (2024-10-11)
+
+
+### Bug Fixes
+
+* :bug: limit nestedAbilities rule filter to model ([e376852](https://github.com/dennemark/prisma-extension-casl/commit/e3768520247a66a1d11ec6ac06f5e960ad2b29ce))
+
 ## [0.7.2](https://github.com/dennemark/prisma-extension-casl/compare/0.7.1...0.7.2) (2024-10-11)
 
 
