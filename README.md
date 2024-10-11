@@ -152,12 +152,12 @@ console.log(result) // [{ email: "-" }]
 
 Here are some performance metrics for the above query for the small test sqlite db:
 
-- plain prisma query: **0.4236**
-- casl prisma query: **3.09900**
-  - create abilities: **0.21132**
-  - enrich query with casl: **0.09345**
-  - prisma query: **2.71646**
-  - filtering query results: **0.07777**
+- plain prisma query: **0.56225**
+- casl prisma query: **3.33416**
+  - create abilities: **0.18987**
+  - enrich query with casl: **0.09284**
+  - prisma query: **2.97764**
+  - filtering query results: **0.07380**
 
 #### Nested fields and wildcards are not supported / tested
 

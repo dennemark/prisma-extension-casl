@@ -2,7 +2,7 @@ import { AbilityTuple, PureAbility } from "@casl/ability";
 import { PrismaQuery } from "@casl/prisma";
 import { Prisma } from "@prisma/client";
 import { CreationTree } from "./convertCreationTreeToSelect";
-import { getPermittedFields, getSubject, relationFieldsByModel } from "./helpers";
+import { getPermittedFields, getSubject, isSubset, relationFieldsByModel } from "./helpers";
 import { storePermissions } from "./storePermissions";
 
 export function filterQueryResults(result: any, mask: any, creationTree: CreationTree | undefined, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: string, permissionField?: string) {
@@ -16,6 +16,7 @@ export function filterQueryResults(result: any, mask: any, creationTree: Creatio
 
     const filterPermittedFields = (entry: any) => {
         if (!entry) { return null }
+        /** if we have created a model, we check if it is allowed and otherwise throw an error */
         if (creationTree?.action === 'create') {
             try {
                 if (!abilities.can('create', getSubject(model, entry))) {
@@ -26,7 +27,30 @@ export function filterQueryResults(result: any, mask: any, creationTree: Creatio
             }
         }
 
+        /** 
+         * if we have updated a model, we have to check, the current entry
+         * has been updated by seeing if it overlaps with the where query
+         * and if it does, we check if all fields were allowed to be updated
+         * otherwise we throw an error 
+         * */
+        if (creationTree?.action === 'update' && creationTree.mutation.length > 0) {
+            creationTree.mutation.forEach(({ fields, where }) => {
+                fields.forEach((field) => {
+                    if (isSubset(where, entry)) {
+                        try {
+                            if (!abilities.can('update', getSubject(model, entry), field)) {
+                                throw new Error(field)
+                            }
+                        } catch (e) {
+                            throw new Error(`It's not allowed to update ${field} on ${model} ` + e)
+                        }
+                    }
+                })
+            })
+        }
+
         const permittedFields = getPermittedFields(abilities, 'read', model, entry)
+
         let hasKeys = false
         Object.keys(entry).filter((field) => field !== permissionField).forEach((field) => {
             const relationField = relationFieldsByModel[model][field]

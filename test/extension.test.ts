@@ -911,6 +911,30 @@ describe('prisma extension casl', () => {
             const client = seedClient.$extends(
                 useCaslAbilities(builderFactory)
             )
+
+            const result = await client.user.findMany()
+            expect(result).toEqual([{ email: "0" }])
+        })
+        it('read performance', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+
+                can('read', 'User', 'email', {
+                    posts: {
+                        some: {
+                            authorId: 0
+                        }
+                    }
+                })
+                cannot('read', 'Post')
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            console.log("read performance")
+
             const t1 = performance.now()
             await seedClient.user.findMany({
                 where: {
@@ -1124,7 +1148,7 @@ describe('prisma extension casl', () => {
             })
             expect(result).toEqual({ email: 'new', posts: [{ id: 0, text: '1' }, { id: 3, text: '' }] })
         })
-        it('cannot do updates on restricted fields with conditions', async () => {
+        it('cannot do nested updates on restricted fields with conditions', async () => {
             function builderFactory() {
                 const builder = abilityBuilder()
                 const { can, cannot } = builder
@@ -1167,11 +1191,41 @@ describe('prisma extension casl', () => {
                 const { can, cannot } = builder
 
                 can('update', 'Thread', 'id')
+                can('update', 'Post', {
+                    id: 0
+                })
+                // cannot needs to be after can rule. https://casl.js.org/v6/en/guide/intro#inverted-rules
                 cannot('update', 'Post', ['text'])
+                can('read', 'Post')
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+
+            await expect(client.post.update({
+                data: {
+                    text: '1'
+                },
+                where: {
+                    id: 0
+                }
+            })).rejects.toThrow()
+        })
+        it('cannot do updates on restricted fields with cannot conditions', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+
+                can('update', 'Thread', 'id')
                 can('update', 'Post', {
                     id: 0
                 })
                 can('read', 'Post')
+                // cannot needs to be after can rule. https://casl.js.org/v6/en/guide/intro#inverted-rules
+                cannot('update', 'Post', ['text'], {
+                    id: 0
+                })
                 return builder
             }
             const client = seedClient.$extends(
@@ -1369,6 +1423,81 @@ describe('prisma extension casl', () => {
                     }
                 }
             })).rejects.toThrow()
+        })
+        it('update performance', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+
+                can('read', 'User', 'email')
+                can('update', 'User')
+                can('update', 'Thread', 'id')
+                can('update', 'Post', ['threadId'], {
+                    id: 0
+                })
+                can('update', 'Post', {
+                    text: '-',
+                    id: 0
+                })
+                can('read', 'Post')
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            console.log('update performance')
+            const t1 = performance.now()
+            await seedClient.user.update({
+                data: {
+                    email: 'new',
+                    posts: {
+                        update: {
+                            data: {
+                                threadId: 0
+                            },
+                            where: {
+                                id: 0
+                            }
+                        }
+                    }
+                },
+                where: {
+                    id: 0
+                },
+                include: {
+                    posts: {
+                        select: { id: true, text: true, threadId: true }
+                    }
+                }
+            })
+            console.log("plain prisma performance", performance.now() - t1)
+
+            expect(await client.user.update({
+                //@ts-ignore
+                debugCasl: true,
+                data: {
+                    email: 'new',
+                    posts: {
+                        update: {
+                            data: {
+                                threadId: 1
+                            },
+                            where: {
+                                id: 0
+                            }
+                        }
+                    }
+                },
+                where: {
+                    id: 0
+                },
+                include: {
+                    posts: {
+                        select: { id: true, text: true, threadId: true }
+                    }
+                }
+            })).toEqual({ email: "new", posts: [{ id: 0, text: "", threadId: 1 }, { id: 3, text: "", threadId: 2 }] })
+
         })
     })
 

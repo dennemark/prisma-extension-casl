@@ -28,18 +28,24 @@ describe('convert creation tree to select query', () => {
                   action: 'create',
                   model: 'Thread',
                   children: {},
+                  mutation: []
                 },
                 tag: {
                   action: 'update',
                   model: 'Thread',
                   children: {},
+                  mutation: []
                 },
               },
-            },
-          }
-        },
+              mutation: []
 
+            },
+          },
+          mutation: []
+        }
       },
+      mutation: []
+
     })
     ).toEqual({ post: { select: { author: { select: { id: true } }, topic: { select: { category: { select: {} } } } } } })
   })
@@ -53,9 +59,11 @@ describe('convert creation tree to select query', () => {
         posts: {
           action: 'create',
           model: 'Post',
-          children: { thread: { model: 'Thread', action: 'update', children: {} } }
+          children: { thread: { model: 'Thread', action: 'update', children: {}, mutation: [] } },
+          mutation: []
         }
-      }
+      },
+      mutation: []
     })).toEqual({ posts: { select: {} } })
   })
 })

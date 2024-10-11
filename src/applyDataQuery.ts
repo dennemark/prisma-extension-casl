@@ -30,7 +30,7 @@ export function applyDataQuery(
     model: string,
     creationTree?: CreationTree
 ) {
-    const tree = creationTree ? creationTree : { action: action, model: model, children: {} } as CreationTree
+    const tree = creationTree ? creationTree : { action: action, model: model, children: {}, mutation: [] } as CreationTree
 
     const permittedFields = getPermittedFields(abilities, action, model)
 
@@ -57,15 +57,15 @@ export function applyDataQuery(
                                     return field in propertyFieldsByModel[model]
                                 })
                             }))
-
+                            tree.mutation.push({ fields: [...argFields], where: argsEntry.where })
                             const nestedAbilities = createPrismaAbility(abilities.rules.filter((rule) => {
                                 if (rule.fields && rule.subject === model) {
                                     if (rule.inverted) {
-                                        const hasNoForbiddenFields = argFields.isDisjointFrom(new Set(rule.fields))
-                                        if (!rule.conditions && !hasNoForbiddenFields) {
-                                            throw new Error(`It's not allowed to "${action}" "${rule.fields.toString()}" on "${model}"`)
-                                        }
-                                        return hasNoForbiddenFields
+                                        return argFields.isDisjointFrom(new Set(rule.fields))
+                                        // if (!rule.conditions && !hasNoForbiddenFields) {
+                                        //     throw new Error(`It's not allowed to "${action}" "${rule.fields.toString()}" on "${model}"`)
+                                        // }
+                                        // return hasNoForbiddenFields
                                     } else {
                                         return argFields.isSubsetOf(new Set(Array.isArray(rule.fields) ? rule.fields : [rule.fields]))
                                     }
@@ -118,7 +118,7 @@ export function applyDataQuery(
                         const mutationAction = caslNestedOperationDict[nestedAction]
                         const isConnection = nestedAction === 'connect' || nestedAction === 'disconnect'
 
-                        tree.children[field] = { action: mutationAction, model: relationModel.type as Prisma.ModelName, children: {} }
+                        tree.children[field] = { action: mutationAction, model: relationModel.type as Prisma.ModelName, children: {}, mutation: [] }
                         if (nestedAction !== 'disconnect' && nestedArgs !== true) {
                             const dataQuery = applyDataQuery(abilities, nestedArgs, mutationAction, relationModel.type, tree.children[field])
                             mutation[field][nestedAction] = dataQuery.args
