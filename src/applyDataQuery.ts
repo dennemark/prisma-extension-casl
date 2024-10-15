@@ -111,7 +111,7 @@ export function applyDataQuery(
             if (permittedFields?.includes(field) === false && !relationModel) {
                 // if fields are not permitted we throw an error and exit
                 throw new Error(`It's not allowed to "${action}" "${field}" on "${model}"`)
-            } else if (relationModel) {
+            } else if (relationModel && mutation[field]) {
                 // if additional relations are found, we apply data query on them, too
                 Object.entries(mutation[field]).forEach(([nestedAction, nestedArgs]) => {
                     if (nestedAction in caslNestedOperationDict) {
