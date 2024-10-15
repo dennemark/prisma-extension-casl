@@ -1051,7 +1051,7 @@ function applyDataQuery(abilities, args, action, model, creationTree) {
       const relationModel = relationFieldsByModel[model][field];
       if (permittedFields?.includes(field) === false && !relationModel) {
         throw new Error(`It's not allowed to "${action}" "${field}" on "${model}"`);
-      } else if (relationModel) {
+      } else if (relationModel && mutation[field]) {
         Object.entries(mutation[field]).forEach(([nestedAction, nestedArgs]) => {
           if (nestedAction in caslNestedOperationDict) {
             const mutationAction = caslNestedOperationDict[nestedAction];

@@ -1,5 +1,12 @@
 
 
+## [0.7.5](https://github.com/dennemark/prisma-extension-casl/compare/0.7.4...0.7.5) (2024-10-15)
+
+
+### Bug Fixes
+
+* :bug: check if mutation field is defined in applyDataQuery ([9515111](https://github.com/dennemark/prisma-extension-casl/commit/9515111ba81fbf2aec7ba2e63db07b8e87e2a5ec))
+
 ## [0.7.4](https://github.com/dennemark/prisma-extension-casl/compare/0.7.3...0.7.4) (2024-10-11)
 
 
