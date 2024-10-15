@@ -1,5 +1,7 @@
 
 
+## [0.7.6](https://github.com/dennemark/prisma-extension-casl/compare/0.7.5...0.7.6) (2024-10-15)
+
 ## [0.7.5](https://github.com/dennemark/prisma-extension-casl/compare/0.7.4...0.7.5) (2024-10-15)
 
 
