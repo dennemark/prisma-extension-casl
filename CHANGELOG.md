@@ -1,5 +1,12 @@
 
 
+## [0.8.0](https://github.com/dennemark/prisma-extension-casl/compare/0.7.6...0.8.0) (2024-10-18)
+
+
+### Features
+
+* :sparkles: allow querying additional ability actions ([37f14f8](https://github.com/dennemark/prisma-extension-casl/commit/37f14f8a93983db3d507fcf4c20003ab551e787c))
+
 ## [0.7.6](https://github.com/dennemark/prisma-extension-casl/compare/0.7.5...0.7.6) (2024-10-15)
 
 ## [0.7.5](https://github.com/dennemark/prisma-extension-casl/compare/0.7.4...0.7.5) (2024-10-15)

@@ -22,6 +22,20 @@ type CreationTree = {
     }[];
 };
 
+type PrismaExtensionCaslOptions = {
+    /**
+     * will add a field on each returned prisma result that stores allowed actions on result (not nested)
+     * so instead of { id: 0 } it would return { id: 0, [permissionField]: ['create', 'read', 'update', 'delete'] }
+     *
+     * to return other actions, please use addPermissionActions
+     */
+    permissionField?: string;
+    /**
+     * adds additional permission actions to ['create', 'read', 'update', 'delete']
+     * that should be returned if permissionField is used.
+     */
+    addPermissionActions?: string[];
+};
 type PrismaCaslOperation = 'create' | 'createMany' | 'createManyAndReturn' | 'upsert' | 'findFirst' | 'findFirstOrThrow' | 'findMany' | 'findUnique' | 'findUniqueOrThrow' | 'aggregate' | 'count' | 'groupBy' | 'update' | 'updateMany' | 'delete' | 'deleteMany';
 
 /**
@@ -55,7 +69,21 @@ declare function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abi
  *  - this is a function call to instantiate abilities on each prisma query to allow adding i.e. context or claims
  * @returns enriched prisma client
  */
-declare function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>, permissionField?: string): (client: any) => {
+/**
+ * enrich a prisma client to check for CASL abilities even in nested queries
+ *
+ * `client.$extends(useCaslAbilities(build))`
+ *
+ * https://casl.js.org/v6/en/package/casl-prisma
+ *
+ *
+ * @param getAbilityFactory function to return CASL prisma abilities
+ *  - this is a function call to instantiate abilities on each prisma query to allow adding i.e. context or claims
+ * @param opts additional options: { permissionField, additionalActions }
+ * @returns enriched prisma client
+ * @returns
+ */
+declare function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>, opts?: PrismaExtensionCaslOptions): (client: any) => {
     $extends: {
         extArgs: {
             result: {};
