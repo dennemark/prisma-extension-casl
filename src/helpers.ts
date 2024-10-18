@@ -6,6 +6,21 @@ import type { DMMF } from '@prisma/generator-helper'
 
 type DefaultCaslAction = "create" | "read" | "update" | "delete"
 
+export type PrismaExtensionCaslOptions = {
+    /**
+     * will add a field on each returned prisma result that stores allowed actions on result (not nested) 
+     * so instead of { id: 0 } it would return { id: 0, [permissionField]: ['create', 'read', 'update', 'delete'] } 
+     * 
+     * to return other actions, please use addPermissionActions
+     */
+    permissionField?: string
+    /** 
+     * adds additional permission actions to ['create', 'read', 'update', 'delete']
+     * that should be returned if permissionField is used.
+     */
+    addPermissionActions?: string[]
+}
+
 export type PrismaCaslOperation =
     'create' |
     'createMany' |

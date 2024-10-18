@@ -1877,6 +1877,7 @@ describe('prisma extension casl', () => {
                 const { can, cannot } = builder
 
                 can('create', 'User')
+                can('share', 'User')
                 can('read', 'User')
                 can('delete', 'User', {
                     posts: {
@@ -1895,10 +1896,10 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory, 'casl')
+                useCaslAbilities(builderFactory, { permissionField: 'casl', addPermissionActions: ['share'] })
             )
             const result = await client.user.findMany()
-            expect(result).toEqual([{ email: '0', id: 0, 'casl': ['create', 'read', 'update', 'delete'] }, { email: '1', id: 1, 'casl': ['create', 'read'] }])
+            expect(result).toEqual([{ email: '0', id: 0, 'casl': ['create', 'read', 'update', 'delete', 'share'] }, { email: '1', id: 1, 'casl': ['create', 'read', 'share'] }])
         })
         it('has permissions on custom prop on chained queries', async () => {
             function builderFactory() {
@@ -1925,7 +1926,7 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory, 'casl')
+                useCaslAbilities(builderFactory, { permissionField: 'casl' })
             )
             const result = await client.post.findUnique({ where: { id: 0 } }).author()
             expect(result).toEqual({ email: '0', id: 0, casl: ['create', 'read'] })

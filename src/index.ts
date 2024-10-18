@@ -3,7 +3,7 @@ import { PrismaQuery } from '@casl/prisma'
 import { Prisma } from '@prisma/client'
 import { applyCaslToQuery } from './applyCaslToQuery'
 import { filterQueryResults } from './filterQueryResults'
-import { caslOperationDict, getFluentModel, PrismaCaslOperation, propertyFieldsByModel, relationFieldsByModel } from './helpers'
+import { caslOperationDict, getFluentModel, PrismaCaslOperation, PrismaExtensionCaslOptions, propertyFieldsByModel, relationFieldsByModel } from './helpers'
 
 export { applyCaslToQuery }
 
@@ -20,7 +20,22 @@ export { applyCaslToQuery }
  *  - this is a function call to instantiate abilities on each prisma query to allow adding i.e. context or claims
  * @returns enriched prisma client
  */
-export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>, permissionField?: string) {
+
+/**
+ * enrich a prisma client to check for CASL abilities even in nested queries
+ * 
+ * `client.$extends(useCaslAbilities(build))` 
+ * 
+ * https://casl.js.org/v6/en/package/casl-prisma
+ * 
+ * 
+ * @param getAbilityFactory function to return CASL prisma abilities
+ *  - this is a function call to instantiate abilities on each prisma query to allow adding i.e. context or claims
+ * @param opts additional options: { permissionField, additionalActions }
+ * @returns enriched prisma client
+ * @returns 
+ */
+export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>, opts?: PrismaExtensionCaslOptions) {
 
 
     return Prisma.defineExtension((client) => {
@@ -65,7 +80,7 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
                  */
                 function getCaslQuery() {
                     try {
-                        return applyCaslToQuery(operation, args, abilities, model, permissionField ? true : false)
+                        return applyCaslToQuery(operation, args, abilities, model, opts?.permissionField ? true : false)
                     }
                     catch (e) {
                         if (args.debugCasl || caslOperationDict[operation as PrismaCaslOperation].action !== 'read') {
@@ -96,7 +111,7 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
                         // on fluent models we need to take mask of the relation
                         caslQuery.mask = fluentRelationModel && fluentRelationModel in caslQuery.mask ? caslQuery.mask[fluentRelationModel] : {}
                     }
-                    const filteredResult = filterQueryResults(result, caslQuery.mask, caslQuery.creationTree, abilities, fluentModel, permissionField)
+                    const filteredResult = filterQueryResults(result, caslQuery.mask, caslQuery.creationTree, abilities, fluentModel, opts)
 
                     if (perf) {
                         perf.mark('prisma-casl-extension-4')

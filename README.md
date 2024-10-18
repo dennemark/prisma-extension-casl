@@ -14,7 +14,7 @@
 - Mutating queries will throw errors in a similar format as CASL. `It's not allowed to "update" "email" on "User"`.
 - On nested `connect`, `disconnect`, `upsert` or `connectOrCreate` mutation queries the client assumes an `update` action for insertion or connection.
 - `update` and `create` are wrapped into a transaction, since `create` abilities will be checked on result of mutation and if it was not allowed the transaction will revert the creation. This limits client transactions to interactive transactions only. Sequential transactions are not supported.
-- optionally add a `permissionField` to `useCaslAbilities` to get an array of crud rights of the queried model: `['create', 'read', 'update', 'delete']` which can be used to check abilities client-side conveniently without all the necessary relation queries
+- optionally add options to `useCaslAbilities`. Add `permissionField` to it to get an array of crud rights of the queried model: `['create', 'read', 'update', 'delete']` and add additional Actions via `addPermissionActions`, which can be used to check abilities client-side conveniently without all the necessary relation queries
 
 ### Examples
 

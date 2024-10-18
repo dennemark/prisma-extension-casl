@@ -1,12 +1,13 @@
 import { AbilityTuple, PureAbility } from "@casl/ability";
 import { PrismaQuery } from "@casl/prisma";
-import { getSubject } from "./helpers";
+import { getSubject, PrismaExtensionCaslOptions } from "./helpers";
 
-export function storePermissions(result: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: string, prop?: string) {
-  if (prop === undefined) {
+export function storePermissions(result: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: string, opts?: PrismaExtensionCaslOptions) {
+  if (!opts?.permissionField) {
     return result
   }
-  const actions = ['create', 'read', 'update', 'delete'] as const
+  const prop = opts.permissionField
+  const actions = ['create', 'read', 'update', 'delete', ...(opts?.addPermissionActions ?? [])]
   const storeProp = (entry: any) => {
     if (entry) {
       entry[prop] = []

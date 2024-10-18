@@ -2,10 +2,10 @@ import { AbilityTuple, PureAbility } from "@casl/ability";
 import { PrismaQuery } from "@casl/prisma";
 import { Prisma } from "@prisma/client";
 import { CreationTree } from "./convertCreationTreeToSelect";
-import { getPermittedFields, getSubject, isSubset, relationFieldsByModel } from "./helpers";
+import { getPermittedFields, getSubject, isSubset, PrismaExtensionCaslOptions, relationFieldsByModel } from "./helpers";
 import { storePermissions } from "./storePermissions";
 
-export function filterQueryResults(result: any, mask: any, creationTree: CreationTree | undefined, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: string, permissionField?: string) {
+export function filterQueryResults(result: any, mask: any, creationTree: CreationTree | undefined, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: string, opts?: PrismaExtensionCaslOptions) {
     if (typeof result === 'number') {
         return result
     }
@@ -52,7 +52,7 @@ export function filterQueryResults(result: any, mask: any, creationTree: Creatio
         const permittedFields = getPermittedFields(abilities, 'read', model, entry)
 
         let hasKeys = false
-        Object.keys(entry).filter((field) => field !== permissionField).forEach((field) => {
+        Object.keys(entry).filter((field) => field !== opts?.permissionField).forEach((field) => {
             const relationField = relationFieldsByModel[model][field]
             if (relationField) {
                 const nestedCreationTree = creationTree && field in creationTree.children ? creationTree.children[field] : undefined
@@ -73,7 +73,7 @@ export function filterQueryResults(result: any, mask: any, creationTree: Creatio
 
         return hasKeys && Object.keys(entry).length > 0 ? entry : null
     }
-    const permissionResult = storePermissions(result, abilities, model, permissionField)
+    const permissionResult = storePermissions(result, abilities, model, opts)
     if (Array.isArray(permissionResult)) {
         return permissionResult.map((entry) => filterPermittedFields(entry)).filter((x) => x)
     } else {
