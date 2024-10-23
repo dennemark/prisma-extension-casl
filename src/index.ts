@@ -111,7 +111,7 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
                         // on fluent models we need to take mask of the relation
                         caslQuery.mask = fluentRelationModel && fluentRelationModel in caslQuery.mask ? caslQuery.mask[fluentRelationModel] : {}
                     }
-                    const filteredResult = filterQueryResults(result, caslQuery.mask, caslQuery.creationTree, abilities, fluentModel, opts)
+                    const filteredResult = filterQueryResults(result, caslQuery.mask, caslQuery.creationTree, abilities, fluentModel, op, opts)
 
                     if (perf) {
                         perf.mark('prisma-casl-extension-4')

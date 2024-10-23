@@ -1811,6 +1811,73 @@ describe('prisma extension casl', () => {
         })
 
     })
+    describe('aggregate', () => {
+        it('can aggregate data', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+                can('read', 'User')
+
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            const result = await client.user.aggregate({
+                _avg: { id: true },
+                _count: { id: true },
+                _min: { id: true },
+                _max: { id: true },
+                _sum: { id: true }
+            })
+            expect(result).toEqual({
+                _avg: { id: 0.5 },
+                _count: { id: 2 },
+                _min: { id: 0 },
+                _max: { id: 1 },
+                _sum: { id: 1 },
+            })
+        })
+    })
+    describe('count', () => {
+        it('can count data', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+                can('read', 'User')
+
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            const result = await client.user.count()
+            expect(result).toEqual(2)
+        })
+    })
+    describe('groupBy', () => {
+        it('can groupBy data', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+                can('read', 'User')
+
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            const result = await client.user.groupBy({
+                by: ['email'],
+                _avg: { id: true },
+                _count: { id: true },
+                _min: { id: true },
+                _max: { id: true },
+                _sum: { id: true }
+            })
+            expect(result).toEqual([{ _avg: { id: 0 }, _count: { id: 1 }, _max: { id: 0 }, _min: { id: 0 }, _sum: { id: 0 }, email: "0" }, { _avg: { id: 1 }, _count: { id: 1 }, _max: { id: 1 }, _min: { id: 1 }, _sum: { id: 1 }, email: "1" }])
+        })
+    })
     describe('fluent api queries', () => {
         it('can do chained queries if abilities exist', async () => {
             function builderFactory() {

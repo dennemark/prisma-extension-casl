@@ -2,10 +2,10 @@ import { AbilityTuple, PureAbility } from "@casl/ability";
 import { PrismaQuery } from "@casl/prisma";
 import { Prisma } from "@prisma/client";
 import { CreationTree } from "./convertCreationTreeToSelect";
-import { getPermittedFields, getSubject, isSubset, PrismaExtensionCaslOptions, relationFieldsByModel } from "./helpers";
+import { caslOperationDict, getPermittedFields, getSubject, isSubset, PrismaCaslOperation, PrismaExtensionCaslOptions, relationFieldsByModel } from "./helpers";
 import { storePermissions } from "./storePermissions";
 
-export function filterQueryResults(result: any, mask: any, creationTree: CreationTree | undefined, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: string, opts?: PrismaExtensionCaslOptions) {
+export function filterQueryResults(result: any, mask: any, creationTree: CreationTree | undefined, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: string, operation: PrismaCaslOperation, opts?: PrismaExtensionCaslOptions) {
     if (typeof result === 'number') {
         return result
     }
@@ -13,6 +13,7 @@ export function filterQueryResults(result: any, mask: any, creationTree: Creatio
     if (!prismaModel) {
         throw new Error(`Model ${model} does not exist on Prisma Client`)
     }
+    const operationFields = caslOperationDict[operation].operationFields
 
     const filterPermittedFields = (entry: any) => {
         if (!entry) { return null }
@@ -52,11 +53,18 @@ export function filterQueryResults(result: any, mask: any, creationTree: Creatio
         const permittedFields = getPermittedFields(abilities, 'read', model, entry)
 
         let hasKeys = false
-        Object.keys(entry).filter((field) => field !== opts?.permissionField).forEach((field) => {
+        Object.keys(entry).filter((field) => {
+            if (operationFields?.includes(field)) {
+                hasKeys = true
+                return false
+            } else {
+                return field !== opts?.permissionField
+            }
+        }).forEach((field) => {
             const relationField = relationFieldsByModel[model][field]
             if (relationField) {
                 const nestedCreationTree = creationTree && field in creationTree.children ? creationTree.children[field] : undefined
-                const res = filterQueryResults(entry[field], mask?.[field], nestedCreationTree, abilities, relationField.type)
+                const res = filterQueryResults(entry[field], mask?.[field], nestedCreationTree, abilities, relationField.type, operation)
                 entry[field] = Array.isArray(res) ? res.length > 0 ? res : null : res
             }
             if ((!permittedFields.includes(field) && !relationField) || mask?.[field] === true) {
