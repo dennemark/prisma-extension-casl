@@ -1,5 +1,12 @@
 
 
+## [0.8.1](https://github.com/dennemark/prisma-extension-casl/compare/0.8.0...0.8.1) (2024-10-23)
+
+
+### Bug Fixes
+
+* :bug: fix aggregate and groupBy queries ([b50547e](https://github.com/dennemark/prisma-extension-casl/commit/b50547e9e9ea109405d230a42eea54bd2540e492))
+
 ## [0.8.0](https://github.com/dennemark/prisma-extension-casl/compare/0.7.6...0.8.0) (2024-10-18)
 
 

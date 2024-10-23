@@ -836,9 +836,9 @@ var caslOperationDict = {
   findMany: { action: "read", dataQuery: false, whereQuery: true, includeSelectQuery: true },
   findUnique: { action: "read", dataQuery: false, whereQuery: true, includeSelectQuery: true },
   findUniqueOrThrow: { action: "read", dataQuery: false, whereQuery: true, includeSelectQuery: true },
-  aggregate: { action: "read", dataQuery: false, whereQuery: true, includeSelectQuery: false },
+  aggregate: { action: "read", dataQuery: false, whereQuery: true, includeSelectQuery: false, operationFields: ["_min", "_max", "_avg", "_count", "_sum"] },
   count: { action: "read", dataQuery: false, whereQuery: true, includeSelectQuery: false },
-  groupBy: { action: "read", dataQuery: false, whereQuery: true, includeSelectQuery: false },
+  groupBy: { action: "read", dataQuery: false, whereQuery: true, includeSelectQuery: false, operationFields: ["_min", "_max", "_avg", "_count", "_sum"] },
   update: { action: "update", dataQuery: true, whereQuery: true, includeSelectQuery: true },
   updateMany: { action: "update", dataQuery: true, whereQuery: true, includeSelectQuery: false },
   delete: { action: "delete", dataQuery: false, whereQuery: true, includeSelectQuery: true },
@@ -1338,7 +1338,7 @@ function storePermissions(result, abilities, model, opts) {
 }
 
 // src/filterQueryResults.ts
-function filterQueryResults(result, mask, creationTree, abilities, model, opts) {
+function filterQueryResults(result, mask, creationTree, abilities, model, operation, opts) {
   if (typeof result === "number") {
     return result;
   }
@@ -1346,6 +1346,7 @@ function filterQueryResults(result, mask, creationTree, abilities, model, opts) 
   if (!prismaModel) {
     throw new Error(`Model ${model} does not exist on Prisma Client`);
   }
+  const operationFields = caslOperationDict[operation].operationFields;
   const filterPermittedFields = (entry) => {
     if (!entry) {
       return null;
@@ -1376,11 +1377,18 @@ function filterQueryResults(result, mask, creationTree, abilities, model, opts) 
     }
     const permittedFields = getPermittedFields(abilities, "read", model, entry);
     let hasKeys = false;
-    Object.keys(entry).filter((field) => field !== opts?.permissionField).forEach((field) => {
+    Object.keys(entry).filter((field) => {
+      if (operationFields?.includes(field)) {
+        hasKeys = true;
+        return false;
+      } else {
+        return field !== opts?.permissionField;
+      }
+    }).forEach((field) => {
       const relationField = relationFieldsByModel[model][field];
       if (relationField) {
         const nestedCreationTree = creationTree && field in creationTree.children ? creationTree.children[field] : void 0;
-        const res = filterQueryResults(entry[field], mask?.[field], nestedCreationTree, abilities, relationField.type);
+        const res = filterQueryResults(entry[field], mask?.[field], nestedCreationTree, abilities, relationField.type, operation);
         entry[field] = Array.isArray(res) ? res.length > 0 ? res : null : res;
       }
       if (!permittedFields.includes(field) && !relationField || mask?.[field] === true) {
@@ -1461,7 +1469,7 @@ function useCaslAbilities(getAbilityFactory, opts) {
           if (fluentRelationModel && caslQuery.mask) {
             caslQuery.mask = fluentRelationModel && fluentRelationModel in caslQuery.mask ? caslQuery.mask[fluentRelationModel] : {};
           }
-          const filteredResult = filterQueryResults(result, caslQuery.mask, caslQuery.creationTree, abilities, fluentModel, opts);
+          const filteredResult = filterQueryResults(result, caslQuery.mask, caslQuery.creationTree, abilities, fluentModel, op, opts);
           if (perf) {
             perf.mark("prisma-casl-extension-4");
             logger?.log(
