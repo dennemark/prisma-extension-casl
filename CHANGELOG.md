@@ -1,5 +1,15 @@
 
 
+## [1.0.0](https://github.com/dennemark/prisma-extension-casl/compare/0.8.1...1.0.0) (2024-10-23)
+
+### ⚠ BREAKING CHANGES
+
+* :boom: V1.0.0 - Prisma v5.20.0
+
+### Features
+
+* :boom: V1.0.0 - Prisma v5.20.0 ([fdc1246](https://github.com/dennemark/prisma-extension-casl/commit/fdc124647f5a4d8889ae7029a027fb312a6af01f))
+
 ## [0.8.1](https://github.com/dennemark/prisma-extension-casl/compare/0.8.0...0.8.1) (2024-10-23)
 
 

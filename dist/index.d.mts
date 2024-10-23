@@ -95,12 +95,12 @@ declare function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAb
                     model: {};
                     query: {};
                     client: {};
-                }>, Prisma.TypeMapCb, {
+                }, Prisma.PrismaClientOptions>, Prisma.TypeMapCb, {
                     result: {};
                     model: {};
                     query: {};
                     client: {};
-                }>;
+                }, {}>;
             };
         };
     };
