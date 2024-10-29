@@ -1,5 +1,11 @@
 
 
+## [1.0.1](https://github.com/dennemark/prisma-extension-casl/compare/1.0.0...1.0.1) (2024-10-29)
+
+### Bug Fixes
+
+* :bug: correct store permissions for chained queries ([fcbd014](https://github.com/dennemark/prisma-extension-casl/commit/fcbd0142f29d9a5b1d0a02391d7d45f59a6bfeec))
+
 ## [1.0.0](https://github.com/dennemark/prisma-extension-casl/compare/0.8.1...1.0.0) (2024-10-23)
 
 ### ⚠ BREAKING CHANGES

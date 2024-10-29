@@ -1231,7 +1231,7 @@ function getNestedQueryRelations(args, abilities, action, model, creationSelectQ
           const relationField = relationFieldsByModel[model][relation];
           if (relationField) {
             const nestedQueryRelations = {
-              ...getNestedQueryRelations(args[method][relation], abilities, "read", relationField.type),
+              ...getNestedQueryRelations(args[method][relation], abilities, action === "all" ? "all" : "read", relationField.type),
               ...queryRelations[relation]?.select ?? {}
             };
             if (nestedQueryRelations && Object.keys(nestedQueryRelations).length > 0) {
