@@ -1996,7 +1996,7 @@ describe('prisma extension casl', () => {
                 useCaslAbilities(builderFactory, { permissionField: 'casl' })
             )
             const result = await client.post.findUnique({ where: { id: 0 } }).author()
-            expect(result).toEqual({ email: '0', id: 0, casl: ['create', 'read'] })
+            expect(result).toEqual({ email: '0', id: 0, casl: ['create', 'read', 'update', 'delete'] })
         })
     })
 

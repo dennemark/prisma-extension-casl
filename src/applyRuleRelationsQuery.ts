@@ -175,7 +175,7 @@ function getNestedQueryRelations(args: any, abilities: PureAbility<AbilityTuple,
 
             if (relationField) {
               const nestedQueryRelations = {
-                ...getNestedQueryRelations(args[method][relation], abilities, 'read', relationField.type as Prisma.ModelName),
+                ...getNestedQueryRelations(args[method][relation], abilities, action === 'all' ? 'all' : 'read', relationField.type as Prisma.ModelName),
                 ...(queryRelations[relation]?.select ?? {})
               }
               if (nestedQueryRelations && Object.keys(nestedQueryRelations).length > 0) {
