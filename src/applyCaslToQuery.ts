@@ -27,7 +27,7 @@ export function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abil
         if (operationAbility.whereQuery && !args.where) {
             args.where = {}
         }
-        const { args: dataArgs, creationTree: dataCreationTree } = applyDataQuery(abilities, args, operationAbility.action, model)
+        const { args: dataArgs, creationTree: dataCreationTree } = applyDataQuery(abilities, args, operation, operationAbility.action, model)
         creationTree = dataCreationTree
         args = dataArgs
         if (operation === 'updateMany') {

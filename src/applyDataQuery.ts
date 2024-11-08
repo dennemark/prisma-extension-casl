@@ -4,7 +4,7 @@ import { Prisma } from '@prisma/client'
 import { applyAccessibleQuery } from './applyAccessibleQuery'
 import { applyWhereQuery } from './applyWhereQuery'
 import { CreationTree } from './convertCreationTreeToSelect'
-import { caslNestedOperationDict, getPermittedFields, propertyFieldsByModel, relationFieldsByModel } from './helpers'
+import { caslNestedOperationDict, getPermittedFields, PrismaCaslOperation, propertyFieldsByModel, relationFieldsByModel } from './helpers'
 import './polyfills'
 
 /**
@@ -26,6 +26,7 @@ import './polyfills'
 export function applyDataQuery(
     abilities: PureAbility<AbilityTuple, PrismaQuery>,
     args: any,
+    operation: PrismaCaslOperation,
     action: string,
     model: string,
     creationTree?: CreationTree
@@ -91,11 +92,12 @@ export function applyDataQuery(
     mutationArgs.map((mutation: any) => {
 
         // get all mutation arg fields and if they are short code connect (userId instead of user: { connect: id }), we convert it
+        // except if it is a createMany or updateMany operation
         const queriedFields = (mutation ? Object.keys(mutation) : []).map((field) => {
             const relationModelId = propertyFieldsByModel[model][field]
             if (relationModelId && mutation[field] !== null) {
                 const fieldId = relationFieldsByModel[model][relationModelId].relationToFields?.[0]
-                if (fieldId) {
+                if (fieldId && operation !== 'createMany' && operation !== 'createManyAndReturn') {
                     mutation[relationModelId] = { connect: { [fieldId]: mutation[field] } }
                     delete mutation[field]
                 }
@@ -120,7 +122,7 @@ export function applyDataQuery(
 
                         tree.children[field] = { action: mutationAction, model: relationModel.type as Prisma.ModelName, children: {}, mutation: [] }
                         if (nestedAction !== 'disconnect' && nestedArgs !== true) {
-                            const dataQuery = applyDataQuery(abilities, nestedArgs, mutationAction, relationModel.type, tree.children[field])
+                            const dataQuery = applyDataQuery(abilities, nestedArgs, operation, mutationAction, relationModel.type, tree.children[field])
                             mutation[field][nestedAction] = dataQuery.args
                             // connection works like a where query, so we apply it
                             if (isConnection) {

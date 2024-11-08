@@ -11,7 +11,7 @@
   "scripts": {
     "build": "prisma generate && tsup src/index.ts --format=cjs,esm --dts",
     "watch": "prisma generate && tsup src/index.ts --format=cjs,esm --dts --watch",
-    "test": "jest --watch",
+    "test": "jest --watch --runInBand",
     "release": "release-it"
   },
   "keywords": [
