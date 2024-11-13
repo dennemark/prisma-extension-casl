@@ -3,7 +3,7 @@ import { PrismaQuery } from '@casl/prisma'
 import { Prisma } from '@prisma/client'
 import { applyCaslToQuery } from './applyCaslToQuery'
 import { filterQueryResults } from './filterQueryResults'
-import { caslOperationDict, getFluentModel, PrismaCaslOperation, PrismaExtensionCaslOptions, propertyFieldsByModel, relationFieldsByModel } from './helpers'
+import { caslOperationDict, getFluentField, getFluentModel, PrismaCaslOperation, PrismaExtensionCaslOptions, propertyFieldsByModel, relationFieldsByModel } from './helpers'
 
 export { applyCaslToQuery }
 
@@ -35,13 +35,15 @@ export { applyCaslToQuery }
  * @returns enriched prisma client
  * @returns 
  */
-export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>, opts?: PrismaExtensionCaslOptions) {
+export function useCaslAbilities(
+    getAbilityFactory: () => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>,
+    opts?: PrismaExtensionCaslOptions) {
 
 
     return Prisma.defineExtension((client) => {
         const allOperations = (getAbilities: () => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => ({
             async $allOperations<T>({ args, query, model, operation, ...rest }: { args: any, query: any, model: any, operation: any }) {
-                const op = operation === 'createMany' ? 'createManyAndReturn' : operation
+
                 const fluentModel = getFluentModel(model, rest)
 
                 const [fluentRelationModel, fluentRelationField] = (fluentModel !== model ? Object.entries(relationFieldsByModel[model]).find(([k, v]) => v.type === fluentModel) : undefined) ?? [undefined, undefined]
@@ -61,7 +63,7 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
                 perf?.clearMarks('prisma-casl-extension-3')
                 perf?.clearMarks('prisma-casl-extension-4')
 
-                if (!(op in caslOperationDict)) {
+                if (!(operation in caslOperationDict)) {
                     return query(args)
                 }
 
@@ -111,7 +113,7 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
                         // on fluent models we need to take mask of the relation
                         caslQuery.mask = fluentRelationModel && fluentRelationModel in caslQuery.mask ? caslQuery.mask[fluentRelationModel] : {}
                     }
-                    const filteredResult = filterQueryResults(result, caslQuery.mask, caslQuery.creationTree, abilities, fluentModel, op, opts)
+                    const filteredResult = filterQueryResults(result, caslQuery.mask, caslQuery.creationTree, abilities, fluentModel as Prisma.ModelName, operation, opts)
 
                     if (perf) {
                         perf.mark('prisma-casl-extension-4')
@@ -127,7 +129,8 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
                         )
                     }
 
-                    return operation === 'createMany' ? { count: filteredResult.length } : filteredResult
+                    return filteredResult
+
                 }
                 const operationAbility = caslOperationDict[operation as PrismaCaslOperation]
                 /** 
@@ -137,31 +140,70 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
                  * 
                  * for reads and deletes we skip the transaction
                  */
-                if (operationAbility.action === 'update' || operationAbility.action === 'create') {
-                    if (transaction) {
-                        if (transaction.kind === 'itx') {
-                            const transactionClient = (client as any)._createItxClient(transaction)
-                            return transactionClient[model][op](caslQuery.args).then(cleanupResults)
-                        } else if (transaction.kind === 'batch') {
-                            //@ts-ignore
-                            throw new Error('Sequential transactions are not supported in prisma-extension-casl.')
-                            // const extendedRequest = request.then(cleanupResults)
-                            // extendedRequest.requestTransaction = request.requestTransaction
-                            //@ts-ignore
-                            // return client._createPrismaPromise(new Promise((resolve, reject) => {
-                            //     query(caslQuery.args).then(cleanupResults).then((result: any) => resolve(result)).catch(((e: any) => reject(e)))
-                            // })
-                        }
+                if (transaction && transaction.kind === 'batch') {
+                    //@ts-ignore
+                    throw new Error('Sequential transactions are not supported in prisma-extension-casl.')
+                    // const extendedRequest = request.then(cleanupResults)
+                    // extendedRequest.requestTransaction = request.requestTransaction
+                    //@ts-ignore
+                    // return client._createPrismaPromise(new Promise((resolve, reject) => {
+                    //     query(caslQuery.args).then(cleanupResults).then((result: any) => resolve(result)).catch(((e: any) => reject(e)))
+                    // })
+                }
+                const transactionQuery = async (txClient: any) => {
+                    if (opts?.beforeQuery) {
+                        await opts.beforeQuery(txClient)
+                    }
+                    if (operationAbility.action === 'update' || operationAbility.action === 'create' || operation === 'deleteMany') {
+                        /**
+                         *  we get all update/deleteMany entries for logging purposes.
+                         */
+                        const getMany = operation === 'deleteMany' || operation === 'updateMany'
+                        const manyResult = getMany ? await txClient[model].findMany(caslQuery.args.where ? { where: caslQuery.args.where } : undefined).then((res: any[]) => {
+                            /** create update objects for updateMany */
+                            return operation === 'updateMany' ? res.map((r) => ({ ...caslQuery.args.data, id: r.id })) : res
+                        }) : []
+                        /**
+                         *  we use createManyAndReturn instead of createMany createMany entries for logging purposes and to check permissions on new entries
+                         */
+                        const op = operation === 'createMany' ? 'createManyAndReturn' : operation
+                        return txClient[model][op](caslQuery.args).then(async (result: any) => {
+                            // we need to get the updated many result
+                            if (opts?.afterQuery) {
+                                await opts.afterQuery(txClient)
+                            }
+                            const filteredResult = cleanupResults(getMany ? manyResult : result)
+                            const results = operation === 'createMany'
+                                ? { count: result.length }
+                                : getMany ? { count: manyResult.length }
+                                    : filteredResult
+                            return results
+                        })
                     } else {
 
-                        return client.$transaction(async (tx) => {
-                            //@ts-ignore
-                            return tx[model][op](caslQuery.args).then(cleanupResults)
+                        return txClient[model][operation](caslQuery.args).then(async (result: any) => {
+                            // we need to get the updated many result
+                            if (opts?.afterQuery) {
+                                await opts.afterQuery(txClient)
+                            }
+                            const fluentField = getFluentField(rest)
+
+                            if (fluentField) {
+                                return cleanupResults(result?.[fluentField])
+                            }
+                            return cleanupResults(result)
                         })
                     }
-                } else {
-                    return query(caslQuery.args).then(cleanupResults)
                 }
+                if (transaction && transaction.kind === 'itx') {
+                    return transactionQuery((client as any)._createItxClient(transaction))
+                } else {
+                    return client.$transaction(async (tx) => {
+                        //@ts-ignore
+                        return transactionQuery(tx)
+                    })
+                }
+
             }
         })
         return client.$extends({

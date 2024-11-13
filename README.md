@@ -108,7 +108,27 @@ To debug queries add `debugCasl: true` to the query like this `caslClient.post.f
 
 ### Limitations and Constraints
 
-#### Sequential transactions are not supported for `update` or `create` actions
+#### NEEDS TO BE THE LAST EXTENSION
+
+Since Prisma does not allow properly transfering a transaction from one extension to another, this extension needs to be the last.
+To allow adding functionality like RLS to a transaction use the following options:
+
+```ts
+const caslClient = prismaClient.$extends(
+  useCaslAbilities(builderFactory, {
+    beforeQuery: (tx) => {
+      tx.$executeRaw`SELECT set_config('app.current_user', ${userId}, TRUE)`;
+      return;
+    },
+    afterQuery: (tx) => {
+      // some other logic
+      return;
+    },
+  })
+);
+```
+
+#### Sequential transactions are not supported
 
 #### Avoid columns with prisma naming
 

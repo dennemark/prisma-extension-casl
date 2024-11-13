@@ -20,8 +20,18 @@ export function filterQueryResults(result: any, mask: any, creationTree: Creatio
         /** if we have created a model, we check if it is allowed and otherwise throw an error */
         if (creationTree?.action === 'create') {
             try {
-                if (!abilities.can('create', getSubject(model, entry))) {
-                    throw new Error('')
+                if (creationTree.mutation?.length) {
+                    creationTree.mutation.forEach(({ where }) => {
+                        if (isSubset(where, entry)) {
+                            if (!abilities.can('create', getSubject(model, entry))) {
+                                throw new Error('')
+                            }
+                        }
+                    })
+                } else {
+                    if (!abilities.can('create', getSubject(model, entry))) {
+                        throw new Error('')
+                    }
                 }
             } catch (e) {
                 throw new Error(`It's not allowed to create on ${model} ` + e)
@@ -36,8 +46,8 @@ export function filterQueryResults(result: any, mask: any, creationTree: Creatio
          * */
         if (creationTree?.action === 'update' && creationTree.mutation.length > 0) {
             creationTree.mutation.forEach(({ fields, where }) => {
-                fields.forEach((field) => {
-                    if (isSubset(where, entry)) {
+                if (isSubset(where, entry)) {
+                    fields.forEach((field) => {
                         try {
                             if (!abilities.can('update', getSubject(model, entry), field)) {
                                 throw new Error(field)
@@ -45,8 +55,8 @@ export function filterQueryResults(result: any, mask: any, creationTree: Creatio
                         } catch (e) {
                             throw new Error(`It's not allowed to update ${field} on ${model} ` + e)
                         }
-                    }
-                })
+                    })
+                }
             })
         }
 

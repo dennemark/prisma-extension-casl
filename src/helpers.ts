@@ -19,6 +19,10 @@ export type PrismaExtensionCaslOptions = {
      * that should be returned if permissionField is used.
      */
     addPermissionActions?: string[]
+    /** uses transaction to allow using client queries before actual query, if fails, whole query will be rolled back */
+    beforeQuery?: (tx: Prisma.TransactionClient) => Promise<void>,
+    /** uses transaction to allow using client queries after actual query, if fails, whole query will be rolled back */
+    afterQuery?: (tx: Prisma.TransactionClient) => Promise<void>,
 }
 
 export type PrismaCaslOperation =
@@ -150,6 +154,15 @@ export function getSubject(model: string, obj: any) {
     const modelFields = Object.keys(propertyFieldsByModel[model])
     const subjectFields = [...modelFields, ...Object.keys(relationFieldsByModel[model])]
     return subject(model, pick(obj, subjectFields))
+}
+
+export function getFluentField(data: any) {
+    const dataPath = data?.__internalParams?.dataPath as string[]
+    if (dataPath?.length > 0) {
+        return dataPath[dataPath.length - 1]
+    } else {
+        return undefined
+    }
 }
 /**
  * if fluent api is used `client.user.findUnique().post()`

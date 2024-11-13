@@ -100,19 +100,17 @@ describe('prisma extension casl', () => {
             const client = seedClient.$extends(
                 useCaslAbilities(builderFactory)
             )
-            expect(await client.user.count()).toEqual(2)
-            expect(
-                await client.$transaction([
-                    client.user.delete({
-                        where: {
-                            id: 0
-                        }
-                    }),
-                    client.user.findUnique({ where: { id: 0 } }),
-                ])
-            ).toEqual([{ email: '0', id: 0 }, null])
-            expect(await client.user.count()).toEqual(1)
-
+            // expect(await client.user.count()).toEqual(2)
+            await expect(client.$transaction([
+                client.user.delete({
+                    where: {
+                        id: 0
+                    }
+                }),
+                client.user.findUnique({ where: { id: 0 } }),
+            ])
+            ).rejects.toThrow()
+            // expect(await client.user.count()).toEqual(1)
         })
         it('reverts read and delete if they error with an existing batch transaction', async () => {
             function builderFactory() {
@@ -305,8 +303,70 @@ describe('prisma extension casl', () => {
                     })]
                 })
             ).toEqual([{ "email": "second-mail" }, { "email": "third-mail" }])
-
-
+        })
+        it('allows to use transaction beforeQuery', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+                can('read', 'Post')
+                can('create', 'Post')
+                can('update', 'User')
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory, {
+                    beforeQuery: async (tx) => {
+                        console.log("hier")
+                        await tx.post.create({
+                            data: {
+                                text: 'abc',
+                                authorId: 0
+                            }
+                        })
+                    }
+                })
+            )
+            expect(await seedClient.post.count()).toBe(4)
+            await
+                client.post.create({
+                    data: {
+                        text: 'abc',
+                        authorId: 0
+                    }
+                })
+            expect(await seedClient.post.count()).toBe(6)
+        })
+        it('rollsback to use transaction beforeQuery', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+                can('read', 'Post')
+                can('create', 'Post')
+                can('update', 'User')
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory, {
+                    beforeQuery: async (tx) => {
+                        await tx.post.create({
+                            data: {
+                                text: 'abc',
+                                authorId: 0
+                            }
+                        })
+                        throw new Error('')
+                    }
+                })
+            )
+            expect(await seedClient.post.count()).toBe(4)
+            await expect(
+                client.post.create({
+                    data: {
+                        text: 'abc',
+                        authorId: 0
+                    }
+                })).rejects.toThrow()
+            expect(await seedClient.post.count()).toBe(4)
         })
     })
     describe('findUnique', () => {
