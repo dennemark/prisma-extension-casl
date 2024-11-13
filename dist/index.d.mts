@@ -35,6 +35,10 @@ type PrismaExtensionCaslOptions = {
      * that should be returned if permissionField is used.
      */
     addPermissionActions?: string[];
+    /** uses transaction to allow using client queries before actual query, if fails, whole query will be rolled back */
+    beforeQuery?: (tx: Prisma.TransactionClient) => Promise<void>;
+    /** uses transaction to allow using client queries after actual query, if fails, whole query will be rolled back */
+    afterQuery?: (tx: Prisma.TransactionClient) => Promise<void>;
 };
 type PrismaCaslOperation = 'create' | 'createMany' | 'createManyAndReturn' | 'upsert' | 'findFirst' | 'findFirstOrThrow' | 'findMany' | 'findUnique' | 'findUniqueOrThrow' | 'aggregate' | 'count' | 'groupBy' | 'update' | 'updateMany' | 'delete' | 'deleteMany';
 

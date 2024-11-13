@@ -1,5 +1,11 @@
 
 
+## [1.1.0](https://github.com/dennemark/prisma-extension-casl/compare/1.0.1...1.1.0) (2024-11-13)
+
+### Features
+
+* :sparkles: add before and afterQuery functions ([7433bee](https://github.com/dennemark/prisma-extension-casl/commit/7433bee16b76eb6c8c506c48ed2792d03e2ddc64))
+
 ## [1.0.1](https://github.com/dennemark/prisma-extension-casl/compare/1.0.0...1.0.1) (2024-10-29)
 
 ### Bug Fixes
