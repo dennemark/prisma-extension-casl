@@ -316,7 +316,6 @@ describe('prisma extension casl', () => {
             const client = seedClient.$extends(
                 useCaslAbilities(builderFactory, {
                     beforeQuery: async (tx) => {
-                        console.log("hier")
                         await tx.post.create({
                             data: {
                                 text: 'abc',
