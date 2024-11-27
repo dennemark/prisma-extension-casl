@@ -3,6 +3,7 @@ import { rulesToAST } from '@casl/ability/extra';
 import { createPrismaAbility, PrismaQuery } from '@casl/prisma';
 import { Prisma } from '@prisma/client';
 import { convertCreationTreeToSelect, CreationTree } from './convertCreationTreeToSelect';
+import { deepMerge } from './deepMerge';
 import { getRuleRelationsQuery } from './getRuleRelationsQuery';
 import { relationFieldsByModel } from './helpers';
 
@@ -174,10 +175,10 @@ function getNestedQueryRelations(args: any, abilities: PureAbility<AbilityTuple,
             const relationField = relationFieldsByModel[model][relation]
 
             if (relationField) {
-              const nestedQueryRelations = {
-                ...getNestedQueryRelations(args[method][relation], abilities, action === 'all' ? 'all' : 'read', relationField.type as Prisma.ModelName),
-                ...(queryRelations[relation]?.select ?? {})
-              }
+              const nestedQueryRelations = deepMerge(
+                getNestedQueryRelations(args[method][relation], abilities, action === 'all' ? 'all' : 'read', relationField.type as Prisma.ModelName),
+                (typeof queryRelations[relation]?.select === 'object' ? queryRelations[relation]?.select : {})
+              )
               if (nestedQueryRelations && Object.keys(nestedQueryRelations).length > 0) {
                 queryRelations[relation] = {
                   ...(queryRelations[relation] ?? {}),
