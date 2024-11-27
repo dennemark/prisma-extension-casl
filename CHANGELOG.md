@@ -1,5 +1,11 @@
 
 
+## [1.1.1](https://github.com/dennemark/prisma-extension-casl/compare/1.1.0...1.1.1) (2024-11-27)
+
+### Bug Fixes
+
+* :bug: deep merge nested rule relations ([bb933e1](https://github.com/dennemark/prisma-extension-casl/commit/bb933e1921a096d9cd08fba83da783a5bcd36a8b))
+
 ## [1.1.0](https://github.com/dennemark/prisma-extension-casl/compare/1.0.1...1.1.0) (2024-11-13)
 
 ### Features
