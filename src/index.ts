@@ -1,6 +1,6 @@
 import { AbilityBuilder, AbilityTuple, PureAbility } from '@casl/ability'
 import { PrismaQuery } from '@casl/prisma'
-import { Prisma } from '@prisma/client'
+import { Prisma, PrismaClient } from '@prisma/client'
 import { applyCaslToQuery } from './applyCaslToQuery'
 import { filterQueryResults } from './filterQueryResults'
 import { caslOperationDict, getFluentField, getFluentModel, PrismaCaslOperation, PrismaExtensionCaslOptions, propertyFieldsByModel, relationFieldsByModel } from './helpers'
@@ -201,6 +201,9 @@ export function useCaslAbilities(
                     return client.$transaction(async (tx) => {
                         //@ts-ignore
                         return transactionQuery(tx)
+                    }, {
+                        //https://github.com/prisma/prisma/issues/20015
+                        maxWait: 10000 // default prisma pool timeout. would be better to get it from client
                     })
                 }
 
