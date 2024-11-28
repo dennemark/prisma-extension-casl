@@ -1588,6 +1588,10 @@ function useCaslAbilities(getAbilityFactory, opts) {
         } else {
           return client.$transaction(async (tx) => {
             return transactionQuery(tx);
+          }, {
+            //https://github.com/prisma/prisma/issues/20015
+            maxWait: 1e4
+            // default prisma pool timeout. would be better to get it from client
           });
         }
       }

@@ -1,5 +1,11 @@
 
 
+## [1.1.2](https://github.com/dennemark/prisma-extension-casl/compare/1.1.1...1.1.2) (2024-11-28)
+
+### Bug Fixes
+
+* :bug: possible fix for prisma transaction connection timeout ([c39c128](https://github.com/dennemark/prisma-extension-casl/commit/c39c128e7507a24fe218d5bbd58eb987486e0337))
+
 ## [1.1.1](https://github.com/dennemark/prisma-extension-casl/compare/1.1.0...1.1.1) (2024-11-27)
 
 ### Bug Fixes
