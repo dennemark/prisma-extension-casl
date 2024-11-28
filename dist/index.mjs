@@ -1134,6 +1134,26 @@ function convertCreationTreeToSelect(abilities, relationQuery) {
   return Object.keys(relationResult).length > 0 ? relationResult : relationQuery.action === "create" ? {} : null;
 }
 
+// src/deepMerge.ts
+function isObject(item) {
+  return item && typeof item === "object" && !Array.isArray(item);
+}
+function deepMerge(target, ...sources) {
+  if (!sources.length) return target;
+  const source = sources.shift();
+  if (isObject(target) && isObject(source)) {
+    for (const key in source) {
+      if (isObject(source[key])) {
+        if (!target[key]) Object.assign(target, { [key]: {} });
+        deepMerge(target[key], source[key]);
+      } else {
+        Object.assign(target, { [key]: source[key] });
+      }
+    }
+  }
+  return deepMerge(target, ...sources);
+}
+
 // src/applyRuleRelationsQuery.ts
 function mergeArgsAndRelationQuery(args, relationQuery) {
   const mask = {};
@@ -1230,10 +1250,10 @@ function getNestedQueryRelations(args, abilities, action, model, creationSelectQ
         if (model in relationFieldsByModel && relation in relationFieldsByModel[model]) {
           const relationField = relationFieldsByModel[model][relation];
           if (relationField) {
-            const nestedQueryRelations = {
-              ...getNestedQueryRelations(args[method][relation], abilities, action === "all" ? "all" : "read", relationField.type),
-              ...queryRelations[relation]?.select ?? {}
-            };
+            const nestedQueryRelations = deepMerge(
+              getNestedQueryRelations(args[method][relation], abilities, action === "all" ? "all" : "read", relationField.type),
+              typeof queryRelations[relation]?.select === "object" ? queryRelations[relation]?.select : {}
+            );
             if (nestedQueryRelations && Object.keys(nestedQueryRelations).length > 0) {
               queryRelations[relation] = {
                 ...queryRelations[relation] ?? {},
