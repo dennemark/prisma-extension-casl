@@ -47,6 +47,7 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
                 const [fluentRelationModel, fluentRelationField] = (fluentModel !== model ? Object.entries(relationFieldsByModel[model]).find(([k, v]) => v.type === fluentModel) : undefined) ?? [undefined, undefined]
                 const transaction = (rest as any).__internalParams.transaction
                 const debug = (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') && args.debugCasl
+                const debugAllErrors = args.debugCasl
                 delete args.debugCasl
                 const perf = debug ? performance : undefined
                 const logger = debug ? console : undefined
@@ -83,7 +84,7 @@ export function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbi
                         return applyCaslToQuery(operation, args, abilities, model, opts?.permissionField ? true : false)
                     }
                     catch (e) {
-                        if (args.debugCasl || caslOperationDict[operation as PrismaCaslOperation].action !== 'read') {
+                        if (debugAllErrors || caslOperationDict[operation as PrismaCaslOperation].action !== 'read') {
                             throw e
                         }
 

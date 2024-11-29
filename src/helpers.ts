@@ -46,8 +46,6 @@ export const caslOperationDict: Record<
         dataQuery: boolean
         whereQuery: boolean
         includeSelectQuery: boolean
-        // optional fields for certain actions that should be allowed to access
-        operationFields?: string[]
     }
 > = {
     create: { action: 'create', dataQuery: true, whereQuery: false, includeSelectQuery: true },
@@ -59,9 +57,9 @@ export const caslOperationDict: Record<
     findMany: { action: 'read', dataQuery: false, whereQuery: true, includeSelectQuery: true },
     findUnique: { action: 'read', dataQuery: false, whereQuery: true, includeSelectQuery: true },
     findUniqueOrThrow: { action: 'read', dataQuery: false, whereQuery: true, includeSelectQuery: true },
-    aggregate: { action: 'read', dataQuery: false, whereQuery: true, includeSelectQuery: false, operationFields: ['_min', '_max', '_avg', '_count', '_sum'] },
+    aggregate: { action: 'read', dataQuery: false, whereQuery: true, includeSelectQuery: false },
     count: { action: 'read', dataQuery: false, whereQuery: true, includeSelectQuery: false },
-    groupBy: { action: 'read', dataQuery: false, whereQuery: true, includeSelectQuery: false, operationFields: ['_min', '_max', '_avg', '_count', '_sum'] },
+    groupBy: { action: 'read', dataQuery: false, whereQuery: true, includeSelectQuery: false },
     update: { action: 'update', dataQuery: true, whereQuery: true, includeSelectQuery: true },
     updateMany: { action: 'update', dataQuery: true, whereQuery: true, includeSelectQuery: false },
     delete: { action: 'delete', dataQuery: false, whereQuery: true, includeSelectQuery: true },
