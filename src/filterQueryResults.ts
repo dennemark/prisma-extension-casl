@@ -13,7 +13,7 @@ export function filterQueryResults(result: any, mask: any, creationTree: Creatio
     if (!prismaModel) {
         throw new Error(`Model ${model} does not exist on Prisma Client`)
     }
-    const operationFields = caslOperationDict[operation].operationFields
+    const operationFields = ["_min", "_max", "_avg", "_count", "_sum"]
 
     const filterPermittedFields = (entry: any) => {
         if (!entry) { return null }
@@ -65,15 +65,17 @@ export function filterQueryResults(result: any, mask: any, creationTree: Creatio
             if (relationField) {
                 const nestedCreationTree = creationTree && field in creationTree.children ? creationTree.children[field] : undefined
                 const res = filterQueryResults(entry[field], mask?.[field], nestedCreationTree, abilities, relationField.type, operation)
-                entry[field] = Array.isArray(res) ? res.length > 0 ? res : null : res
+                // do not distinguish array to get empty array for prisma
+                entry[field] = res // Array.isArray(res) ? res.length > 0 ? res : null : res
             }
             if ((!permittedFields.includes(field) && !relationField) || mask?.[field] === true) {
                 delete entry[field]
             } else if (relationField) {
                 hasKeys = true
-                if (entry[field] === null) {
-                    delete entry[field]
-                }
+                // do not delete to get null values when returning for prisma
+                // if (entry[field] === null) {
+                //     delete entry[field]
+                // }
             } else {
                 hasKeys = true
             }
