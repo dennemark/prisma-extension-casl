@@ -17,6 +17,11 @@
 ### Features
 
 * :sparkles: add before and afterQuery functions ([7433bee](https://github.com/dennemark/prisma-extension-casl/commit/7433bee16b76eb6c8c506c48ed2792d03e2ddc64))
+## [1.0.2](https://github.com/dennemark/prisma-extension-casl/compare/1.0.1...1.0.2) (2024-11-28)
+
+### Bug Fixes
+
+* :bug: deep merge nested rule relations ([ecd8741](https://github.com/dennemark/prisma-extension-casl/commit/ecd87416b69ed3c477629bbaf891e182070283f5))
 
 ## [1.0.1](https://github.com/dennemark/prisma-extension-casl/compare/1.0.0...1.0.1) (2024-10-29)
 
