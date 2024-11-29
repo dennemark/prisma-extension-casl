@@ -1,5 +1,16 @@
 
 
+## [1.1.3](https://github.com/dennemark/prisma-extension-casl/compare/1.1.2...1.1.3) (2024-11-29)
+
+### Bug Fixes
+
+* :bug: correct return of empty values ([2effde5](https://github.com/dennemark/prisma-extension-casl/commit/2effde52f184a70c50031fe74e7a04d4f94e9dfa))
+## [1.0.2](https://github.com/dennemark/prisma-extension-casl/compare/1.1.2...1.1.3) (2024-11-28)
+
+### Bug Fixes
+
+* :bug: deep merge nested rule relations ([ecd8741](https://github.com/dennemark/prisma-extension-casl/commit/ecd87416b69ed3c477629bbaf891e182070283f5))
+
 ## [1.1.2](https://github.com/dennemark/prisma-extension-casl/compare/1.1.1...1.1.2) (2024-11-28)
 
 ### Bug Fixes

@@ -861,9 +861,9 @@ var caslOperationDict = {
   findMany: { action: "read", dataQuery: false, whereQuery: true, includeSelectQuery: true },
   findUnique: { action: "read", dataQuery: false, whereQuery: true, includeSelectQuery: true },
   findUniqueOrThrow: { action: "read", dataQuery: false, whereQuery: true, includeSelectQuery: true },
-  aggregate: { action: "read", dataQuery: false, whereQuery: true, includeSelectQuery: false, operationFields: ["_min", "_max", "_avg", "_count", "_sum"] },
+  aggregate: { action: "read", dataQuery: false, whereQuery: true, includeSelectQuery: false },
   count: { action: "read", dataQuery: false, whereQuery: true, includeSelectQuery: false },
-  groupBy: { action: "read", dataQuery: false, whereQuery: true, includeSelectQuery: false, operationFields: ["_min", "_max", "_avg", "_count", "_sum"] },
+  groupBy: { action: "read", dataQuery: false, whereQuery: true, includeSelectQuery: false },
   update: { action: "update", dataQuery: true, whereQuery: true, includeSelectQuery: true },
   updateMany: { action: "update", dataQuery: true, whereQuery: true, includeSelectQuery: false },
   delete: { action: "delete", dataQuery: false, whereQuery: true, includeSelectQuery: true },
@@ -1399,7 +1399,7 @@ function filterQueryResults(result, mask, creationTree, abilities, model, operat
   if (!prismaModel) {
     throw new Error(`Model ${model} does not exist on Prisma Client`);
   }
-  const operationFields = caslOperationDict[operation].operationFields;
+  const operationFields = ["_min", "_max", "_avg", "_count", "_sum"];
   const filterPermittedFields = (entry) => {
     if (!entry) {
       return null;
@@ -1452,15 +1452,12 @@ function filterQueryResults(result, mask, creationTree, abilities, model, operat
       if (relationField) {
         const nestedCreationTree = creationTree && field in creationTree.children ? creationTree.children[field] : void 0;
         const res = filterQueryResults(entry[field], mask?.[field], nestedCreationTree, abilities, relationField.type, operation);
-        entry[field] = Array.isArray(res) ? res.length > 0 ? res : null : res;
+        entry[field] = res;
       }
       if (!permittedFields.includes(field) && !relationField || mask?.[field] === true) {
         delete entry[field];
       } else if (relationField) {
         hasKeys = true;
-        if (entry[field] === null) {
-          delete entry[field];
-        }
       } else {
         hasKeys = true;
       }
@@ -1484,6 +1481,7 @@ function useCaslAbilities(getAbilityFactory, opts) {
         const [fluentRelationModel, fluentRelationField] = (fluentModel !== model ? Object.entries(relationFieldsByModel[model]).find(([k2, v4]) => v4.type === fluentModel) : void 0) ?? [void 0, void 0];
         const transaction = rest.__internalParams.transaction;
         const debug = (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") && args.debugCasl;
+        const debugAllErrors = args.debugCasl;
         delete args.debugCasl;
         const perf = debug ? performance : void 0;
         const logger = debug ? console : void 0;
@@ -1510,7 +1508,7 @@ function useCaslAbilities(getAbilityFactory, opts) {
           try {
             return applyCaslToQuery(operation, args, abilities, model, opts?.permissionField ? true : false);
           } catch (e4) {
-            if (args.debugCasl || caslOperationDict[operation].action !== "read") {
+            if (debugAllErrors || caslOperationDict[operation].action !== "read") {
               throw e4;
             }
           }
