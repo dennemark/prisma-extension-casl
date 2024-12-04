@@ -101,6 +101,7 @@ describe('prisma extension casl', () => {
                 useCaslAbilities(builderFactory)
             )
             // expect(await client.user.count()).toEqual(2)
+
             await expect(client.$transaction([
                 client.user.delete({
                     where: {
@@ -201,6 +202,7 @@ describe('prisma extension casl', () => {
                 }
             })).rejects.toThrow()
             await expect(
+                //@ts-ignore
                 client.$transaction(async (tx) => {
                     await tx.user.create({
                         data: {
@@ -260,6 +262,7 @@ describe('prisma extension casl', () => {
             })
             expect(firstResult).toBeNull()
             expect(await
+                //@ts-ignore
                 client.$transaction(async (tx) => {
                     return [await tx.user.create({
                         data: {

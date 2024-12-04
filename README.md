@@ -7,6 +7,8 @@
 > WIP - some abstractions might change in the future and lead to different interpretation of CASL rules.
 >
 > Please be very careful using this library in production! Test your endpoints on your own and raise an issue if some case is not supported by this library!
+>
+> This extension should be added last. Since it creates interactive transactions internally. There might still be issues with batching causing N+1 problems.
 
 - Supports only CRUD actions `create`, `read`, `update` and `delete`.
 - The permissions on fields of the query result are filtered by `read` ability.

@@ -152,6 +152,7 @@ export function useCaslAbilities(
                     // })
                 }
                 const transactionQuery = async (txClient: any) => {
+
                     if (opts?.beforeQuery) {
                         await opts.beforeQuery(txClient)
                     }
@@ -197,9 +198,16 @@ export function useCaslAbilities(
                     }
                 }
                 if (transaction && transaction.kind === 'itx') {
+
                     return transactionQuery((client as any)._createItxClient(transaction))
                 } else {
                     return client.$transaction(async (tx) => {
+
+                        (tx as any)[
+                            Symbol.for("prisma.client.transaction.id")
+                        ] = 'casl-extension-' + (tx as any)[
+                        Symbol.for("prisma.client.transaction.id")
+                        ]
                         //@ts-ignore
                         return transactionQuery(tx)
                     }, {
@@ -210,6 +218,26 @@ export function useCaslAbilities(
 
             }
         })
+
+
+            // Derived from yates:
+            // By default, Prisma will batch requests by the transaction ID if it is present.
+            // If our transaction id does not include casl-extension- it is a normal interactive transaction
+            // and we hook into it. otherwise we use normal batching for our transaction
+            // - https://github.com/prisma/prisma/blob/5.21.1/packages/client/src/runtime/RequestHandler.ts#L122
+            // - https://www.prisma.io/docs/orm/prisma-client/queries/query-optimization-performance
+            ; (client as any)._requestHandler.dataloader.options.batchBy = (
+                request: any,
+            ) => {
+
+                if (request.transaction?.id && !request.transaction?.id?.toString().startsWith('casl-extension-')) {
+                    return `transaction-${request.transaction.id}`;
+                }
+
+                return getBatchId(request.protocolQuery);
+            };
+
+
         return client.$extends({
             name: "prisma-extension-casl",
             client: {
@@ -239,4 +267,39 @@ export function useCaslAbilities(
     })
 }
 
+
+//https://github.com/prisma/prisma/blob/1a9ef0fbd3948ee708add6816a33743e1ff7df9c/packages/client/src/runtime/core/jsonProtocol/getBatchId.ts#L4
+
+export function getBatchId(query: any): string | undefined {
+    if (query.action !== "findUnique" && query.action !== "findUniqueOrThrow") {
+        return undefined;
+    }
+    const parts: string[] = [];
+    if (query.modelName) {
+        parts.push(query.modelName);
+    }
+
+    if (query.query.arguments) {
+        parts.push(buildKeysString(query.query.arguments));
+    }
+    parts.push(buildKeysString(query.query.selection));
+
+    return parts.join("");
+}
+
+
+function buildKeysString(obj: object): string {
+    const keysArray = Object.keys(obj)
+        .sort()
+        .map((key) => {
+            // @ts-ignore
+            const value = obj[key];
+            if (typeof value === "object" && value !== null) {
+                return `(${key} ${buildKeysString(value)})`;
+            }
+            return key;
+        });
+
+    return `(${keysArray.join(" ")})`;
+}
 
