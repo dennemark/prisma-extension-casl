@@ -109,5 +109,6 @@ declare function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAb
         };
     };
 };
+declare function getBatchId(query: any): string | undefined;
 
-export { applyCaslToQuery, useCaslAbilities };
+export { applyCaslToQuery, getBatchId, useCaslAbilities };

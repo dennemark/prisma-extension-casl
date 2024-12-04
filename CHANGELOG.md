@@ -1,5 +1,11 @@
 
 
+## [1.1.4](https://github.com/dennemark/prisma-extension-casl/compare/1.1.3...1.1.4) (2024-12-04)
+
+### Bug Fixes
+
+* :bug: try fixing batching ([56cde5f](https://github.com/dennemark/prisma-extension-casl/commit/56cde5fba2b61c9968ca1f4ea8d9b27c093bffec))
+
 ## [1.1.3](https://github.com/dennemark/prisma-extension-casl/compare/1.1.2...1.1.3) (2024-11-29)
 
 ### Bug Fixes

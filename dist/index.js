@@ -21,6 +21,7 @@ var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: tru
 var src_exports = {};
 __export(src_exports, {
   applyCaslToQuery: () => applyCaslToQuery,
+  getBatchId: () => getBatchId,
   useCaslAbilities: () => useCaslAbilities
 });
 module.exports = __toCommonJS(src_exports);
@@ -1585,6 +1586,7 @@ function useCaslAbilities(getAbilityFactory, opts) {
           return transactionQuery(client._createItxClient(transaction));
         } else {
           return client.$transaction(async (tx) => {
+            tx[Symbol.for("prisma.client.transaction.id")] = "casl-extension-" + tx[Symbol.for("prisma.client.transaction.id")];
             return transactionQuery(tx);
           }, {
             //https://github.com/prisma/prisma/issues/20015
@@ -1594,6 +1596,12 @@ function useCaslAbilities(getAbilityFactory, opts) {
         }
       }
     });
+    client._requestHandler.dataloader.options.batchBy = (request) => {
+      if (request.transaction?.id && !request.transaction?.id?.toString().startsWith("casl-extension-")) {
+        return `transaction-${request.transaction.id}`;
+      }
+      return getBatchId(request.protocolQuery);
+    };
     return client.$extends({
       name: "prisma-extension-casl",
       client: {
@@ -1621,8 +1629,33 @@ function useCaslAbilities(getAbilityFactory, opts) {
     });
   });
 }
+function getBatchId(query) {
+  if (query.action !== "findUnique" && query.action !== "findUniqueOrThrow") {
+    return void 0;
+  }
+  const parts = [];
+  if (query.modelName) {
+    parts.push(query.modelName);
+  }
+  if (query.query.arguments) {
+    parts.push(buildKeysString(query.query.arguments));
+  }
+  parts.push(buildKeysString(query.query.selection));
+  return parts.join("");
+}
+function buildKeysString(obj) {
+  const keysArray = Object.keys(obj).sort().map((key) => {
+    const value = obj[key];
+    if (typeof value === "object" && value !== null) {
+      return `(${key} ${buildKeysString(value)})`;
+    }
+    return key;
+  });
+  return `(${keysArray.join(" ")})`;
+}
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
   applyCaslToQuery,
+  getBatchId,
   useCaslAbilities
 });
