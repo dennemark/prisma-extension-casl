@@ -1476,6 +1476,7 @@ function filterQueryResults(result, mask, creationTree, abilities, model, operat
 // src/index.ts
 function useCaslAbilities(getAbilityFactory, opts) {
   return import_client2.Prisma.defineExtension((client) => {
+    const transactionsToBatch = /* @__PURE__ */ new Set();
     const allOperations = (getAbilities) => ({
       async $allOperations({ args, query, model, operation, ...rest }) {
         const fluentModel = getFluentModel(model, rest);
@@ -1586,8 +1587,11 @@ function useCaslAbilities(getAbilityFactory, opts) {
           return transactionQuery(client._createItxClient(transaction));
         } else {
           return client.$transaction(async (tx) => {
-            tx[Symbol.for("prisma.client.transaction.id")] = "casl-extension-" + tx[Symbol.for("prisma.client.transaction.id")];
-            return transactionQuery(tx);
+            const transactionId = tx[Symbol.for("prisma.client.transaction.id")].toString();
+            transactionsToBatch.add(transactionId);
+            return transactionQuery(tx).finally(() => {
+              transactionsToBatch.delete(transactionId);
+            });
           }, {
             //https://github.com/prisma/prisma/issues/20015
             maxWait: 1e4
@@ -1597,10 +1601,11 @@ function useCaslAbilities(getAbilityFactory, opts) {
       }
     });
     client._requestHandler.dataloader.options.batchBy = (request) => {
-      if (request.transaction?.id && !request.transaction?.id?.toString().startsWith("casl-extension-")) {
+      const batchId = getBatchId(request.protocolQuery);
+      if (request.transaction?.id && (!transactionsToBatch.has(request.transaction.id.toString()) && batchId)) {
         return `transaction-${request.transaction.id}`;
       }
-      return getBatchId(request.protocolQuery);
+      return batchId;
     };
     return client.$extends({
       name: "prisma-extension-casl",

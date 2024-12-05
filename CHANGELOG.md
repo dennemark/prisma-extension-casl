@@ -1,5 +1,11 @@
 
 
+## [1.1.5](https://github.com/dennemark/prisma-extension-casl/compare/1.1.4...1.1.5) (2024-12-05)
+
+### Bug Fixes
+
+* :bug: use different method to check if transactionId should be used for batch ([5bd5dc7](https://github.com/dennemark/prisma-extension-casl/commit/5bd5dc7d92acf59e07a0a5a2acec1238c37c9935))
+
 ## [1.1.4](https://github.com/dennemark/prisma-extension-casl/compare/1.1.3...1.1.4) (2024-12-04)
 
 ### Bug Fixes
