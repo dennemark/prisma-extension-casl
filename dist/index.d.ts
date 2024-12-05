@@ -39,6 +39,10 @@ type PrismaExtensionCaslOptions = {
     beforeQuery?: (tx: Prisma.TransactionClient) => Promise<void>;
     /** uses transaction to allow using client queries after actual query, if fails, whole query will be rolled back */
     afterQuery?: (tx: Prisma.TransactionClient) => Promise<void>;
+    /** max wait for batch transaction - default 30000 */
+    txMaxWait?: number;
+    /** timeout for batch transaction - default 30000 */
+    txTimeout?: number;
 };
 type PrismaCaslOperation = 'create' | 'createMany' | 'createManyAndReturn' | 'upsert' | 'findFirst' | 'findFirstOrThrow' | 'findMany' | 'findUnique' | 'findUniqueOrThrow' | 'aggregate' | 'count' | 'groupBy' | 'update' | 'updateMany' | 'delete' | 'deleteMany';
 
@@ -109,6 +113,13 @@ declare function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAb
         };
     };
 };
+/**
+ * recreates getBatchId from prisma
+ * //https://github.com/prisma/prisma/blob/1a9ef0fbd3948ee708add6816a33743e1ff7df9c/packages/client/src/runtime/core/jsonProtocol/getBatchId.ts#L4
+ *
+ * @param query
+ * @returns
+ */
 declare function getBatchId(query: any): string | undefined;
 
 export { applyCaslToQuery, getBatchId, useCaslAbilities };

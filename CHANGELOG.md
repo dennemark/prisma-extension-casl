@@ -1,5 +1,11 @@
 
 
+## [1.1.6](https://github.com/dennemark/prisma-extension-casl/compare/1.1.5...1.1.6) (2024-12-05)
+
+### Bug Fixes
+
+* :bug: custom batching function to allow before and after queries ([233abda](https://github.com/dennemark/prisma-extension-casl/commit/233abdafbac3607761e822dd528d7b7733f4d72d))
+
 ## [1.1.5](https://github.com/dennemark/prisma-extension-casl/compare/1.1.4...1.1.5) (2024-12-05)
 
 ### Bug Fixes

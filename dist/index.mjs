@@ -1449,13 +1449,17 @@ function filterQueryResults(result, mask, creationTree, abilities, model, operat
 
 // src/index.ts
 function useCaslAbilities(getAbilityFactory, opts) {
+  const txMaxWait = opts?.txMaxWait ?? 3e4;
+  const txTimeout = opts?.txTimeout ?? 3e4;
   return Prisma2.defineExtension((client) => {
-    const transactionsToBatch = /* @__PURE__ */ new Set();
+    let tickActive = false;
+    const batches = {};
     const allOperations = (getAbilities) => ({
       async $allOperations({ args, query, model, operation, ...rest }) {
         const fluentModel = getFluentModel(model, rest);
         const [fluentRelationModel, fluentRelationField] = (fluentModel !== model ? Object.entries(relationFieldsByModel[model]).find(([k2, v4]) => v4.type === fluentModel) : void 0) ?? [void 0, void 0];
-        const transaction = rest.__internalParams.transaction;
+        const __internalParams = rest.__internalParams;
+        const transaction = __internalParams.transaction;
         const debug = (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") && args.debugCasl;
         const debugAllErrors = args.debugCasl;
         delete args.debugCasl;
@@ -1526,70 +1530,99 @@ function useCaslAbilities(getAbilityFactory, opts) {
         if (transaction && transaction.kind === "batch") {
           throw new Error("Sequential transactions are not supported in prisma-extension-casl.");
         }
-        const transactionQuery = async (txClient) => {
-          if (opts?.beforeQuery) {
-            await opts.beforeQuery(txClient);
-          }
-          if (operationAbility.action === "update" || operationAbility.action === "create" || operation === "deleteMany") {
-            const getMany = operation === "deleteMany" || operation === "updateMany";
-            const manyResult = getMany ? await txClient[model].findMany(caslQuery.args.where ? { where: caslQuery.args.where } : void 0).then((res) => {
-              return operation === "updateMany" ? res.map((r2) => ({ ...caslQuery.args.data, id: r2.id })) : res;
-            }) : [];
-            const op = operation === "createMany" ? "createManyAndReturn" : operation;
-            return txClient[model][op](caslQuery.args).then(async (result) => {
-              if (opts?.afterQuery) {
-                await opts.afterQuery(txClient);
-              }
-              const filteredResult = cleanupResults(getMany ? manyResult : result);
-              const results = operation === "createMany" ? { count: result.length } : getMany ? { count: manyResult.length } : filteredResult;
-              return results;
-            });
-          } else {
-            return txClient[model][operation](caslQuery.args).then(async (result) => {
-              if (opts?.afterQuery) {
-                await opts.afterQuery(txClient);
-              }
-              const fluentField = getFluentField(rest);
-              if (fluentField) {
-                return cleanupResults(result?.[fluentField]);
-              }
-              return cleanupResults(result);
-            });
-          }
-        };
-        if (transaction && transaction.kind === "itx") {
-          return transactionQuery(client._createItxClient(transaction));
+        const hash = transaction?.id ?? "batch";
+        if (!batches[hash]) {
+          batches[hash] = [];
+        }
+        if (!tickActive) {
+          tickActive = true;
+          process.nextTick(() => {
+            dispatchBatches(transaction);
+            tickActive = false;
+          });
+        }
+        const batchQuery = (model2, action, args2, callback) => new Promise((resolve, reject) => {
+          batches[hash].push({
+            params: __internalParams,
+            model: model2,
+            action,
+            args: args2,
+            reject,
+            resolve,
+            callback
+          });
+        });
+        if (operationAbility.action === "update" || operationAbility.action === "create" || operation === "deleteMany") {
+          const getMany = operation === "deleteMany" || operation === "updateMany";
+          const op = operation === "createMany" ? "createManyAndReturn" : operation;
+          return batchQuery(model, op, caslQuery.args, async (result) => {
+            const filteredResult = cleanupResults(result);
+            const results = operation === "createMany" || operation === "deleteMany" || operation === "updateMany" ? { count: result.length } : filteredResult;
+            return results;
+          });
         } else {
-          return client.$transaction(async (tx) => {
-            const transactionId = tx[Symbol.for("prisma.client.transaction.id")].toString();
-            transactionsToBatch.add(transactionId);
-            return transactionQuery(tx).finally(() => {
-              transactionsToBatch.delete(transactionId);
-            });
-          }, {
-            //https://github.com/prisma/prisma/issues/20015
-            maxWait: 1e4
-            // default prisma pool timeout. would be better to get it from client
+          return batchQuery(model, operation, caslQuery.args, async (result) => {
+            const fluentField = getFluentField(rest);
+            if (fluentField) {
+              return cleanupResults(result?.[fluentField]);
+            }
+            return cleanupResults(result);
           });
         }
       }
     });
     client._requestHandler.dataloader.options.batchBy = (request) => {
       const batchId = getBatchId(request.protocolQuery);
-      if (request.transaction?.id && (!transactionsToBatch.has(request.transaction.id.toString()) && batchId)) {
-        return `transaction-${request.transaction.id}`;
+      if (request.transaction?.id) {
+        return `transaction-${request.transaction.id}${batchId ? `-${batchId}` : ""}`;
       }
       return batchId;
+    };
+    const dispatchBatches = (transaction) => {
+      for (const [key, batch] of Object.entries(batches)) {
+        delete batches[key];
+        const runBatchTransaction = async (tx) => {
+          if (opts?.beforeQuery) {
+            await opts.beforeQuery(tx);
+          }
+          const results = await Promise.all(
+            batch.map((request) => {
+              return tx[request.model][request.action](request.args).then((res) => request.callback(res)).catch((e4) => {
+                throw e4;
+              });
+            })
+          );
+          if (opts?.afterQuery) {
+            await opts?.afterQuery(tx);
+          }
+          return results;
+        };
+        new Promise((resolve, reject) => {
+          if (transaction && transaction.kind === "itx") {
+            runBatchTransaction(client._createItxClient(transaction)).then(resolve).catch(reject);
+          } else {
+            client.$transaction(async (tx) => {
+              return runBatchTransaction(tx);
+            }, {
+              maxWait: txMaxWait,
+              timeout: txTimeout
+            }).then(resolve).catch(reject);
+          }
+        }).then((results) => {
+          results.forEach((result, index) => {
+            batch[index].resolve(result);
+          });
+        }).catch((e4) => {
+          for (const request of batch) {
+            request.reject(e4);
+          }
+          delete batches[key];
+        });
+      }
     };
     return client.$extends({
       name: "prisma-extension-casl",
       client: {
-        // https://github.com/prisma/prisma/issues/20678
-        // $transaction(...props: Parameters<(typeof client)['$transaction']>): ReturnType<(typeof client)['$transaction']> {
-        //     return transactionStore.run({ alreadyInTransaction: true }, () => {
-        //         return client.$transaction(...props);
-        //     });
-        // },
         $casl(extendFactory) {
           return client.$extends({
             query: {
