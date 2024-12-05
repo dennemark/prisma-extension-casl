@@ -2090,7 +2090,6 @@ describe('prisma extension casl', () => {
             expect(result).toEqual({ email: '0', id: 0, casl: ['create', 'read', 'update', 'delete'] })
         })
     })
-
 })
 afterAll(async () => {
     await seedClient.$disconnect()

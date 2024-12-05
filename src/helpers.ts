@@ -23,6 +23,10 @@ export type PrismaExtensionCaslOptions = {
     beforeQuery?: (tx: Prisma.TransactionClient) => Promise<void>,
     /** uses transaction to allow using client queries after actual query, if fails, whole query will be rolled back */
     afterQuery?: (tx: Prisma.TransactionClient) => Promise<void>,
+    /** max wait for batch transaction - default 30000 */
+    txMaxWait?: number
+    /** timeout for batch transaction - default 30000 */
+    txTimeout?: number
 }
 
 export type PrismaCaslOperation =
