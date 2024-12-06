@@ -1,5 +1,11 @@
 
 
+## [1.1.7](https://github.com/dennemark/prisma-extension-casl/compare/1.1.6...1.1.7) (2024-12-06)
+
+### Bug Fixes
+
+* :bug: fluent list relation mask ([5afde2e](https://github.com/dennemark/prisma-extension-casl/commit/5afde2e26c42b0da7bf28460bb3a36801f090eef))
+
 ## [1.1.6](https://github.com/dennemark/prisma-extension-casl/compare/1.1.5...1.1.6) (2024-12-05)
 
 ### Bug Fixes

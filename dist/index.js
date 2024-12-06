@@ -1236,7 +1236,7 @@ function mergeArgsAndRelationQuery(args, relationQuery) {
           ...args.include ?? {},
           [k2]: v4
         };
-        mask[k2] = removeNestedIncludeSelect(v4.select);
+        mask[k2] = args.where ? true : removeNestedIncludeSelect(v4.select);
       }
     });
   }
@@ -1276,30 +1276,35 @@ function getNestedQueryRelations(args, abilities, action, model, creationSelectQ
       inverted: false
     };
   }));
-  const ast = d4(ability, action, model);
-  const queryRelations = getRuleRelationsQuery(model, ast, creationSelectQuery === true ? {} : creationSelectQuery);
-  ["include", "select"].map((method) => {
-    if (args && args[method]) {
-      for (const relation in args[method]) {
-        if (model in relationFieldsByModel && relation in relationFieldsByModel[model]) {
-          const relationField = relationFieldsByModel[model][relation];
-          if (relationField) {
-            const nestedQueryRelations = deepMerge(
-              getNestedQueryRelations(args[method][relation], abilities, action === "all" ? "all" : "read", relationField.type),
-              typeof queryRelations[relation]?.select === "object" ? queryRelations[relation]?.select : {}
-            );
-            if (nestedQueryRelations && Object.keys(nestedQueryRelations).length > 0) {
-              queryRelations[relation] = {
-                ...queryRelations[relation] ?? {},
-                select: nestedQueryRelations
-              };
+  try {
+    const ast = d4(ability, action, model);
+    const queryRelations = getRuleRelationsQuery(model, ast, creationSelectQuery === true ? {} : creationSelectQuery);
+    ["include", "select"].map((method) => {
+      if (args && args[method]) {
+        for (const relation in args[method]) {
+          if (model in relationFieldsByModel && relation in relationFieldsByModel[model]) {
+            const relationField = relationFieldsByModel[model][relation];
+            if (relationField) {
+              const nestedQueryRelations = deepMerge(
+                getNestedQueryRelations(args[method][relation], abilities, action === "all" ? "all" : "read", relationField.type),
+                typeof queryRelations[relation]?.select === "object" ? queryRelations[relation]?.select : {}
+              );
+              if (nestedQueryRelations && Object.keys(nestedQueryRelations).length > 0) {
+                queryRelations[relation] = {
+                  ...queryRelations[relation] ?? {},
+                  select: nestedQueryRelations
+                };
+              }
             }
           }
         }
       }
-    }
-  });
-  return queryRelations;
+    });
+    return queryRelations;
+  } catch (e4) {
+    console.error(`Your ability relation probably is missing an 'is': [relation]: { is: { id: 0 } }`);
+    throw e4;
+  }
 }
 
 // src/transformDataToWhereQuery.ts
