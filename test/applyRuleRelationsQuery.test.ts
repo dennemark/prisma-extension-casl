@@ -258,11 +258,7 @@ describe('apply rule relations query', () => {
     const { args, mask } = applyRuleRelationsQuery(includeArgs, build(), 'read', 'User')
     expect(mask).toEqual({
       posts: {
-        author: {
-          threads: {
-            id: true
-          }
-        }
+        author: true
       }
     })
     expect(args?.include).toEqual({

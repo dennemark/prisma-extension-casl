@@ -77,11 +77,10 @@ function mergeArgsAndRelationQuery(args: any, relationQuery: any) {
           ...(args.include ?? {}),
           [k]: v
         }
-        mask[k] = removeNestedIncludeSelect(v.select)
+        mask[k] = args.where ? true : removeNestedIncludeSelect(v.select)
       }
     })
   }
-
   return {
     args,
     mask
@@ -165,31 +164,35 @@ function getNestedQueryRelations(args: any, abilities: PureAbility<AbilityTuple,
       inverted: false
     }
   }))
-  const ast = rulesToAST(ability, action, model)
+  try {
+    const ast = rulesToAST(ability, action, model)
 
-  const queryRelations = getRuleRelationsQuery(model, ast, creationSelectQuery === true ? {} : creationSelectQuery)
-    ;['include', 'select'].map((method) => {
-      if (args && args[method]) {
-        for (const relation in args[method]) {
-          if (model in relationFieldsByModel && relation in relationFieldsByModel[model]) {
-            const relationField = relationFieldsByModel[model][relation]
+    const queryRelations = getRuleRelationsQuery(model, ast, creationSelectQuery === true ? {} : creationSelectQuery)
+      ;['include', 'select'].map((method) => {
+        if (args && args[method]) {
+          for (const relation in args[method]) {
+            if (model in relationFieldsByModel && relation in relationFieldsByModel[model]) {
+              const relationField = relationFieldsByModel[model][relation]
 
-            if (relationField) {
-              const nestedQueryRelations = deepMerge(
-                getNestedQueryRelations(args[method][relation], abilities, action === 'all' ? 'all' : 'read', relationField.type as Prisma.ModelName),
-                (typeof queryRelations[relation]?.select === 'object' ? queryRelations[relation]?.select : {})
-              )
-              if (nestedQueryRelations && Object.keys(nestedQueryRelations).length > 0) {
-                queryRelations[relation] = {
-                  ...(queryRelations[relation] ?? {}),
-                  select: nestedQueryRelations
+              if (relationField) {
+                const nestedQueryRelations = deepMerge(
+                  getNestedQueryRelations(args[method][relation], abilities, action === 'all' ? 'all' : 'read', relationField.type as Prisma.ModelName),
+                  (typeof queryRelations[relation]?.select === 'object' ? queryRelations[relation]?.select : {})
+                )
+                if (nestedQueryRelations && Object.keys(nestedQueryRelations).length > 0) {
+                  queryRelations[relation] = {
+                    ...(queryRelations[relation] ?? {}),
+                    select: nestedQueryRelations
+                  }
                 }
               }
             }
           }
         }
-      }
-    })
-
-  return queryRelations
+      })
+    return queryRelations
+  } catch (e) {
+    console.error(`Your ability relation probably is missing an 'is': [relation]: { is: { id: 0 } }`)
+    throw e
+  }
 }

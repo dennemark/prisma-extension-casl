@@ -581,7 +581,7 @@ describe('prisma extension casl', () => {
                     }
                 },
             })
-            expect(result).toEqual({ author: { email: '1', posts: [{ id: 1, thread: null }] } })
+            expect(result).toEqual({ author: { email: '1', posts: [{ id: 1 }] } })
         })
 
         it('includes nested fields if query does not include properties to check for rules', async () => {
@@ -2088,6 +2088,39 @@ describe('prisma extension casl', () => {
             )
             const result = await client.post.findUnique({ where: { id: 0 } }).author()
             expect(result).toEqual({ email: '0', id: 0, casl: ['create', 'read', 'update', 'delete'] })
+        })
+    })
+    describe('filter query', () => {
+        it('removes query mask', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+
+                can('read', 'Thread')
+                can('read', 'Post', {
+                    threadId: 0,
+                    author: {
+                        is: {
+                            threads: {
+                                some: {
+                                    id: 0
+                                }
+                            }
+                        }
+                    }
+                })
+                can('read', 'User')
+
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory, { permissionField: 'casl' })
+            )
+            const result = await client.user.findUnique({ where: { id: 0 } }).posts()
+            expect(result).toEqual([
+                { authorId: 0, text: "", threadId: 0, id: 0, casl: ['read'] }
+            ])
+
         })
     })
 })

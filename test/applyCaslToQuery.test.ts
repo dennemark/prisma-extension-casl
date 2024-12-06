@@ -108,9 +108,7 @@ describe('apply casl to query', () => {
             author: {
                 id: true,
                 posts: {
-                    thread: {
-                        creatorId: true
-                    }
+                    thread: true
                 }
             },
             thread: true
