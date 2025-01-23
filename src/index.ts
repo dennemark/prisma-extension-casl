@@ -58,9 +58,8 @@ export function useCaslAbilities(
         const allOperations = (getAbilities: () => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => ({
             async $allOperations<T>({ args, query, model, operation, ...rest }: { args: any, query: any, model: any, operation: any }) {
 
-                const fluentModel = getFluentModel(model, rest)
+                const { fluentModel, fluentRelationModel, fluentRelationField } = getFluentModel(model, rest)
 
-                const [fluentRelationModel, fluentRelationField] = (fluentModel !== model ? Object.entries(relationFieldsByModel[model]).find(([k, v]) => v.type === fluentModel) : undefined) ?? [undefined, undefined]
                 const __internalParams = (rest as any).__internalParams
                 const transaction = __internalParams.transaction
                 const debug = (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') && args.debugCasl

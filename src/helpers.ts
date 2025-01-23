@@ -175,14 +175,21 @@ export function getFluentField(data: any) {
  * @returns fluent api model
  */
 export function getFluentModel(startModel: string, data: any) {
+    const startRelation = {
+        fluentModel: startModel,
+        fluentRelationField: undefined as DMMF.Field | undefined,
+        fluentRelationModel: undefined as string | undefined
+    }
     const dataPath = data?.__internalParams?.dataPath as string[]
     if (dataPath?.length > 0) {
         return dataPath.filter((x) => x !== 'select').reduce((acc, x) => {
-            acc = relationFieldsByModel[acc][x].type
+            acc.fluentRelationField = relationFieldsByModel[acc.fluentModel][x]
+            acc.fluentModel = acc.fluentRelationField.type
+            acc.fluentRelationModel = x
             return acc
-        }, startModel)
+        }, startRelation)
     } else {
-        return startModel
+        return startRelation
     }
 }
 

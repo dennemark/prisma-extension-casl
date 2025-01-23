@@ -2057,7 +2057,10 @@ describe('prisma extension casl', () => {
                 useCaslAbilities(builderFactory, { permissionField: 'casl', addPermissionActions: ['share'] })
             )
             const result = await client.user.findMany()
-            expect(result).toEqual([{ email: '0', id: 0, 'casl': ['create', 'read', 'update', 'delete', 'share'] }, { email: '1', id: 1, 'casl': ['create', 'read', 'share'] }])
+            expect(result).toEqual([
+                { email: '0', id: 0, 'casl': ['create', 'read', 'update', 'delete', 'share'] },
+                { email: '1', id: 1, 'casl': ['create', 'read', 'share'] }
+            ])
         })
         it('has permissions on custom prop on chained queries', async () => {
             function builderFactory() {
