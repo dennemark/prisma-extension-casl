@@ -1,5 +1,11 @@
 
 
+## [1.1.8](https://github.com/dennemark/prisma-extension-casl/compare/1.1.7...1.1.8) (2025-01-23)
+
+### Bug Fixes
+
+* :bug: get correct relation ([4997fc1](https://github.com/dennemark/prisma-extension-casl/commit/4997fc1a3a906106e493466974ec4da6d03aff30))
+
 ## [1.1.7](https://github.com/dennemark/prisma-extension-casl/compare/1.1.6...1.1.7) (2024-12-06)
 
 ### Bug Fixes

@@ -899,14 +899,21 @@ function getFluentField(data) {
   }
 }
 function getFluentModel(startModel, data) {
+  const startRelation = {
+    fluentModel: startModel,
+    fluentRelationField: void 0,
+    fluentRelationModel: void 0
+  };
   const dataPath = data?.__internalParams?.dataPath;
   if (dataPath?.length > 0) {
     return dataPath.filter((x5) => x5 !== "select").reduce((acc, x5) => {
-      acc = relationFieldsByModel[acc][x5].type;
+      acc.fluentRelationField = relationFieldsByModel[acc.fluentModel][x5];
+      acc.fluentModel = acc.fluentRelationField.type;
+      acc.fluentRelationModel = x5;
       return acc;
-    }, startModel);
+    }, startRelation);
   } else {
-    return startModel;
+    return startRelation;
   }
 }
 function isSubset(obj1, obj2) {
@@ -1461,8 +1468,7 @@ function useCaslAbilities(getAbilityFactory, opts) {
     const batches = {};
     const allOperations = (getAbilities) => ({
       async $allOperations({ args, query, model, operation, ...rest }) {
-        const fluentModel = getFluentModel(model, rest);
-        const [fluentRelationModel, fluentRelationField] = (fluentModel !== model ? Object.entries(relationFieldsByModel[model]).find(([k2, v4]) => v4.type === fluentModel) : void 0) ?? [void 0, void 0];
+        const { fluentModel, fluentRelationModel, fluentRelationField } = getFluentModel(model, rest);
         const __internalParams = rest.__internalParams;
         const transaction = __internalParams.transaction;
         const debug = (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") && args.debugCasl;
