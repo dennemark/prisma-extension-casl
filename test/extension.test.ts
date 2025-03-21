@@ -1930,6 +1930,44 @@ describe('prisma extension casl', () => {
             })
         })
     })
+    describe('update/createManyAndReturn', () => {
+        it('can updateManyAndReturn', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+                can('update', 'Thread')
+                can('read', 'Thread')
+                can('update', 'Post')
+                can('read', 'Post')
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            const result = await client.post.updateMany({ data: { text: 'updateMany' } })
+            const resultReturn = await client.post.updateManyAndReturn({ data: { text: 'updateManyAndReturn' } })
+            expect(result).toEqual({ count: 4 })
+            expect(resultReturn[0].text).toEqual('updateManyAndReturn')
+        })
+        it('can createManyAndReturn', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+                can('create', 'Thread')
+                can('read', 'Thread')
+                can('create', 'Post')
+                can('read', 'Post')
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            const result = await client.post.createMany({ data: [{ authorId: 0, text: 'createMany' }] })
+            const resultReturn = await client.post.createManyAndReturn({ data: [{ authorId: 0, text: 'createManyAndReturn' }] })
+            expect(result).toEqual({ count: 1 })
+            expect(resultReturn[0].text).toEqual('createManyAndReturn')
+        })
+    })
     describe('count', () => {
         it('can count data', async () => {
             function builderFactory() {

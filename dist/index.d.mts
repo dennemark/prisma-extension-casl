@@ -1,7 +1,7 @@
-import * as _prisma_client_runtime_library from '@prisma/client/runtime/library';
-import { PureAbility, AbilityTuple, AbilityBuilder } from '@casl/ability';
+import { AbilityBuilder, AbilityTuple, PureAbility } from '@casl/ability';
 import { PrismaQuery } from '@casl/prisma';
 import { Prisma } from '@prisma/client';
+import * as _prisma_client_runtime_library from '@prisma/client/runtime/library';
 
 type CreationTree = {
     action: string;

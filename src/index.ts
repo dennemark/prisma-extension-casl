@@ -202,7 +202,7 @@ export function useCaslAbilities(
                     /**
                      *  we get all update/deleteMany entries for logging purposes.
                      */
-                    const getMany = operation === 'deleteMany' || operation === 'updateMany'
+                    // const getMany = operation === 'deleteMany' || operation === 'updateMany'
 
                     // const manyResult: any[] = getMany ? await batchQuery(model, 'findMany', caslQuery.args.where ? { where: caslQuery.args.where } : undefined, (res: any[]) => {
                     //     /** create update objects for updateMany */
@@ -211,7 +211,7 @@ export function useCaslAbilities(
                     /**
                      *  we use createManyAndReturn instead of createMany createMany entries for logging purposes and to check permissions on new entries
                      */
-                    const op = operation === 'createMany' ? 'createManyAndReturn' : operation
+                    const op = operation === 'createMany' ? 'createManyAndReturn' : operation === 'updateMany' ? 'updateManyAndReturn' : operation
                     return batchQuery(model, op, caslQuery.args, async (result: any) => {
 
                         const filteredResult = cleanupResults(result)//getMany ? manyResult : result)

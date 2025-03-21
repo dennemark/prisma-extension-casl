@@ -44,6 +44,7 @@ export type PrismaCaslOperation =
     'groupBy' |
     'update' |
     'updateMany' |
+    'updateManyAndReturn' |
     'delete' |
     'deleteMany'
 
@@ -70,6 +71,7 @@ export const caslOperationDict: Record<
     groupBy: { action: 'read', dataQuery: false, whereQuery: true, includeSelectQuery: false },
     update: { action: 'update', dataQuery: true, whereQuery: true, includeSelectQuery: true },
     updateMany: { action: 'update', dataQuery: true, whereQuery: true, includeSelectQuery: false },
+    updateManyAndReturn: { action: 'update', dataQuery: true, whereQuery: true, includeSelectQuery: false },
     delete: { action: 'delete', dataQuery: false, whereQuery: true, includeSelectQuery: true },
     deleteMany: { action: 'delete', dataQuery: false, whereQuery: true, includeSelectQuery: false },
 } as const
