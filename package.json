@@ -1,6 +1,6 @@
 {
   "name": "prisma-extension-casl",
-  "version": "1.1.8",
+  "version": "1.2.0",
   "description": "Enforce casl abilities on prisma client ",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

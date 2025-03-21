@@ -863,6 +863,7 @@ var caslOperationDict = {
   groupBy: { action: "read", dataQuery: false, whereQuery: true, includeSelectQuery: false },
   update: { action: "update", dataQuery: true, whereQuery: true, includeSelectQuery: true },
   updateMany: { action: "update", dataQuery: true, whereQuery: true, includeSelectQuery: false },
+  updateManyAndReturn: { action: "update", dataQuery: true, whereQuery: true, includeSelectQuery: false },
   delete: { action: "delete", dataQuery: false, whereQuery: true, includeSelectQuery: true },
   deleteMany: { action: "delete", dataQuery: false, whereQuery: true, includeSelectQuery: false }
 };
@@ -1354,7 +1355,7 @@ function applyCaslToQuery(operation, args, abilities, model, queryAllRuleRelatio
     const { args: dataArgs, creationTree: dataCreationTree } = applyDataQuery(abilities, args, operation, operationAbility.action, model);
     creationTree = dataCreationTree;
     args = dataArgs;
-    if (operation === "updateMany") {
+    if (operation === "updateMany" || operation === "updateManyAndReturn") {
       args = transformDataToWhereQuery(args, model);
     }
   } else if (operationAbility.whereQuery) {
@@ -1586,8 +1587,7 @@ function useCaslAbilities(getAbilityFactory, opts) {
           });
         });
         if (operationAbility.action === "update" || operationAbility.action === "create" || operation === "deleteMany") {
-          const getMany = operation === "deleteMany" || operation === "updateMany";
-          const op = operation === "createMany" ? "createManyAndReturn" : operation;
+          const op = operation === "createMany" ? "createManyAndReturn" : operation === "updateMany" ? "updateManyAndReturn" : operation;
           return batchQuery(model, op, caslQuery.args, async (result) => {
             const filteredResult = cleanupResults(result);
             const results = operation === "createMany" || operation === "deleteMany" || operation === "updateMany" ? { count: result.length } : filteredResult;

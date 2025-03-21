@@ -1,7 +1,7 @@
-import { AbilityBuilder, AbilityTuple, PureAbility } from '@casl/ability';
+import * as _prisma_client_runtime_library from '@prisma/client/runtime/library';
+import { PureAbility, AbilityTuple, AbilityBuilder } from '@casl/ability';
 import { PrismaQuery } from '@casl/prisma';
 import { Prisma } from '@prisma/client';
-import * as _prisma_client_runtime_library from '@prisma/client/runtime/library';
 
 type CreationTree = {
     action: string;
@@ -44,7 +44,7 @@ type PrismaExtensionCaslOptions = {
     /** timeout for batch transaction - default 30000 */
     txTimeout?: number;
 };
-type PrismaCaslOperation = 'create' | 'createMany' | 'createManyAndReturn' | 'upsert' | 'findFirst' | 'findFirstOrThrow' | 'findMany' | 'findUnique' | 'findUniqueOrThrow' | 'aggregate' | 'count' | 'groupBy' | 'update' | 'updateMany' | 'delete' | 'deleteMany';
+type PrismaCaslOperation = 'create' | 'createMany' | 'createManyAndReturn' | 'upsert' | 'findFirst' | 'findFirstOrThrow' | 'findMany' | 'findUnique' | 'findUniqueOrThrow' | 'aggregate' | 'count' | 'groupBy' | 'update' | 'updateMany' | 'updateManyAndReturn' | 'delete' | 'deleteMany';
 
 /**
  * Applies CASL authorization logic to prisma query

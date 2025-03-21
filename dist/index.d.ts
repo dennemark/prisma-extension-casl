@@ -44,7 +44,7 @@ type PrismaExtensionCaslOptions = {
     /** timeout for batch transaction - default 30000 */
     txTimeout?: number;
 };
-type PrismaCaslOperation = 'create' | 'createMany' | 'createManyAndReturn' | 'upsert' | 'findFirst' | 'findFirstOrThrow' | 'findMany' | 'findUnique' | 'findUniqueOrThrow' | 'aggregate' | 'count' | 'groupBy' | 'update' | 'updateMany' | 'delete' | 'deleteMany';
+type PrismaCaslOperation = 'create' | 'createMany' | 'createManyAndReturn' | 'upsert' | 'findFirst' | 'findFirstOrThrow' | 'findMany' | 'findUnique' | 'findUniqueOrThrow' | 'aggregate' | 'count' | 'groupBy' | 'update' | 'updateMany' | 'updateManyAndReturn' | 'delete' | 'deleteMany';
 
 /**
  * Applies CASL authorization logic to prisma query

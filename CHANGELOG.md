@@ -1,4 +1,11 @@
+# Changelog
 
+## [1.2.0](https://github.com/dennemark/prisma-extension-casl/compare/1.1.8...1.2.0) (2025-03-21)
+
+### Features
+
+* :package: update prisma version to 6.5.0 ([775d908](https://github.com/dennemark/prisma-extension-casl/commit/775d90808b9d2c4ade9fad20584457e9e9ff3acb))
+* :sparkles: add updateManyAndReturn ([02bac4b](https://github.com/dennemark/prisma-extension-casl/commit/02bac4be093e4f82e7c440e6ca74d0dd035068f5))
 
 ## [1.1.8](https://github.com/dennemark/prisma-extension-casl/compare/1.1.7...1.1.8) (2025-01-23)
 
