@@ -494,6 +494,26 @@ describe('prisma extension casl', () => {
                 }
             })).toEqual({ id: 0 })
         })
+        it('omit query works on property', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+
+                can('read', 'User')
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            expect(await client.user.findUnique({
+                where: {
+                    id: 0
+                },
+                omit: {
+                    email: true
+                }
+            })).toEqual({ id: 0 })
+        })
         it('select with limited fields for selects', async () => {
             function builderFactory() {
                 const builder = abilityBuilder()
