@@ -318,7 +318,7 @@ function p4(e4, c5, f4) {
 var a3 = p4(z, M);
 var u4 = p4(["$and", "$or"].reduce((o3, t3) => (o3[t3] = Object.assign({}, o3[t3], { type: "field" }), o3), Object.assign({}, z, { $nor: Object.assign({}, z.$nor, { type: "field", parse: O.compound }) })), M, { forPrimitives: true });
 
-// node_modules/.pnpm/@casl+ability@6.7.1/node_modules/@casl/ability/dist/es6m/index.mjs
+// node_modules/.pnpm/@casl+ability@6.7.3/node_modules/@casl/ability/dist/es6m/index.mjs
 function O4(t3) {
   return Array.isArray(t3) ? t3 : [t3];
 }
@@ -407,7 +407,7 @@ var K = class {
   matchesField(t3) {
     if (!this.fields) return true;
     if (!t3) return !this.inverted;
-    if (this.fields && !this.u) this.u = this.t.fieldMatcher(this.fields);
+    if (!this.u) this.u = this.t.fieldMatcher(this.fields);
     return this.u(t3);
   }
 };
@@ -611,7 +611,7 @@ var ForbiddenError = class extends yt {
 ForbiddenError.P = dt;
 var pt = Object.freeze({ __proto__: null });
 
-// node_modules/.pnpm/@casl+ability@6.7.1/node_modules/@casl/ability/dist/es6m/extra/index.mjs
+// node_modules/.pnpm/@casl+ability@6.7.3/node_modules/@casl/ability/dist/es6m/extra/index.mjs
 function c4(t3, n3, r2, e4) {
   const o3 = t3.detectSubjectType(r2);
   const i4 = t3.possibleRulesFor(n3, o3);
@@ -629,22 +629,18 @@ function c4(t3, n3, r2, e4) {
   return Array.from(s3);
 }
 function h4(t3, n3, r2, e4) {
-  const o3 = {};
-  const i4 = t3.rulesFor(n3, r2);
-  for (let t4 = 0; t4 < i4.length; t4++) {
-    const n4 = i4[t4];
-    const r3 = n4.inverted ? "$and" : "$or";
+  const o3 = [];
+  const i4 = [];
+  const s3 = t3.rulesFor(n3, r2);
+  for (let t4 = 0; t4 < s3.length; t4++) {
+    const n4 = s3[t4];
+    const r3 = n4.inverted ? o3 : i4;
     if (!n4.conditions) if (n4.inverted) break;
-    else {
-      delete o3[r3];
-      return o3;
-    }
-    else {
-      o3[r3] = o3[r3] || [];
-      o3[r3].push(e4(n4));
-    }
+    else return o3.length ? { $and: o3 } : {};
+    else r3.push(e4(n4));
   }
-  return o3.$or ? o3 : null;
+  if (!i4.length) return null;
+  return o3.length ? { $or: i4, $and: o3 } : { $or: i4 };
 }
 function a4(t3) {
   if (!t3.ast) throw new Error(`Ability rule "${JSON.stringify(t3)}" does not have "ast" property. So, cannot be used to generate AST`);
@@ -658,7 +654,7 @@ function d4(r2, e4, o3) {
   return w(i4.$and);
 }
 
-// node_modules/.pnpm/@casl+prisma@1.5.0_@casl+ability@6.7.1_@prisma+client@5.21.1_prisma@5.20.0_/node_modules/@casl/prisma/dist/es6m/runtime.mjs
+// node_modules/.pnpm/@casl+prisma@1.5.1_@casl+ability@6.7.3_@prisma+client@6.5.0_prisma@6.5.0_typescript@5.8.2__typescript@5.8.2_/node_modules/@casl/prisma/dist/es6m/runtime.mjs
 var A3 = class extends Error {
   static invalidArgument(t3, e4, r2) {
     const n3 = `${typeof e4}(${JSON.stringify(e4, null, 2)})`;
@@ -805,7 +801,7 @@ function createAbilityFactory() {
   return createAbility;
 }
 
-// node_modules/.pnpm/@casl+prisma@1.5.0_@casl+ability@6.7.1_@prisma+client@5.21.1_prisma@5.20.0_/node_modules/@casl/prisma/dist/es6m/index.mjs
+// node_modules/.pnpm/@casl+prisma@1.5.1_@casl+ability@6.7.3_@prisma+client@6.5.0_prisma@6.5.0_typescript@5.8.2__typescript@5.8.2_/node_modules/@casl/prisma/dist/es6m/index.mjs
 var e3 = createAbilityFactory();
 var m5 = at2();
 
