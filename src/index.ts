@@ -329,13 +329,23 @@ export function useCaslAbilities(
             client: {
                 $casl(extendFactory: (factory: AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) {
                     // alter the getAblities function shortly
-                    return client.$extends({
+                    const extendedClient = client.$extends({
                         query: {
                             $allModels: {
-                                ...allOperations(() => extendFactory(getAbilityFactory()))
-                            }
-                        }
+                                ...allOperations(() => extendFactory(getAbilityFactory())),
+                            },
+                        },
                     })
+                    // if we are within a transaction, return client with transaction
+                    const transactionId = Prisma.getExtensionContext(this)[Symbol.for('prisma.client.transaction.id')]
+                    if (transactionId) {
+                        //@ts-ignore
+                        return extendedClient._createItxClient({
+                            kind: 'itx',
+                            id: transactionId
+                        }) as typeof extendedClient
+                    }
+                    return extendedClient
                 }
             },
             query: {
