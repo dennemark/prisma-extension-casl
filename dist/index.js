@@ -1657,13 +1657,21 @@ function useCaslAbilities(getAbilityFactory, opts) {
       name: "prisma-extension-casl",
       client: {
         $casl(extendFactory) {
-          return client.$extends({
+          const extendedClient = client.$extends({
             query: {
               $allModels: {
                 ...allOperations(() => extendFactory(getAbilityFactory()))
               }
             }
           });
+          const transactionId = import_client2.Prisma.getExtensionContext(this)[Symbol.for("prisma.client.transaction.id")];
+          if (transactionId) {
+            return extendedClient._createItxClient({
+              kind: "itx",
+              id: transactionId
+            });
+          }
+          return extendedClient;
         }
       },
       query: {

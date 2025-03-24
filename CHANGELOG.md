@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.1](https://github.com/dennemark/prisma-extension-casl/compare/1.2.0...1.2.1) (2025-03-24)
+
+### Bug Fixes
+
+* :bug: allow setting $casl within a transaction ([8bcbb20](https://github.com/dennemark/prisma-extension-casl/commit/8bcbb2037a120f841a10f7e776dd4342f01069e9))
+
 ## [1.2.0](https://github.com/dennemark/prisma-extension-casl/compare/1.1.8...1.2.0) (2025-03-21)
 
 ### Features
