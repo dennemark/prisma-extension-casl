@@ -55,6 +55,35 @@ export function useCaslAbilities(
             reject: (error: unknown) => void;
         }>> = {};
 
+        function extendCaslAbilities(extendFactory: (factory: AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) {
+
+            // alter the getAblities function shortly
+            const extendedClient = client.$extends({
+                query: {
+                    $allModels: {
+                        ...allOperations(() => extendFactory(getAbilityFactory())),
+                    },
+                },
+            })
+            // if we are within a transaction, return client with transaction
+            //@ts-ignore
+            const transactionId = Prisma.getExtensionContext(this)[Symbol.for('prisma.client.transaction.id')]
+            if (transactionId) {
+                //@ts-ignore
+                const transactionClient = extendedClient._createItxClient({
+                    kind: 'itx',
+                    id: transactionId
+                }) as typeof extendedClient
+                //@ts-ignore
+                transactionClient.$casl = extendCaslAbilities
+                return transactionClient
+            }
+            //@ts-ignore
+            extendedClient.$casl = extendCaslAbilities
+            return extendedClient
+        }
+
+
         const allOperations = (getAbilities: () => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => ({
             async $allOperations<T>({ args, query, model, operation, ...rest }: { args: any, query: any, model: any, operation: any }) {
 
@@ -327,26 +356,7 @@ export function useCaslAbilities(
         return client.$extends({
             name: "prisma-extension-casl",
             client: {
-                $casl(extendFactory: (factory: AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) {
-                    // alter the getAblities function shortly
-                    const extendedClient = client.$extends({
-                        query: {
-                            $allModels: {
-                                ...allOperations(() => extendFactory(getAbilityFactory())),
-                            },
-                        },
-                    })
-                    // if we are within a transaction, return client with transaction
-                    const transactionId = Prisma.getExtensionContext(this)[Symbol.for('prisma.client.transaction.id')]
-                    if (transactionId) {
-                        //@ts-ignore
-                        return extendedClient._createItxClient({
-                            kind: 'itx',
-                            id: transactionId
-                        }) as typeof extendedClient
-                    }
-                    return extendedClient
-                }
+                $casl: extendCaslAbilities
             },
             query: {
                 $allModels: {

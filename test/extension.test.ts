@@ -35,6 +35,25 @@ describe('prisma extension casl', () => {
         })
     })
     describe('transaction', () => {
+        it('has $transaction on $casl client', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            expect(client.$transaction).toBeDefined()
+            expect(client.$casl((abilities) => abilities).$transaction).toBeDefined()
+            let transactionClient = undefined
+            await client.$casl((abilities) => abilities).$transaction(async (tx) => {
+                transactionClient = tx
+                return
+            })
+            expect(transactionClient).toBeDefined()
+            //@ts-ignore
+            expect(transactionClient?.$casl).toBeDefined()
+        })
         it('reverts create within an existing batch transaction', async () => {
             function builderFactory() {
                 const builder = abilityBuilder()
@@ -306,6 +325,42 @@ describe('prisma extension casl', () => {
                     })]
                 })
             ).toEqual([{ "email": "second-mail" }, { "email": "third-mail" }])
+        })
+        it('creates within an existing interactive transaction with $casl application in transaction', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            expect(await
+                client.$casl((abilities) => {
+                    abilities.can('read', 'User', 'email')
+                    return abilities
+                }).$transaction(async (tx) => {
+                    try {
+                        await tx.user.create({
+                            data: {
+                                email: 'third-mail'
+                            }
+                        })
+                    } catch (e) {
+
+                    }
+                    //@ts-ignore
+                    return [await tx.$casl((abilities) => {
+                        abilities.can('read', 'User', 'email')
+                        abilities.can('create', 'User')
+                        return abilities
+                    }).user.create({
+                        data: {
+                            email: 'second-mail',
+                        }
+                    })]
+                })
+            ).toEqual([{ "email": "second-mail" }])
         })
         it('allows to use transaction beforeQuery', async () => {
             function builderFactory() {
