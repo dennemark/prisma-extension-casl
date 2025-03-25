@@ -76,6 +76,10 @@ export function useCaslAbilities(
                 }) as typeof extendedClient
                 //@ts-ignore
                 transactionClient.$casl = extendCaslAbilities
+                // if $transaction is called on already existing transaction client, just use current transaction
+                transactionClient.$transaction = async (first: any) => {
+                    return first(transactionClient)
+                }
                 return transactionClient
             }
             //@ts-ignore

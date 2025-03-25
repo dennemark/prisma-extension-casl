@@ -47,12 +47,15 @@ describe('prisma extension casl', () => {
             expect(client.$casl((abilities) => abilities).$transaction).toBeDefined()
             let transactionClient = undefined
             await client.$casl((abilities) => abilities).$transaction(async (tx) => {
-                transactionClient = tx
+                //@ts-ignore
+                transactionClient = tx.$casl((abilities) => abilities)
                 return
             })
             expect(transactionClient).toBeDefined()
             //@ts-ignore
             expect(transactionClient?.$casl).toBeDefined()
+            //@ts-ignore
+            expect(transactionClient?.$transaction).toBeDefined()
         })
         it('reverts create within an existing batch transaction', async () => {
             function builderFactory() {
