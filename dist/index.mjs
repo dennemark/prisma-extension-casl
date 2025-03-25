@@ -1463,6 +1463,26 @@ function useCaslAbilities(getAbilityFactory, opts) {
   return Prisma2.defineExtension((client) => {
     let tickActive = false;
     const batches = {};
+    function extendCaslAbilities(extendFactory) {
+      const extendedClient = client.$extends({
+        query: {
+          $allModels: {
+            ...allOperations(() => extendFactory(getAbilityFactory()))
+          }
+        }
+      });
+      const transactionId = Prisma2.getExtensionContext(this)[Symbol.for("prisma.client.transaction.id")];
+      if (transactionId) {
+        const transactionClient = extendedClient._createItxClient({
+          kind: "itx",
+          id: transactionId
+        });
+        transactionClient.$casl = extendCaslAbilities;
+        return transactionClient;
+      }
+      extendedClient.$casl = extendCaslAbilities;
+      return extendedClient;
+    }
     const allOperations = (getAbilities) => ({
       async $allOperations({ args, query, model, operation, ...rest }) {
         const { fluentModel, fluentRelationModel, fluentRelationField } = getFluentModel(model, rest);
@@ -1630,23 +1650,7 @@ function useCaslAbilities(getAbilityFactory, opts) {
     return client.$extends({
       name: "prisma-extension-casl",
       client: {
-        $casl(extendFactory) {
-          const extendedClient = client.$extends({
-            query: {
-              $allModels: {
-                ...allOperations(() => extendFactory(getAbilityFactory()))
-              }
-            }
-          });
-          const transactionId = Prisma2.getExtensionContext(this)[Symbol.for("prisma.client.transaction.id")];
-          if (transactionId) {
-            return extendedClient._createItxClient({
-              kind: "itx",
-              id: transactionId
-            });
-          }
-          return extendedClient;
-        }
+        $casl: extendCaslAbilities
       },
       query: {
         $allModels: {
