@@ -1478,6 +1478,9 @@ function useCaslAbilities(getAbilityFactory, opts) {
           id: transactionId
         });
         transactionClient.$casl = extendCaslAbilities;
+        transactionClient.$transaction = async (first) => {
+          return first(transactionClient);
+        };
         return transactionClient;
       }
       extendedClient.$casl = extendCaslAbilities;

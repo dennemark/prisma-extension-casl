@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.3](https://github.com/dennemark/prisma-extension-casl/compare/1.2.2...1.2.3) (2025-03-25)
+
+### Bug Fixes
+
+* :bug: expose $transaction on transaction client ([0bf6b70](https://github.com/dennemark/prisma-extension-casl/commit/0bf6b7032b5de452f84af73d84bc53f12f33aa7e))
+
 ## [1.2.2](https://github.com/dennemark/prisma-extension-casl/compare/1.2.1...1.2.2) (2025-03-25)
 
 ### Bug Fixes
