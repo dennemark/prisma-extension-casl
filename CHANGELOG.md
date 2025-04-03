@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.0](https://github.com/dennemark/prisma-extension-casl/compare/1.2.3...1.3.0) (2025-04-03)
+
+### Features
+
+* :sparkles: add permittedFields to nested entries ([4c5dcdf](https://github.com/dennemark/prisma-extension-casl/commit/4c5dcdf7507083c2bc8ed3fc4526c6797bea526e))
+
 ## [1.2.3](https://github.com/dennemark/prisma-extension-casl/compare/1.2.2...1.2.3) (2025-03-25)
 
 ### Bug Fixes

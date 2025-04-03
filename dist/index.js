@@ -1461,7 +1461,7 @@ function filterQueryResults(result, mask, creationTree, abilities, model, operat
       const relationField = relationFieldsByModel[model][field];
       if (relationField) {
         const nestedCreationTree = creationTree && field in creationTree.children ? creationTree.children[field] : void 0;
-        const res = filterQueryResults(entry[field], mask?.[field], nestedCreationTree, abilities, relationField.type, operation);
+        const res = filterQueryResults(entry[field], mask?.[field], nestedCreationTree, abilities, relationField.type, operation, opts);
         entry[field] = res;
       }
       if (!permittedFields.includes(field) && !relationField || mask?.[field] === true) {
