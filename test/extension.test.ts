@@ -2208,6 +2208,49 @@ describe('prisma extension casl', () => {
             const result = await client.post.findUnique({ where: { id: 0 } }).author()
             expect(result).toEqual({ email: '0', id: 0, casl: ['create', 'read', 'update', 'delete'] })
         })
+        it('has permissions on custom nested prop on chained queries', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+
+                can('create', 'User')
+                can('read', 'Post')
+                can('read', 'User')
+                can('delete', 'User', {
+                    posts: {
+                        some: {
+                            id: 0
+                        }
+                    }
+                })
+                can('update', 'User', {
+                    posts: {
+                        some: {
+                            id: 0
+                        }
+                    }
+                })
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory, { permissionField: 'casl' })
+            )
+            const result = await client.post.findUnique({
+                where: { id: 0 },
+                include: {
+                    author: true
+                }
+            })
+            expect(result).toEqual({
+                id: 0, text: '', threadId: 0, casl: ['read'],
+                authorId: 0,
+                author: {
+                    email: '0',
+                    id: 0,
+                    casl: ['create', 'read', 'update', 'delete']
+                }
+            })
+        })
     })
     describe('filter query', () => {
         it('removes query mask', async () => {

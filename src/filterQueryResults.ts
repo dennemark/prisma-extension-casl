@@ -74,7 +74,7 @@ export function filterQueryResults(result: any, mask: any, creationTree: Creatio
             const relationField = relationFieldsByModel[model][field]
             if (relationField) {
                 const nestedCreationTree = creationTree && field in creationTree.children ? creationTree.children[field] : undefined
-                const res = filterQueryResults(entry[field], mask?.[field], nestedCreationTree, abilities, relationField.type, operation)
+                const res = filterQueryResults(entry[field], mask?.[field], nestedCreationTree, abilities, relationField.type, operation, opts)
                 // do not distinguish array to get empty array for prisma
                 entry[field] = res // Array.isArray(res) ? res.length > 0 ? res : null : res
             }
