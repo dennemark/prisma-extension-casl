@@ -17,13 +17,6 @@ describe('apply include select query', () => {
         expect(args).toEqual({
             select: {
                 author: true
-            },
-            where: {
-                AND: [{
-                    author: {
-                        OR: [{ id: 0 }, {}]
-                    }
-                }]
             }
         })
     })
@@ -44,14 +37,6 @@ describe('apply include select query', () => {
         expect(args).toEqual({
             select: {
                 author: true
-            },
-            where: {
-                AND: [{
-                    author: {
-                        OR: [{ id: 1 }],
-                        // AND: [{ NOT: { id: 0 } }]
-                    }
-                }]
             }
         })
     })
@@ -68,19 +53,6 @@ describe('apply include select query', () => {
         expect(args).toEqual({
             select: {
                 thread: true
-            },
-            where: {
-                AND: [{
-                    OR: [{
-                        thread: null
-                    },
-                    {
-                        thread: {
-                            OR: [{ id: 1 }],
-                        }
-
-                    }]
-                }]
             }
         })
     })
@@ -189,13 +161,6 @@ describe('apply include select query', () => {
         expect(args).toEqual({
             include: {
                 author: true
-            },
-            where: {
-                AND: [{
-                    author: {
-                        OR: [{ id: 0 }, {}]
-                    }
-                }]
             }
         })
     })

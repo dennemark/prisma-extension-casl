@@ -922,7 +922,7 @@ describe('prisma extension casl', () => {
             const result = await client.post.findUnique({ where: { id: 0 }, include: { thread: true } })
             expect(result).toEqual({ authorId: 0, id: 0, threadId: 0, text: '', thread: { id: 0 } })
         })
-        it('cannot findUnique if nested id is correct and included, but nested has no read rights', async () => {
+        it('can findUnique if nested id is correct and included, but makes nested null if it has no read rights', async () => {
             function builderFactory() {
                 const builder = abilityBuilder()
                 const { can, cannot } = builder
@@ -939,7 +939,13 @@ describe('prisma extension casl', () => {
             const client = seedClient.$extends(
                 useCaslAbilities(builderFactory)
             )
-            expect(await client.post.findUnique({ where: { id: 0 }, include: { thread: true } })).toBeNull()
+            expect(await client.post.findUnique({ where: { id: 0 }, include: { thread: true } })).toEqual({
+                authorId: 0,
+                id: 0,
+                text: '',
+                thread: null,
+                threadId: 0
+            })
         })
         it('cannot findUnique if nested id is not correct and included', async () => {
             function builderFactory() {
@@ -1023,7 +1029,13 @@ describe('prisma extension casl', () => {
                 include: {
                     author: true
                 }
-            })).toBeNull()
+            })).toEqual({
+                author: null,
+                authorId: 1,
+                id: 1,
+                text: '',
+                threadId: 0
+            })
         })
 
         it('cannot findUnique', async () => {
