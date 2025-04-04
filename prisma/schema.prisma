@@ -8,10 +8,11 @@ datasource db {
 }
 
 model User {
-    id      Int      @id @default(autoincrement())
-    email   String
-    posts   Post[]
-    threads Thread[]
+    id       Int      @id @default(autoincrement())
+    email    String
+    posts    Post[]   @relation(name: "author")
+    threads  Thread[]
+    favorite Post?    @relation(name: "favoritedBy")
 }
 
 model Topic {
@@ -29,10 +30,12 @@ model Thread {
 }
 
 model Post {
-    id       Int     @id @default(autoincrement())
-    text     String
-    thread   Thread? @relation(fields: [threadId], references: [id], onDelete: Cascade)
-    threadId Int?
-    author   User    @relation(fields: [authorId], references: [id], onDelete: Cascade)
-    authorId Int
+    id            Int     @id @default(autoincrement())
+    text          String
+    thread        Thread? @relation(fields: [threadId], references: [id], onDelete: Cascade)
+    threadId      Int?
+    author        User    @relation(name: "author", fields: [authorId], references: [id], onDelete: Cascade)
+    authorId      Int
+    favoritedBy   User?   @relation(name: "favoritedBy", fields: [favoritedById], references: [id], onDelete: Cascade)
+    favoritedById Int?    @unique
 }

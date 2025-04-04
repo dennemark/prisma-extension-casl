@@ -44,7 +44,8 @@ export async function seed(prisma: PrismaClient) {
             id: 0,
             text: '',
             authorId: 0,
-            threadId: 0
+            threadId: 0,
+            favoritedById: 0
         }, {
             id: 1,
             text: '',
@@ -62,4 +63,5 @@ export async function seed(prisma: PrismaClient) {
             threadId: 2
         }]
     })
+
 }
