@@ -17,7 +17,7 @@ describe('getPermittedFields', () => {
         const { can, cannot, build } = abilityBuilder()
         can('read', 'User')
         cannot('read', 'User', 'id')
-        expect(getPermittedFields(build(), 'read', 'User')).toEqual(['email'])
+        expect(getPermittedFields(build(), 'read', 'User')).toEqual(['email', 'favoriteId'])
     })
     it('does not include restricted fields even if they exist in can', () => {
         const { can, cannot, build } = abilityBuilder()
