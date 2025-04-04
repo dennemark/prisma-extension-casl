@@ -45,7 +45,6 @@ export async function seed(prisma: PrismaClient) {
             text: '',
             authorId: 0,
             threadId: 0,
-            favoritedById: 0
         }, {
             id: 1,
             text: '',
@@ -63,5 +62,12 @@ export async function seed(prisma: PrismaClient) {
             threadId: 2
         }]
     })
-
+    await prisma.user.update({
+        where: {
+            id: 0
+        },
+        data: {
+            favoriteId: 0
+        }
+    })
 }

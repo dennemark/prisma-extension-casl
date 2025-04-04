@@ -527,20 +527,19 @@ describe('prisma extension casl', () => {
             )
 
 
-
-            const result = await client.thread.findUnique({
+            const result = await client.post.findUnique({
                 where: {
                     id: 0
                 },
                 include: {
-                    creator: {
+                    author: {
                         include: {
                             favorite: true
                         }
                     }
                 }
             })
-            expect(result).toEqual({ id: 0, creator: { id: 0, email: '0', favorite: { id: 0 } } })
+            expect(result).toEqual({ id: 0, author: { id: 0, email: '0', favorite: { id: 0 } } })
 
         })
 
@@ -591,7 +590,7 @@ describe('prisma extension casl', () => {
                 where: {
                     id: 0
                 }
-            })).toEqual({ id: 0 })
+            })).toEqual({ id: 0, favoriteId: 0, })
         })
         it('omit query works on property', async () => {
             function builderFactory() {
@@ -611,7 +610,7 @@ describe('prisma extension casl', () => {
                 omit: {
                     email: true
                 }
-            })).toEqual({ id: 0 })
+            })).toEqual({ id: 0, favoriteId: 0, })
         })
         it('select with limited fields for selects', async () => {
             function builderFactory() {
@@ -817,7 +816,7 @@ describe('prisma extension casl', () => {
                 useCaslAbilities(builderFactory)
             )
             const result = await client.user.findMany()
-            expect(result).toEqual([{ email: '0', id: 0 }, { email: '1', id: 1 }])
+            expect(result).toEqual([{ email: '0', favoriteId: 0, id: 0 }, { email: '1', favoriteId: null, id: 1 }])
         })
 
         it('ignores conditional rule', async () => {
@@ -835,7 +834,7 @@ describe('prisma extension casl', () => {
                 useCaslAbilities(builderFactory)
             )
             const result = await client.user.findMany()
-            expect(result).toEqual([{ id: 0 }, { email: '1', id: 1 }])
+            expect(result).toEqual([{ id: 0, favoriteId: 0, }, { email: '1', favoriteId: null, id: 1 }])
         })
         it('applies filter props and ignores weaker can rule', async () => {
             function builderFactory() {
@@ -852,7 +851,7 @@ describe('prisma extension casl', () => {
                 useCaslAbilities(builderFactory)
             )
             const result = await client.user.findMany()
-            expect(result).toEqual([{ email: '0', id: 0 }, { email: '1' }])
+            expect(result).toEqual([{ email: '0', favoriteId: 0, id: 0 }, { email: '1' }])
         })
         it('allows to see more props on a condition', async () => {
             function builderFactory() {
@@ -921,7 +920,7 @@ describe('prisma extension casl', () => {
                 useCaslAbilities(builderFactory)
             )
             const result = await client.post.findUnique({ where: { id: 0 }, include: { thread: true } })
-            expect(result).toEqual({ authorId: 0, id: 0, threadId: 0, favoritedById: 0, text: '', thread: { id: 0 } })
+            expect(result).toEqual({ authorId: 0, id: 0, threadId: 0, text: '', thread: { id: 0 } })
         })
         it('cannot findUnique if nested id is correct and included, but nested has no read rights', async () => {
             function builderFactory() {
@@ -1072,7 +1071,7 @@ describe('prisma extension casl', () => {
                 useCaslAbilities(builderFactory)
             )
             const result = await client.post.findMany({ include: { thread: true } })
-            expect(result).toEqual([{ authorId: 0, id: 0, text: '', threadId: 0, favoritedById: 0, thread: { id: 0 } }, { authorId: 1, id: 1, favoritedById: null, text: '', threadId: 0, thread: { id: 0 } }, { authorId: 0, id: 3, favoritedById: null, text: '', threadId: 2, thread: { id: 2 } }])
+            expect(result).toEqual([{ authorId: 0, id: 0, text: '', threadId: 0, thread: { id: 0 } }, { authorId: 1, id: 1, text: '', threadId: 0, thread: { id: 0 } }, { authorId: 0, id: 3, text: '', threadId: 2, thread: { id: 2 } }])
         })
         it('checks post permission but does not include it in output', async () => {
             function builderFactory() {
@@ -1221,7 +1220,7 @@ describe('prisma extension casl', () => {
                     id: 0
                 }
             })
-            expect(result).toEqual({ id: 0, email: 'new' })
+            expect(result).toEqual({ id: 0, favoriteId: 0, email: 'new' })
         })
         it('cannot update non-permitted property with ability', async () => {
             function builderFactory() {
@@ -1364,7 +1363,7 @@ describe('prisma extension casl', () => {
                 where: {
                     id: 0
                 }
-            })).toEqual({ id: 0, text: "", threadId: 1, authorId: 0, favoritedById: 0 })
+            })).toEqual({ id: 0, text: "", threadId: 1, authorId: 0, })
         })
         it('cannot do updates on restricted fields with conditions', async () => {
             function builderFactory() {
@@ -1738,7 +1737,7 @@ describe('prisma extension casl', () => {
             })
             const deleted = await seedClient.user.findUnique({ where: { id: 0 } })
             expect(deleted).toBeNull()
-            expect(result).toEqual({ id: 0, email: '0' })
+            expect(result).toEqual({ id: 0, favoriteId: 0, email: '0' })
         })
         it('can delete if ability exists and condition applies', async () => {
             function builderFactory() {
@@ -1761,7 +1760,7 @@ describe('prisma extension casl', () => {
             })
             const deleted = await seedClient.user.findUnique({ where: { id: 0 } })
             expect(deleted).toBeNull()
-            expect(result).toEqual({ id: 0, email: '0' })
+            expect(result).toEqual({ id: 0, favoriteId: 0, email: '0' })
         })
         it('cannot delete if ability exists and condition does not apply', async () => {
             function builderFactory() {
@@ -2143,7 +2142,7 @@ describe('prisma extension casl', () => {
                 useCaslAbilities(builderFactory)
             )
             const result = await client.user.findUnique({ where: { id: 0 } }).posts()
-            expect(result).toEqual([{ authorId: 0, text: '', id: 0, threadId: 0, favoritedById: 0 }])
+            expect(result).toEqual([{ authorId: 0, text: '', id: 0, threadId: 0 }])
         })
         it('can do chained queries if abilities exist', async () => {
             function builderFactory() {
@@ -2175,13 +2174,12 @@ describe('prisma extension casl', () => {
                 abilities.can('read', 'Post')
                 return abilities
             }).user.findUnique({ where: { id: 0 } }).posts()
-            expect(result).toEqual([{ authorId: 0, text: '', id: 0, threadId: 0, favoritedById: 0 },
+            expect(result).toEqual([{ authorId: 0, text: '', id: 0, threadId: 0 },
             {
                 authorId: 0,
                 id: 3,
                 text: '',
-                threadId: 2,
-                favoritedById: null
+                threadId: 2
             },
             ])
         })
@@ -2216,8 +2214,8 @@ describe('prisma extension casl', () => {
             )
             const result = await client.user.findMany()
             expect(result).toEqual([
-                { email: '0', id: 0, 'casl': ['create', 'read', 'update', 'delete', 'share'] },
-                { email: '1', id: 1, 'casl': ['create', 'read', 'share'] }
+                { email: '0', id: 0, favoriteId: 0, 'casl': ['create', 'read', 'update', 'delete', 'share'] },
+                { email: '1', id: 1, favoriteId: null, 'casl': ['create', 'read', 'share'] }
             ])
         })
         it('has permissions on custom prop on chained queries', async () => {
@@ -2248,7 +2246,7 @@ describe('prisma extension casl', () => {
                 useCaslAbilities(builderFactory, { permissionField: 'casl' })
             )
             const result = await client.post.findUnique({ where: { id: 0 } }).author()
-            expect(result).toEqual({ email: '0', id: 0, casl: ['create', 'read', 'update', 'delete'] })
+            expect(result).toEqual({ email: '0', favoriteId: 0, id: 0, casl: ['create', 'read', 'update', 'delete'] })
         })
         it('has permissions on custom nested prop', async () => {
             function builderFactory() {
@@ -2288,16 +2286,16 @@ describe('prisma extension casl', () => {
                 }
             })
             expect(result).toEqual({
-                id: 0, text: '', threadId: 0, favoritedById: 0, casl: ['read'],
+                id: 0, text: '', threadId: 0, casl: ['read'],
                 authorId: 0,
                 author: {
                     email: '0',
+                    favoriteId: 0,
                     id: 0,
                     casl: ['create', 'read', 'update', 'delete'],
                     posts: [{
                         authorId: 0,
                         casl: ["read"],
-                        favoritedById: 0,
                         id: 0,
                         text: "",
                         threadId: 0
@@ -2305,7 +2303,6 @@ describe('prisma extension casl', () => {
                         id: 3,
                         text: "",
                         threadId: 2,
-                        favoritedById: null,
                         authorId: 0,
                         casl: ["read"]
                     }]
@@ -2341,7 +2338,7 @@ describe('prisma extension casl', () => {
             )
             const result = await client.user.findUnique({ where: { id: 0 } }).posts()
             expect(result).toEqual([
-                { authorId: 0, text: "", threadId: 0, favoritedById: 0, id: 0, casl: ['read'] }
+                { authorId: 0, text: "", threadId: 0, id: 0, casl: ['read'] }
             ])
 
         })
