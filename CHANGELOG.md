@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.4](https://github.com/dennemark/prisma-extension-casl/compare/1.3.3...1.3.4) (2025-04-04)
+
+### Bug Fixes
+
+* :bug: solve 1 to 1 where query issue ([7df0132](https://github.com/dennemark/prisma-extension-casl/commit/7df0132945fe403d8d3b34452500f717c0b3eaa3))
+
 ## [1.3.3](https://github.com/dennemark/prisma-extension-casl/compare/1.3.2...1.3.3) (2025-04-04)
 
 ### Bug Fixes
