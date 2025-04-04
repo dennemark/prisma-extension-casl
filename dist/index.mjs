@@ -1067,7 +1067,7 @@ function applyDataQuery(abilities, args, operation, action, model, creationTree)
 }
 
 // src/applyIncludeSelectQuery.ts
-function applyIncludeSelectQuery(abilities, args, model) {
+function applyIncludeSelectQuery(abilities, args, model, forbidWhereQuery = false) {
   ;
   ["include", "select"].forEach((method) => {
     if (args && args[method]) {
@@ -1075,13 +1075,13 @@ function applyIncludeSelectQuery(abilities, args, model) {
         if (model in relationFieldsByModel && relation in relationFieldsByModel[model]) {
           const relationField = relationFieldsByModel[model][relation];
           if (relationField) {
-            if (relationField.isList || relationField.isRequired === false) {
+            if (relationField.isList || forbidWhereQuery) {
               const methodQuery = applyWhereQuery(abilities, args[method][relation], "read", relationField.type);
               args[method][relation] = methodQuery.select && Object.keys(methodQuery.select).length === 0 ? false : methodQuery;
             } else {
               args = applyWhereQuery(abilities, args, "read", relationField.type, relation, relationField.isRequired);
             }
-            args[method][relation] = applyIncludeSelectQuery(abilities, args[method][relation], relationField.type);
+            args[method][relation] = applyIncludeSelectQuery(abilities, args[method][relation], relationField.type, !relationField.isList && relationField.isRequired);
           }
         }
       }
