@@ -1101,7 +1101,7 @@ function applyIncludeSelectQuery(abilities, args, model) {
         if (model in relationFieldsByModel && relation in relationFieldsByModel[model]) {
           const relationField = relationFieldsByModel[model][relation];
           if (relationField) {
-            if (relationField.isList) {
+            if (relationField.isList || relationField.relationToFields?.length === 0) {
               const methodQuery = applyWhereQuery(abilities, args[method][relation], "read", relationField.type);
               args[method][relation] = methodQuery.select && Object.keys(methodQuery.select).length === 0 ? false : methodQuery;
             } else {
