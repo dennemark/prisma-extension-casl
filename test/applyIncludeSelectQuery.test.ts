@@ -67,16 +67,21 @@ describe('apply include select query', () => {
         }, 'Post')
         expect(args).toEqual({
             select: {
-                thread: {
-                    where: {
-                        AND: [{
-                            OR: [{
-                                id: 1
-                            }]
-                        }]
-                    }
-                }
+                thread: true
             },
+            where: {
+                AND: [{
+                    OR: [{
+                        thread: null
+                    },
+                    {
+                        thread: {
+                            OR: [{ id: 1 }],
+                        }
+
+                    }]
+                }]
+            }
         })
     })
     it('applies select method and does not allow reading of field', () => {
