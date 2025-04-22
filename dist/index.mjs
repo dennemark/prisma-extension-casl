@@ -1076,8 +1076,12 @@ function applyIncludeSelectQuery(abilities, args, model) {
           const relationField = relationFieldsByModel[model][relation];
           if (relationField) {
             if (relationField.isList) {
-              const methodQuery = applyWhereQuery(abilities, args[method][relation], "read", relationField.type);
-              args[method][relation] = methodQuery.select && Object.keys(methodQuery.select).length === 0 ? false : methodQuery;
+              try {
+                const methodQuery = applyWhereQuery(abilities, args[method][relation], "read", relationField.type);
+                args[method][relation] = methodQuery.select && Object.keys(methodQuery.select).length === 0 ? false : methodQuery;
+              } catch (e4) {
+                args[method][relation] = false;
+              }
             }
             args[method][relation] = applyIncludeSelectQuery(abilities, args[method][relation], relationField.type);
           }
@@ -1523,8 +1527,11 @@ function useCaslAbilities(getAbilityFactory, opts) {
           }
         }
         const caslQuery = getCaslQuery();
+        if (fluentRelationField?.isList && !caslQuery?.args.select[fluentRelationField.name]) {
+          return [];
+        }
         if (!caslQuery) {
-          if (operation === "findMany" || fluentRelationField?.isList) {
+          if (operation === "findMany") {
             return [];
           } else {
             return null;

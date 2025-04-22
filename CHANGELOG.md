@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.5](https://github.com/dennemark/prisma-extension-casl/compare/1.3.4...1.3.5) (2025-04-22)
+
+### Bug Fixes
+
+* :bug: do not throw error when including nested omitted relation ([b441400](https://github.com/dennemark/prisma-extension-casl/commit/b4414005a351b8549a92e93f137aeb0b9eb1b01f))
+
 ## [1.3.4](https://github.com/dennemark/prisma-extension-casl/compare/1.3.3...1.3.4) (2025-04-04)
 
 ### Bug Fixes
