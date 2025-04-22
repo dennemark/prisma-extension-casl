@@ -140,10 +140,12 @@ export function useCaslAbilities(
                     }
                 }
                 const caslQuery = getCaslQuery()
-
+                if (fluentRelationField?.isList && !caslQuery?.args.select[fluentRelationField.name]) {
+                    return []
+                }
                 if (!caslQuery) {
                     /** if casl query did not return a result we return either null or an empty array for findMany or list relation */
-                    if (operation === 'findMany' || fluentRelationField?.isList) {
+                    if (operation === 'findMany') {
                         return []
                     } else {
                         return null

@@ -29,9 +29,13 @@ export function applyIncludeSelectQuery(
                     const relationField = relationFieldsByModel[model][relation]
                     if (relationField) {
                         if (relationField.isList) {
-                            const methodQuery = applyWhereQuery(abilities, args[method][relation], 'read', relationField.type)
-                            // if select function is empty, we do not query the relation
-                            args[method][relation] = methodQuery.select && Object.keys(methodQuery.select).length === 0 ? false : methodQuery
+                            try {
+                                const methodQuery = applyWhereQuery(abilities, args[method][relation], 'read', relationField.type)
+                                // if select function is empty, we do not query the relation
+                                args[method][relation] = methodQuery.select && Object.keys(methodQuery.select).length === 0 ? false : methodQuery
+                            } catch (e) {
+                                args[method][relation] = false
+                            }
                         }
 
                         args[method][relation] = applyIncludeSelectQuery(abilities, args[method][relation], relationField.type)

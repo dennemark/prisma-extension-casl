@@ -1037,7 +1037,37 @@ describe('prisma extension casl', () => {
                 threadId: 0
             })
         })
+        it('can findUnique include list does not return when not allowed to read', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
 
+                can('read', 'Topic')
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            const result = await client.topic.findUnique({
+                where: {
+                    id: 0
+                },
+                include: {
+                    threads: true
+                }
+            })
+            expect(result).toEqual({
+                id: 0
+            })
+
+            const topic = await seedClient.topic.findUnique({
+                where: { id: 0 },
+                include: {
+                    threads: true
+                }
+            })
+            expect(topic?.threads.length).toBe(2)
+        })
         it('cannot findUnique', async () => {
             function builderFactory() {
                 const builder = abilityBuilder()
@@ -2156,7 +2186,7 @@ describe('prisma extension casl', () => {
             const result = await client.user.findUnique({ where: { id: 0 } }).posts()
             expect(result).toEqual([{ authorId: 0, text: '', id: 0, threadId: 0 }])
         })
-        it('can do chained queries if abilities exist', async () => {
+        it('can do chained queries if abilities exist and returns empty list for list relation', async () => {
             function builderFactory() {
                 const builder = abilityBuilder()
                 const { can, cannot } = builder
