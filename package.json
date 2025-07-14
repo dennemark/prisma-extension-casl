@@ -31,7 +31,7 @@
     "@prisma/generator-helper": "^6.5.0",
     "@release-it/conventional-changelog": "^10.0.0",
     "@types/jest": "^29.5.14",
-    "@types/node": "^22.14.0",
+    "@types/node": "^24.0.13",
     "esbuild": "^0.25.2",
     "jest": "^29.7.0",
     "prisma": "6.5.0",
