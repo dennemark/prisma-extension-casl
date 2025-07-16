@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.0.0-beta.0](https://github.com/dennemark/prisma-extension-casl/compare/1.3.5...2.0.0-beta.0) (2025-07-16)
+
+### ⚠ BREAKING CHANGES
+
+* :sparkles: allow usage of custom prisma client
+
+### Features
+
+* :sparkles: allow usage of custom prisma client ([ab7f446](https://github.com/dennemark/prisma-extension-casl/commit/ab7f4464a8e3cdb3e8dabb40199b5a3ae46eed8e))
+
 ## [1.3.5](https://github.com/dennemark/prisma-extension-casl/compare/1.3.4...1.3.5) (2025-04-22)
 
 ### Bug Fixes

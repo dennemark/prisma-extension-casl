@@ -3,7 +3,7 @@ import { PureAbility, AbilityTuple, AbilityBuilder } from '@casl/ability';
 import { PrismaQuery } from '@casl/prisma';
 import { Prisma } from '@prisma/client';
 
-type CreationTree = {
+type CreationTree<M extends Prisma.ModelName = Prisma.ModelName> = {
     action: string;
     model: Prisma.ModelName;
     children: Record<string, CreationTree>;
@@ -22,7 +22,7 @@ type CreationTree = {
     }[];
 };
 
-type PrismaExtensionCaslOptions = {
+type PrismaExtensionCaslOptions<T extends typeof Prisma = typeof Prisma> = {
     /**
      * will add a field on each returned prisma result that stores allowed actions on result (not nested)
      * so instead of { id: 0 } it would return { id: 0, [permissionField]: ['create', 'read', 'update', 'delete'] }
@@ -43,6 +43,7 @@ type PrismaExtensionCaslOptions = {
     txMaxWait?: number;
     /** timeout for batch transaction - default 30000 */
     txTimeout?: number;
+    prismaInstance?: T;
 };
 type PrismaCaslOperation = 'create' | 'createMany' | 'createManyAndReturn' | 'upsert' | 'findFirst' | 'findFirstOrThrow' | 'findMany' | 'findUnique' | 'findUniqueOrThrow' | 'aggregate' | 'count' | 'groupBy' | 'update' | 'updateMany' | 'updateManyAndReturn' | 'delete' | 'deleteMany';
 
@@ -55,14 +56,14 @@ type PrismaCaslOperation = 'create' | 'createMany' | 'createManyAndReturn' | 'up
  * @param model Prisma model
  * @returns Enriched query with casl authorization
  */
-declare function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: Prisma.ModelName, queryAllRuleRelations?: boolean): {
-    creationTree: CreationTree | undefined;
+declare function applyCaslToQuery<T extends typeof Prisma = typeof Prisma, M extends Prisma.ModelName = Prisma.ModelName>(prismaInstance: T, operation: PrismaCaslOperation, args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: M, queryAllRuleRelations?: boolean): {
+    creationTree: CreationTree<M> | undefined;
     args: any;
     mask: Record<string, any>;
 } | {
     args: any;
     mask: undefined;
-    creationTree: CreationTree | undefined;
+    creationTree: CreationTree<M> | undefined;
 };
 
 /**
@@ -91,7 +92,7 @@ declare function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abi
  * @returns enriched prisma client
  * @returns
  */
-declare function useCaslAbilities(getAbilityFactory: () => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>, opts?: PrismaExtensionCaslOptions): (client: any) => {
+declare function useCaslAbilities<T extends typeof Prisma = typeof Prisma, M extends Prisma.ModelName = Prisma.ModelName>(getAbilityFactory: () => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>, opts?: PrismaExtensionCaslOptions<T>): (client: any) => {
     $extends: {
         extArgs: {
             result: {};

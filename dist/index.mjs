@@ -1,5 +1,5 @@
 // src/index.ts
-import { Prisma as Prisma2 } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 // node_modules/.pnpm/@ucast+core@1.10.2/node_modules/@ucast/core/dist/es6m/index.mjs
 var t = class {
@@ -806,7 +806,7 @@ var e3 = createAbilityFactory();
 var m5 = at2();
 
 // src/applyAccessibleQuery.ts
-function applyAccessibleQuery(query, accessibleQuery) {
+function applyAccessibleQuery(prismaInstance, query, accessibleQuery) {
   if (accessibleQuery && Object.keys(accessibleQuery).length > 0) {
     return {
       ...query,
@@ -821,7 +821,6 @@ function applyAccessibleQuery(query, accessibleQuery) {
 }
 
 // src/helpers.ts
-import { Prisma } from "@prisma/client";
 var caslOperationDict = {
   create: { action: "create", dataQuery: true, whereQuery: false, includeSelectQuery: true },
   createMany: { action: "create", dataQuery: true, whereQuery: false, includeSelectQuery: true },
@@ -854,13 +853,13 @@ var caslNestedOperationDict = {
   disconnect: "update",
   set: "update"
 };
-var relationFieldsByModel = Object.fromEntries(Prisma.dmmf.datamodel.models.map((model) => {
+var relationFieldsByModel = (prismaInstance) => Object.fromEntries(prismaInstance.dmmf.datamodel.models.map((model) => {
   const relationFields = Object.fromEntries(model.fields.filter((field) => field && field.kind === "object" && field.relationName).map((field) => [field.name, field]));
   return [model.name, relationFields];
 }));
-var propertyFieldsByModel = Object.fromEntries(Prisma.dmmf.datamodel.models.map((model) => {
+var propertyFieldsByModel = (prismaInstance) => Object.fromEntries(prismaInstance.dmmf.datamodel.models.map((model) => {
   const propertyFields = Object.fromEntries(model.fields.filter((field) => !(field && field.kind === "object" && field.relationName)).map((field) => {
-    const relation = Object.values(relationFieldsByModel[model.name]).find((value) => value.relationFromFields.includes(field.name));
+    const relation = Object.values(relationFieldsByModel(prismaInstance)[model.name]).find((value) => value.relationFromFields.includes(field.name));
     return [field.name, relation?.name];
   }));
   return [model.name, propertyFields];
@@ -873,18 +872,18 @@ function pick(obj, keys) {
     return acc;
   }, {});
 }
-function getPermittedFields(abilities, action, model, obj) {
-  const modelFields = Object.keys(propertyFieldsByModel[model]);
-  const permittedFields = c4(abilities, action, obj ? getSubject(model, obj) : model, {
+function getPermittedFields(prismaInstance, abilities, action, model, obj) {
+  const modelFields = Object.keys(propertyFieldsByModel(prismaInstance)[model]);
+  const permittedFields = c4(abilities, action, obj ? getSubject(prismaInstance, model, obj) : model, {
     fieldsFrom: (rule) => {
       return rule.fields || modelFields;
     }
   });
   return permittedFields;
 }
-function getSubject(model, obj) {
-  const modelFields = Object.keys(propertyFieldsByModel[model]);
-  const subjectFields = [...modelFields, ...Object.keys(relationFieldsByModel[model])];
+function getSubject(prismaInstance, model, obj) {
+  const modelFields = Object.keys(propertyFieldsByModel(prismaInstance)[model]);
+  const subjectFields = [...modelFields, ...Object.keys(relationFieldsByModel(prismaInstance)[model])];
   return R2(model, pick(obj, subjectFields));
 }
 function getFluentField(data) {
@@ -895,7 +894,7 @@ function getFluentField(data) {
     return void 0;
   }
 }
-function getFluentModel(startModel, data) {
+function getFluentModel(prismaInstance, startModel, data) {
   const startRelation = {
     fluentModel: startModel,
     fluentRelationField: void 0,
@@ -904,7 +903,7 @@ function getFluentModel(startModel, data) {
   const dataPath = data?.__internalParams?.dataPath;
   if (dataPath?.length > 0) {
     return dataPath.filter((x5) => x5 !== "select").reduce((acc, x5) => {
-      acc.fluentRelationField = relationFieldsByModel[acc.fluentModel][x5];
+      acc.fluentRelationField = relationFieldsByModel(prismaInstance)[acc.fluentModel][x5];
       acc.fluentModel = acc.fluentRelationField.type;
       acc.fluentRelationModel = x5;
       return acc;
@@ -941,13 +940,14 @@ function isSubset(obj1, obj2) {
 }
 
 // src/applyWhereQuery.ts
-function applyWhereQuery(abilities, args, action, model, relation, requiredRelation) {
-  const prismaModel = model in relationFieldsByModel ? model : void 0;
+function applyWhereQuery(prismaInstance, abilities, args, action, model, relation, requiredRelation) {
+  const relationByModel = relationFieldsByModel(prismaInstance);
+  const prismaModel = model in relationByModel ? model : void 0;
   if (!prismaModel) {
     throw new Error(`Model ${model} does not exist on Prisma Client`);
   }
   const accessibleQuery = m5(abilities, action)[prismaModel];
-  if (Object.keys(accessibleQuery).length > 0) {
+  if (accessibleQuery && Object.keys(accessibleQuery).length > 0) {
     if (args === true) {
       args = {};
     }
@@ -955,7 +955,7 @@ function applyWhereQuery(abilities, args, action, model, relation, requiredRelat
       args.where = {};
     }
     const relationQuery = relation && accessibleQuery ? requiredRelation ? { [relation]: accessibleQuery } : { OR: [{ [relation]: null }, { [relation]: accessibleQuery }] } : accessibleQuery;
-    args.where = applyAccessibleQuery(args.where, relationQuery);
+    args.where = applyAccessibleQuery(prismaInstance, args.where, relationQuery);
   }
   return args;
 }
@@ -983,9 +983,9 @@ if (!Set.prototype.isDisjointFrom) {
 }
 
 // src/applyDataQuery.ts
-function applyDataQuery(abilities, args, operation, action, model, creationTree) {
+function applyDataQuery(prismaInstance, abilities, args, operation, action, model, creationTree) {
   const tree = creationTree ? creationTree : { action, model, children: {}, mutation: [] };
-  const permittedFields = getPermittedFields(abilities, action, model);
+  const permittedFields = getPermittedFields(prismaInstance, abilities, action, model);
   const mutationArgs = [];
   (Array.isArray(args) ? args : [args]).map((argsEntry) => {
     let hasWhereQuery = false;
@@ -997,7 +997,7 @@ function applyDataQuery(abilities, args, operation, action, model, creationTree)
           hasWhereQuery = true;
           const argFields = new Set(nestedArgs.flatMap((arg) => {
             return Object.keys(arg).filter((field) => {
-              return field in propertyFieldsByModel[model];
+              return field in propertyFieldsByModel(prismaInstance)[model];
             });
           }));
           tree.mutation.push({ fields: [...argFields], where: argsEntry.where });
@@ -1012,7 +1012,7 @@ function applyDataQuery(abilities, args, operation, action, model, creationTree)
               return true;
             }
           }));
-          applyWhereQuery(nestedAbilities, argsEntry, nestedAction !== "update" && nestedAction !== "create" ? action : "update", model);
+          applyWhereQuery(prismaInstance, nestedAbilities, argsEntry, nestedAction !== "update" && nestedAction !== "create" ? action : "update", model);
         }
       }
     });
@@ -1022,9 +1022,9 @@ function applyDataQuery(abilities, args, operation, action, model, creationTree)
   });
   mutationArgs.map((mutation) => {
     const queriedFields = (mutation ? Object.keys(mutation) : []).map((field) => {
-      const relationModelId = propertyFieldsByModel[model][field];
+      const relationModelId = propertyFieldsByModel(prismaInstance)[model][field];
       if (relationModelId && mutation[field] !== null) {
-        const fieldId = relationFieldsByModel[model][relationModelId].relationToFields?.[0];
+        const fieldId = relationFieldsByModel(prismaInstance)[model][relationModelId].relationToFields?.[0];
         if (fieldId && operation !== "createMany" && operation !== "createManyAndReturn") {
           mutation[relationModelId] = { connect: { [fieldId]: mutation[field] } };
           delete mutation[field];
@@ -1035,7 +1035,7 @@ function applyDataQuery(abilities, args, operation, action, model, creationTree)
       }
     });
     queriedFields.forEach((field) => {
-      const relationModel = relationFieldsByModel[model][field];
+      const relationModel = relationFieldsByModel(prismaInstance)[model][field];
       if (permittedFields?.includes(field) === false && !relationModel) {
         throw new Error(`It's not allowed to "${action}" "${field}" on "${model}"`);
       } else if (relationModel && mutation[field]) {
@@ -1045,14 +1045,14 @@ function applyDataQuery(abilities, args, operation, action, model, creationTree)
             const isConnection = nestedAction === "connect" || nestedAction === "disconnect";
             tree.children[field] = { action: mutationAction, model: relationModel.type, children: {}, mutation: [] };
             if (nestedAction !== "disconnect" && nestedArgs !== true) {
-              const dataQuery = applyDataQuery(abilities, nestedArgs, operation, mutationAction, relationModel.type, tree.children[field]);
+              const dataQuery = applyDataQuery(prismaInstance, abilities, nestedArgs, operation, mutationAction, relationModel.type, tree.children[field]);
               mutation[field][nestedAction] = dataQuery.args;
               if (isConnection) {
                 const accessibleQuery = m5(abilities, mutationAction)[relationModel.type];
                 if (Array.isArray(mutation[field][nestedAction])) {
-                  mutation[field][nestedAction] = mutation[field][nestedAction].map((q4) => applyAccessibleQuery(q4, accessibleQuery));
+                  mutation[field][nestedAction] = mutation[field][nestedAction].map((q4) => applyAccessibleQuery(prismaInstance, q4, accessibleQuery));
                 } else {
-                  mutation[field][nestedAction] = applyAccessibleQuery(mutation[field][nestedAction], accessibleQuery);
+                  mutation[field][nestedAction] = applyAccessibleQuery(prismaInstance, mutation[field][nestedAction], accessibleQuery);
                 }
               }
             }
@@ -1067,23 +1067,23 @@ function applyDataQuery(abilities, args, operation, action, model, creationTree)
 }
 
 // src/applyIncludeSelectQuery.ts
-function applyIncludeSelectQuery(abilities, args, model) {
-  ;
+function applyIncludeSelectQuery(prismaInstance, abilities, args, model) {
+  const relationByModel = relationFieldsByModel(prismaInstance);
   ["include", "select"].forEach((method) => {
     if (args && args[method]) {
       for (const relation in args[method]) {
-        if (model in relationFieldsByModel && relation in relationFieldsByModel[model]) {
-          const relationField = relationFieldsByModel[model][relation];
+        if (model in relationByModel && relation in relationByModel[model]) {
+          const relationField = relationByModel[model][relation];
           if (relationField) {
             if (relationField.isList) {
               try {
-                const methodQuery = applyWhereQuery(abilities, args[method][relation], "read", relationField.type);
+                const methodQuery = applyWhereQuery(prismaInstance, abilities, args[method][relation], "read", relationField.type);
                 args[method][relation] = methodQuery.select && Object.keys(methodQuery.select).length === 0 ? false : methodQuery;
               } catch (e4) {
                 args[method][relation] = false;
               }
             }
-            args[method][relation] = applyIncludeSelectQuery(abilities, args[method][relation], relationField.type);
+            args[method][relation] = applyIncludeSelectQuery(prismaInstance, abilities, args[method][relation], relationField.type);
           }
         }
       }
@@ -1100,16 +1100,16 @@ function flattenAst(ast) {
     return [ast];
   }
 }
-function getRuleRelationsQuery(model, ast, dataRelationQuery = {}) {
+function getRuleRelationsQuery(prismaInstance, model, ast, dataRelationQuery = {}) {
   const obj = dataRelationQuery;
   if (ast) {
     if (typeof ast.value === "object") {
       flattenAst(ast).map((childAst) => {
-        const relation = relationFieldsByModel[model];
+        const relation = relationFieldsByModel(prismaInstance)[model];
         if (childAst.field) {
           if (childAst.field in relation) {
             const dataInclude = obj[childAst.field] !== void 0 ? obj[childAst.field] : {};
-            const relQuery = getRuleRelationsQuery(relation[childAst.field].type, childAst.value, dataInclude === true ? {} : dataInclude.select);
+            const relQuery = getRuleRelationsQuery(prismaInstance, relation[childAst.field].type, childAst.value, dataInclude === true ? {} : dataInclude.select);
             if (relQuery && Object.keys(relQuery).length > 0) {
               obj[childAst.field] = {
                 select: relQuery
@@ -1130,17 +1130,17 @@ function getRuleRelationsQuery(model, ast, dataRelationQuery = {}) {
 }
 
 // src/convertCreationTreeToSelect.ts
-function convertCreationTreeToSelect(abilities, relationQuery) {
+function convertCreationTreeToSelect(prismaInstance, abilities, relationQuery) {
   let relationResult = {};
   if (relationQuery.action === "create") {
     const ast = d4(abilities, relationQuery.action, relationQuery.model);
-    relationResult = getRuleRelationsQuery(relationQuery.model, ast, {});
+    relationResult = getRuleRelationsQuery(prismaInstance, relationQuery.model, ast, {});
   }
   if (Object.keys(relationQuery.children).length === 0) {
     return relationQuery.action === "create" ? relationResult : null;
   }
   for (const key in relationQuery.children) {
-    const childRelation = convertCreationTreeToSelect(abilities, relationQuery.children[key]);
+    const childRelation = convertCreationTreeToSelect(prismaInstance, abilities, relationQuery.children[key]);
     if (childRelation !== null) {
       relationResult[key] = { select: childRelation };
     }
@@ -1236,9 +1236,9 @@ function removeNestedIncludeSelect(args) {
     }
   })) : args;
 }
-function applyRuleRelationsQuery(args, abilities, action, model, creationTree) {
-  const creationSelectQuery = creationTree ? convertCreationTreeToSelect(abilities, creationTree) ?? {} : {};
-  const queryRelations = getNestedQueryRelations(args, abilities, action, model, creationSelectQuery === true ? {} : creationSelectQuery);
+function applyRuleRelationsQuery(prismaInstance, args, abilities, action, model, creationTree) {
+  const creationSelectQuery = creationTree ? convertCreationTreeToSelect(prismaInstance, abilities, creationTree) ?? {} : {};
+  const queryRelations = getNestedQueryRelations(prismaInstance, args, abilities, action, model, creationSelectQuery === true ? {} : creationSelectQuery);
   if (!args.select && !args.include) {
     args.include = {};
   }
@@ -1248,7 +1248,7 @@ function applyRuleRelationsQuery(args, abilities, action, model, creationTree) {
   }
   return { ...result, creationTree };
 }
-function getNestedQueryRelations(args, abilities, action, model, creationSelectQuery = {}) {
+function getNestedQueryRelations(prismaInstance, args, abilities, action, model, creationSelectQuery = {}) {
   const ability = e3(abilities.rules.filter((rule) => rule.conditions).map((rule) => {
     return {
       ...rule,
@@ -1256,17 +1256,18 @@ function getNestedQueryRelations(args, abilities, action, model, creationSelectQ
       inverted: false
     };
   }));
+  const relationByModel = relationFieldsByModel(prismaInstance);
   try {
     const ast = d4(ability, action, model);
-    const queryRelations = getRuleRelationsQuery(model, ast, creationSelectQuery === true ? {} : creationSelectQuery);
+    const queryRelations = getRuleRelationsQuery(prismaInstance, model, ast, creationSelectQuery === true ? {} : creationSelectQuery);
     ["include", "select"].map((method) => {
       if (args && args[method]) {
         for (const relation in args[method]) {
-          if (model in relationFieldsByModel && relation in relationFieldsByModel[model]) {
-            const relationField = relationFieldsByModel[model][relation];
+          if (model in relationByModel && relation in relationByModel[model]) {
+            const relationField = relationByModel[model][relation];
             if (relationField) {
               const nestedQueryRelations = deepMerge(
-                getNestedQueryRelations(args[method][relation], abilities, action === "all" ? "all" : "read", relationField.type),
+                getNestedQueryRelations(prismaInstance, args[method][relation], abilities, action === "all" ? "all" : "read", relationField.type),
                 typeof queryRelations[relation]?.select === "object" ? queryRelations[relation]?.select : {}
               );
               if (nestedQueryRelations && Object.keys(nestedQueryRelations).length > 0) {
@@ -1288,14 +1289,14 @@ function getNestedQueryRelations(args, abilities, action, model, creationSelectQ
 }
 
 // src/transformDataToWhereQuery.ts
-function transformDataToWhereQuery(args, model) {
+function transformDataToWhereQuery(prismaInstance, args, model) {
   ;
   ["connect", "disconnect"].forEach((action) => {
     Object.entries(args.data).forEach(([relation, obj]) => {
       if (typeof obj === "object" && !Array.isArray(obj) && obj[action]) {
         const ANDArgs = { AND: [...obj[action].AND ?? [], ...args.where[relation]?.AND ?? []] };
-        const relationTo = relationFieldsByModel[model][relation].relationToFields?.[0];
-        const relationFrom = relationFieldsByModel[model][relation].relationFromFields?.[0];
+        const relationTo = relationFieldsByModel(prismaInstance)[model][relation].relationToFields?.[0];
+        const relationFrom = relationFieldsByModel(prismaInstance)[model][relation].relationFromFields?.[0];
         if (!relationTo || !relationFrom) {
           throw new Error("Cannot find correct relations to transform updateMany to casl query.");
         }
@@ -1320,7 +1321,7 @@ function transformDataToWhereQuery(args, model) {
 }
 
 // src/applyCaslToQuery.ts
-function applyCaslToQuery(operation, args, abilities, model, queryAllRuleRelations) {
+function applyCaslToQuery(prismaInstance, operation, args, abilities, model, queryAllRuleRelations) {
   const operationAbility = caslOperationDict[operation];
   m5(abilities, operationAbility.action)[model];
   let creationTree = void 0;
@@ -1328,17 +1329,17 @@ function applyCaslToQuery(operation, args, abilities, model, queryAllRuleRelatio
     if (operationAbility.whereQuery && !args.where) {
       args.where = {};
     }
-    const { args: dataArgs, creationTree: dataCreationTree } = applyDataQuery(abilities, args, operation, operationAbility.action, model);
+    const { args: dataArgs, creationTree: dataCreationTree } = applyDataQuery(prismaInstance, abilities, args, operation, operationAbility.action, model);
     creationTree = dataCreationTree;
     args = dataArgs;
     if (operation === "updateMany" || operation === "updateManyAndReturn") {
-      args = transformDataToWhereQuery(args, model);
+      args = transformDataToWhereQuery(prismaInstance, args, model);
     }
   } else if (operationAbility.whereQuery) {
-    args = applyWhereQuery(abilities, args, operationAbility.action, model);
+    args = applyWhereQuery(prismaInstance, abilities, args, operationAbility.action, model);
   }
   if (operationAbility.includeSelectQuery) {
-    args = applyIncludeSelectQuery(abilities, args, model);
+    args = applyIncludeSelectQuery(prismaInstance, abilities, args, model);
     if (!operationAbility.whereQuery && args.where) {
       delete args.where;
     }
@@ -1346,12 +1347,12 @@ function applyCaslToQuery(operation, args, abilities, model, queryAllRuleRelatio
     delete args.include;
     delete args.select;
   }
-  const result = operationAbility.includeSelectQuery ? applyRuleRelationsQuery(args, abilities, queryAllRuleRelations ? "all" : operationAbility.action, model, creationTree) : { args, mask: void 0, creationTree };
+  const result = operationAbility.includeSelectQuery ? applyRuleRelationsQuery(prismaInstance, args, abilities, queryAllRuleRelations ? "all" : operationAbility.action, model, creationTree) : { args, mask: void 0, creationTree };
   return result;
 }
 
 // src/storePermissions.ts
-function storePermissions(result, abilities, model, opts) {
+function storePermissions(prismaInstance, result, abilities, model, opts) {
   if (!opts?.permissionField) {
     return result;
   }
@@ -1361,7 +1362,7 @@ function storePermissions(result, abilities, model, opts) {
     if (entry) {
       entry[prop] = [];
       actions.forEach((action) => {
-        if (abilities.can(action, getSubject(model, entry))) {
+        if (abilities.can(action, getSubject(prismaInstance, model, entry))) {
           entry[prop].push(action);
         }
       });
@@ -1377,11 +1378,11 @@ function storePermissions(result, abilities, model, opts) {
 }
 
 // src/filterQueryResults.ts
-function filterQueryResults(result, mask, creationTree, abilities, model, operation, opts) {
+function filterQueryResults(prismaInstance, result, mask, creationTree, abilities, model, operation, opts) {
   if (typeof result === "number") {
     return result;
   }
-  const prismaModel = model in relationFieldsByModel ? model : void 0;
+  const prismaModel = model in relationFieldsByModel(prismaInstance) ? model : void 0;
   if (!prismaModel) {
     throw new Error(`Model ${model} does not exist on Prisma Client`);
   }
@@ -1395,13 +1396,13 @@ function filterQueryResults(result, mask, creationTree, abilities, model, operat
         if (creationTree.mutation?.length) {
           creationTree.mutation.forEach(({ where }) => {
             if (isSubset(where, entry)) {
-              if (!abilities.can("create", getSubject(model, entry))) {
+              if (!abilities.can("create", getSubject(prismaInstance, model, entry))) {
                 throw new Error("");
               }
             }
           });
         } else {
-          if (!abilities.can("create", getSubject(model, entry))) {
+          if (!abilities.can("create", getSubject(prismaInstance, model, entry))) {
             throw new Error("");
           }
         }
@@ -1414,7 +1415,7 @@ function filterQueryResults(result, mask, creationTree, abilities, model, operat
         if (isSubset(where, entry)) {
           fields.forEach((field) => {
             try {
-              if (!abilities.can("update", getSubject(model, entry), field)) {
+              if (!abilities.can("update", getSubject(prismaInstance, model, entry), field)) {
                 throw new Error(field);
               }
             } catch (e4) {
@@ -1424,7 +1425,7 @@ function filterQueryResults(result, mask, creationTree, abilities, model, operat
         }
       });
     }
-    const permittedFields = getPermittedFields(abilities, "read", model, entry);
+    const permittedFields = getPermittedFields(prismaInstance, abilities, "read", model, entry);
     let hasKeys = false;
     Object.keys(entry).filter((field) => {
       if (operationFields?.includes(field)) {
@@ -1434,10 +1435,10 @@ function filterQueryResults(result, mask, creationTree, abilities, model, operat
         return field !== opts?.permissionField;
       }
     }).forEach((field) => {
-      const relationField = relationFieldsByModel[model][field];
+      const relationField = relationFieldsByModel(prismaInstance)[model][field];
       if (relationField) {
         const nestedCreationTree = creationTree && field in creationTree.children ? creationTree.children[field] : void 0;
-        const res = filterQueryResults(entry[field], mask?.[field], nestedCreationTree, abilities, relationField.type, operation, opts);
+        const res = filterQueryResults(prismaInstance, entry[field], mask?.[field], nestedCreationTree, abilities, relationField.type, operation, opts);
         entry[field] = res;
       }
       if (!permittedFields.includes(field) && !relationField || mask?.[field] === true) {
@@ -1450,7 +1451,7 @@ function filterQueryResults(result, mask, creationTree, abilities, model, operat
     });
     return hasKeys && Object.keys(entry).length > 0 ? entry : null;
   };
-  const permissionResult = storePermissions(result, abilities, model, opts);
+  const permissionResult = storePermissions(prismaInstance, result, abilities, model, opts);
   if (Array.isArray(permissionResult)) {
     return permissionResult.map((entry) => filterPermittedFields(entry)).filter((x5) => x5);
   } else {
@@ -1462,7 +1463,8 @@ function filterQueryResults(result, mask, creationTree, abilities, model, operat
 function useCaslAbilities(getAbilityFactory, opts) {
   const txMaxWait = opts?.txMaxWait ?? 3e4;
   const txTimeout = opts?.txTimeout ?? 3e4;
-  return Prisma2.defineExtension((client) => {
+  const prismaInstance = opts?.prismaInstance ?? Prisma;
+  return prismaInstance.defineExtension((client) => {
     let tickActive = false;
     const batches = {};
     function extendCaslAbilities(extendFactory) {
@@ -1473,7 +1475,7 @@ function useCaslAbilities(getAbilityFactory, opts) {
           }
         }
       });
-      const transactionId = Prisma2.getExtensionContext(this)[Symbol.for("prisma.client.transaction.id")];
+      const transactionId = prismaInstance.getExtensionContext(this)[Symbol.for("prisma.client.transaction.id")];
       if (transactionId) {
         const transactionClient = extendedClient._createItxClient({
           kind: "itx",
@@ -1490,7 +1492,7 @@ function useCaslAbilities(getAbilityFactory, opts) {
     }
     const allOperations = (getAbilities) => ({
       async $allOperations({ args, query, model, operation, ...rest }) {
-        const { fluentModel, fluentRelationModel, fluentRelationField } = getFluentModel(model, rest);
+        const { fluentModel, fluentRelationModel, fluentRelationField } = getFluentModel(prismaInstance, model, rest);
         const __internalParams = rest.__internalParams;
         const transaction = __internalParams.transaction;
         const debug = (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") && args.debugCasl;
@@ -1519,7 +1521,7 @@ function useCaslAbilities(getAbilityFactory, opts) {
         perf?.mark("prisma-casl-extension-1");
         function getCaslQuery() {
           try {
-            return applyCaslToQuery(operation, args, abilities, model, opts?.permissionField ? true : false);
+            return applyCaslToQuery(prismaInstance, operation, args, abilities, model, opts?.permissionField ? true : false);
           } catch (e4) {
             if (debugAllErrors || caslOperationDict[operation].action !== "read") {
               throw e4;
@@ -1545,7 +1547,7 @@ function useCaslAbilities(getAbilityFactory, opts) {
           if (fluentRelationModel && caslQuery.mask) {
             caslQuery.mask = fluentRelationModel && fluentRelationModel in caslQuery.mask ? caslQuery.mask[fluentRelationModel] : {};
           }
-          const filteredResult = filterQueryResults(result, caslQuery.mask, caslQuery.creationTree, abilities, fluentModel, operation, opts);
+          const filteredResult = filterQueryResults(prismaInstance, result, caslQuery.mask, caslQuery.creationTree, abilities, fluentModel, operation, opts);
           if (perf) {
             perf.mark("prisma-casl-extension-4");
             logger?.log(
