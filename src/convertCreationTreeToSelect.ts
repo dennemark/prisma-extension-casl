@@ -4,7 +4,7 @@ import { PrismaQuery } from '@casl/prisma';
 import { Prisma } from '@prisma/client';
 import { getRuleRelationsQuery } from './getRuleRelationsQuery';
 
-export type CreationTree = {
+export type CreationTree<M extends Prisma.ModelName = Prisma.ModelName> = {
   action: string,
   model: Prisma.ModelName,
   children: Record<string, CreationTree>,
@@ -20,12 +20,12 @@ export type CreationTree = {
   mutation: { fields: string[], where: any }[]
 }
 
-export function convertCreationTreeToSelect(abilities: PureAbility<AbilityTuple, PrismaQuery>, relationQuery: CreationTree): Record<string, any> | true | null {
+export function convertCreationTreeToSelect<T extends typeof Prisma = typeof Prisma, M extends Prisma.ModelName = Prisma.ModelName>(prismaInstance: T, abilities: PureAbility<AbilityTuple, PrismaQuery>, relationQuery: CreationTree<M>): Record<string, any> | true | null {
   // Recursively filter children
   let relationResult: Record<string, any> = {};
   if (relationQuery.action === 'create') {
     const ast = rulesToAST(abilities, relationQuery.action, relationQuery.model)
-    relationResult = getRuleRelationsQuery(relationQuery.model, ast, {})
+    relationResult = getRuleRelationsQuery<T, M>(prismaInstance, relationQuery.model, ast, {})
   }
 
   // Base case: if there are no children and type is 'create', keep this node
@@ -37,7 +37,7 @@ export function convertCreationTreeToSelect(abilities: PureAbility<AbilityTuple,
 
   for (const key in relationQuery.children) {
 
-    const childRelation = convertCreationTreeToSelect(abilities, relationQuery.children[key]);
+    const childRelation = convertCreationTreeToSelect<T, M>(prismaInstance, abilities, relationQuery.children[key]);
 
     // If the filtered child is valid, add it to the filtered children
     if (childRelation !== null) {

@@ -1,4 +1,5 @@
 
+import { Prisma } from '@prisma/client'
 import { applyIncludeSelectQuery } from '../src/applyIncludeSelectQuery'
 import { abilityBuilder } from './abilities'
 
@@ -9,7 +10,7 @@ describe('apply include select query', () => {
         can('read', 'User', ['email', 'id'], {
             id: 0
         })
-        const args = applyIncludeSelectQuery(build(), {
+        const args = applyIncludeSelectQuery(Prisma, build(), {
             select: {
                 author: true
             }
@@ -29,7 +30,7 @@ describe('apply include select query', () => {
         cannot('read', 'User', 'email', {
             id: 0
         })
-        const args = applyIncludeSelectQuery(build(), {
+        const args = applyIncludeSelectQuery(Prisma, build(), {
             select: {
                 author: true
             }
@@ -45,7 +46,7 @@ describe('apply include select query', () => {
         can('read', 'Thread', {
             id: 1
         })
-        const args = applyIncludeSelectQuery(build(), {
+        const args = applyIncludeSelectQuery(Prisma, build(), {
             select: {
                 thread: true
             }
@@ -62,7 +63,7 @@ describe('apply include select query', () => {
         cannot('read', 'User', 'email', {
             id: 0
         })
-        const args = applyIncludeSelectQuery(build(), {
+        const args = applyIncludeSelectQuery(Prisma, build(), {
             where: {
                 author: {
                     id: 0
@@ -88,7 +89,7 @@ describe('apply include select query', () => {
         can('read', 'Post', 'id', {
             authorId: 0
         })
-        const args = applyIncludeSelectQuery(build(), {
+        const args = applyIncludeSelectQuery(Prisma, build(), {
             select: {
                 posts: true
             }
@@ -108,7 +109,7 @@ describe('apply include select query', () => {
         can('read', 'Post', 'id', {
             threadId: null
         })
-        const args = applyIncludeSelectQuery(build(), {
+        const args = applyIncludeSelectQuery(Prisma, build(), {
             select: {
                 posts: true
             }
@@ -128,7 +129,7 @@ describe('apply include select query', () => {
         can('read', 'Post', 'id', {
             authorId: 0
         })
-        const args = applyIncludeSelectQuery(build(), {
+        const args = applyIncludeSelectQuery(Prisma, build(), {
             select: {
                 posts: {
                     // this equals rule and therefore id is a visible field
@@ -153,7 +154,7 @@ describe('apply include select query', () => {
         can('read', 'User', ['email', 'id'], {
             id: 0
         })
-        const args = applyIncludeSelectQuery(build(), {
+        const args = applyIncludeSelectQuery(Prisma, build(), {
             include: {
                 author: true
             }
@@ -170,7 +171,7 @@ describe('apply include select query', () => {
         can('read', 'Post', 'id', {
             authorId: 0
         })
-        const args = applyIncludeSelectQuery(build(), {
+        const args = applyIncludeSelectQuery(Prisma, build(), {
             include: {
                 posts: true
             }
@@ -191,7 +192,7 @@ describe('apply include select query', () => {
         can('read', 'Post', 'id', {
             authorId: 0
         })
-        const args = applyIncludeSelectQuery(build(), {
+        const args = applyIncludeSelectQuery(Prisma, build(), {
             include: {
                 posts: {
                     // this equals rule and therefore id is a visible field

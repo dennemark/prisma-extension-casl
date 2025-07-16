@@ -1,8 +1,8 @@
 
+import { Prisma } from '@prisma/client'
 import { applyIncludeSelectQuery } from '../src/applyIncludeSelectQuery'
 import { applyRuleRelationsQuery } from '../src/applyRuleRelationsQuery'
 import { abilityBuilder } from './abilities'
-
 
 describe('apply rule relations query', () => {
   it('adds missing select queries for list relation', () => {
@@ -25,7 +25,7 @@ describe('apply rule relations query', () => {
         endsWith: '1'
       }
     })
-    const { args, mask } = applyRuleRelationsQuery({
+    const { args, mask } = applyRuleRelationsQuery(Prisma, {
       select: {
         posts: {
           select: {
@@ -80,7 +80,7 @@ describe('apply rule relations query', () => {
         endsWith: '1'
       }
     })
-    const { args, mask } = applyRuleRelationsQuery({
+    const { args, mask } = applyRuleRelationsQuery(Prisma, {
       include: {
         posts: true
       }
@@ -113,7 +113,7 @@ describe('apply rule relations query', () => {
         }
       }
     })
-    const { args, mask } = applyRuleRelationsQuery({
+    const { args, mask } = applyRuleRelationsQuery(Prisma, {
       select: {
         author: {
           id: true
@@ -151,7 +151,7 @@ describe('apply rule relations query', () => {
         }
       }
     })
-    const { args, mask } = applyRuleRelationsQuery({ select: { id: true, thread: true } }, build(), 'read', 'Post')
+    const { args, mask } = applyRuleRelationsQuery(Prisma, { select: { id: true, thread: true } }, build(), 'read', 'Post')
     expect(args).toEqual({
       select: {
         id: true, thread: {
@@ -183,7 +183,7 @@ describe('apply rule relations query', () => {
         }
       }
     })
-    const { args, mask } = applyRuleRelationsQuery({}, build(), 'read', 'Topic')
+    const { args, mask } = applyRuleRelationsQuery(Prisma, {}, build(), 'read', 'Topic')
     expect(args).toEqual({
       include: {
         threads: {
@@ -226,7 +226,7 @@ describe('apply rule relations query', () => {
         }
       }
     })
-    const { args, mask } = applyRuleRelationsQuery({}, build(), 'read', 'Thread')
+    const { args, mask } = applyRuleRelationsQuery(Prisma, {}, build(), 'read', 'Thread')
     expect(args).toEqual({
       include: {
         posts: {
@@ -253,9 +253,9 @@ describe('apply rule relations query', () => {
       }
     })
 
-    const includeArgs = applyIncludeSelectQuery(build(), { include: { posts: true } }, 'User')
+    const includeArgs = applyIncludeSelectQuery(Prisma, build(), { include: { posts: true } }, 'User')
 
-    const { args, mask } = applyRuleRelationsQuery(includeArgs, build(), 'read', 'User')
+    const { args, mask } = applyRuleRelationsQuery(Prisma, includeArgs, build(), 'read', 'User')
     expect(mask).toEqual({
       posts: {
         author: true

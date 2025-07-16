@@ -1,6 +1,6 @@
+import { Prisma } from '@prisma/client'
 import { convertCreationTreeToSelect } from "../src/convertCreationTreeToSelect"
 import { abilityBuilder } from "./abilities"
-
 
 describe('convert creation tree to select query', () => {
   it('correctly builds data query', () => {
@@ -12,7 +12,7 @@ describe('convert creation tree to select query', () => {
         }
       }
     })
-    expect(convertCreationTreeToSelect(build(), {
+    expect(convertCreationTreeToSelect(Prisma, build(), {
       action: 'update',
       model: 'User',
       children: {
@@ -52,7 +52,7 @@ describe('convert creation tree to select query', () => {
   it('correctly builds data query', () => {
     const { build } = abilityBuilder()
 
-    expect(convertCreationTreeToSelect(build(), {
+    expect(convertCreationTreeToSelect(Prisma, build(), {
       action: 'create',
       model: 'User',
       children: {

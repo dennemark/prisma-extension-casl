@@ -1,12 +1,12 @@
 import { AbilityTuple, PureAbility, Subject, subject } from '@casl/ability'
 import { permittedFieldsOf } from '@casl/ability/extra'
-import { prismaQuery, PrismaQuery } from '@casl/prisma'
+import { PrismaQuery } from '@casl/prisma'
 import { Prisma } from '@prisma/client'
 import type { DMMF } from '@prisma/generator-helper'
 
 type DefaultCaslAction = "create" | "read" | "update" | "delete"
 
-export type PrismaExtensionCaslOptions = {
+export type PrismaExtensionCaslOptions<T extends typeof Prisma = typeof Prisma> = {
     /**
      * will add a field on each returned prisma result that stores allowed actions on result (not nested) 
      * so instead of { id: 0 } it would return { id: 0, [permissionField]: ['create', 'read', 'update', 'delete'] } 
@@ -27,6 +27,7 @@ export type PrismaExtensionCaslOptions = {
     txMaxWait?: number
     /** timeout for batch transaction - default 30000 */
     txTimeout?: number
+    prismaInstance?: T
 }
 
 export type PrismaCaslOperation =
@@ -90,18 +91,18 @@ export const caslNestedOperationDict: Record<string, 'create' | 'update' | 'read
     set: 'update'
 }
 
-export const relationFieldsByModel = Object.fromEntries(Prisma.dmmf.datamodel.models.map((model: DMMF.Model) => {
+export const relationFieldsByModel = (prismaInstance: typeof Prisma) => Object.fromEntries(prismaInstance.dmmf.datamodel.models.map((model: DMMF.Model) => {
     const relationFields = Object.fromEntries(model.fields
         .filter((field) => field && field.kind === 'object' && field.relationName)
         .map((field) => ([field.name, field])))
     return [model.name, relationFields]
 }))
 
-export const propertyFieldsByModel = Object.fromEntries(Prisma.dmmf.datamodel.models.map((model: DMMF.Model) => {
+export const propertyFieldsByModel = (prismaInstance: typeof Prisma) => Object.fromEntries(prismaInstance.dmmf.datamodel.models.map((model: DMMF.Model) => {
     const propertyFields = Object.fromEntries(model.fields
         .filter((field) => !(field && field.kind === 'object' && field.relationName))
         .map((field) => {
-            const relation = Object.values(relationFieldsByModel[model.name]).find((value: any) => value.relationFromFields.includes(field.name))
+            const relation = Object.values(relationFieldsByModel(prismaInstance)[model.name]).find((value: any) => value.relationFromFields.includes(field.name))
             return [field.name, relation?.name]
         }))
     return [model.name, propertyFields]
@@ -133,14 +134,15 @@ export function pick<T extends Record<string, K>, K extends keyof T>(obj: T | un
  * @param obj 
  * @returns 
  */
-export function getPermittedFields(
+export function getPermittedFields<T extends typeof Prisma = typeof Prisma, M extends Prisma.ModelName = Prisma.ModelName>(
+    prismaInstance: T,
     abilities: PureAbility<AbilityTuple, PrismaQuery>,
     action: string,
     model: string,
     obj?: any
 ) {
-    const modelFields = Object.keys(propertyFieldsByModel[model])
-    const permittedFields = permittedFieldsOf(abilities, action, obj ? getSubject(model, obj) : model, {
+    const modelFields = Object.keys(propertyFieldsByModel(prismaInstance)[model])
+    const permittedFields = permittedFieldsOf(abilities, action, obj ? getSubject<T, M>(prismaInstance, model, obj) : model, {
         fieldsFrom: rule => {
             return rule.fields || modelFields;
         }
@@ -154,9 +156,9 @@ export function getPermittedFields(
  * @param obj 
  * @returns 
  */
-export function getSubject(model: string, obj: any) {
-    const modelFields = Object.keys(propertyFieldsByModel[model])
-    const subjectFields = [...modelFields, ...Object.keys(relationFieldsByModel[model])]
+export function getSubject<T extends typeof Prisma = typeof Prisma, M extends Prisma.ModelName = Prisma.ModelName>(prismaInstance: T, model: string, obj: any) {
+    const modelFields = Object.keys(propertyFieldsByModel(prismaInstance)[model])
+    const subjectFields = [...modelFields, ...Object.keys(relationFieldsByModel(prismaInstance)[model])]
     return subject(model, pick(obj, subjectFields))
 }
 
@@ -176,7 +178,7 @@ export function getFluentField(data: any) {
  * @param data query args with internalParams - includes a dataPath for fluent api
  * @returns fluent api model
  */
-export function getFluentModel(startModel: string, data: any) {
+export function getFluentModel<T extends typeof Prisma = typeof Prisma, M extends Prisma.ModelName = Prisma.ModelName>(prismaInstance: T, startModel: string, data: any) {
     const startRelation = {
         fluentModel: startModel,
         fluentRelationField: undefined as DMMF.Field | undefined,
@@ -185,7 +187,7 @@ export function getFluentModel(startModel: string, data: any) {
     const dataPath = data?.__internalParams?.dataPath as string[]
     if (dataPath?.length > 0) {
         return dataPath.filter((x) => x !== 'select').reduce((acc, x) => {
-            acc.fluentRelationField = relationFieldsByModel[acc.fluentModel][x]
+            acc.fluentRelationField = relationFieldsByModel(prismaInstance)[acc.fluentModel][x]
             acc.fluentModel = acc.fluentRelationField.type
             acc.fluentRelationModel = x
             return acc

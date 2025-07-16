@@ -1,6 +1,6 @@
 import { AbilityBuilder, AbilityTuple, PureAbility } from '@casl/ability'
 import { PrismaQuery } from '@casl/prisma'
-import { Prisma, PrismaClient, PrismaPromise } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 import { applyCaslToQuery } from './applyCaslToQuery'
 import { filterQueryResults } from './filterQueryResults'
 import { caslOperationDict, getFluentField, getFluentModel, PrismaCaslOperation, PrismaExtensionCaslOptions, propertyFieldsByModel, relationFieldsByModel } from './helpers'
@@ -35,14 +35,14 @@ export { applyCaslToQuery }
  * @returns enriched prisma client
  * @returns 
  */
-export function useCaslAbilities(
+export function useCaslAbilities<T extends typeof Prisma = typeof Prisma, M extends Prisma.ModelName = Prisma.ModelName>(
     getAbilityFactory: () => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>,
-    opts?: PrismaExtensionCaslOptions) {
+    opts?: PrismaExtensionCaslOptions<T>) {
     // Set default options
     const txMaxWait = opts?.txMaxWait ?? 30000
     const txTimeout = opts?.txTimeout ?? 30000
-
-    return Prisma.defineExtension((client) => {
+    const prismaInstance = opts?.prismaInstance ?? Prisma as T
+    return prismaInstance.defineExtension((client) => {
         let tickActive = false;
         const batches: Record<string, Array<{
             params: object;
@@ -67,7 +67,7 @@ export function useCaslAbilities(
             })
             // if we are within a transaction, return client with transaction
             //@ts-ignore
-            const transactionId = Prisma.getExtensionContext(this)[Symbol.for('prisma.client.transaction.id')]
+            const transactionId = prismaInstance.getExtensionContext(this)[Symbol.for('prisma.client.transaction.id')]
             if (transactionId) {
                 //@ts-ignore
                 const transactionClient = extendedClient._createItxClient({
@@ -89,9 +89,9 @@ export function useCaslAbilities(
 
 
         const allOperations = (getAbilities: () => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => ({
-            async $allOperations<T>({ args, query, model, operation, ...rest }: { args: any, query: any, model: any, operation: any }) {
+            async $allOperations({ args, query, model, operation, ...rest }: { args: any, query: any, model: any, operation: any }) {
 
-                const { fluentModel, fluentRelationModel, fluentRelationField } = getFluentModel(model, rest)
+                const { fluentModel, fluentRelationModel, fluentRelationField } = getFluentModel<T, M>(prismaInstance, model, rest)
 
                 const __internalParams = (rest as any).__internalParams
                 const transaction = __internalParams.transaction
@@ -130,7 +130,7 @@ export function useCaslAbilities(
                  */
                 function getCaslQuery() {
                     try {
-                        return applyCaslToQuery(operation, args, abilities, model, opts?.permissionField ? true : false)
+                        return applyCaslToQuery<T, M>(prismaInstance, operation, args, abilities, model, opts?.permissionField ? true : false)
                     }
                     catch (e) {
                         if (debugAllErrors || caslOperationDict[operation as PrismaCaslOperation].action !== 'read') {
@@ -164,7 +164,7 @@ export function useCaslAbilities(
                         // on fluent models we need to take mask of the relation
                         caslQuery.mask = fluentRelationModel && fluentRelationModel in caslQuery.mask ? caslQuery.mask[fluentRelationModel] : {}
                     }
-                    const filteredResult = filterQueryResults(result, caslQuery.mask, caslQuery.creationTree, abilities, fluentModel as Prisma.ModelName, operation, opts)
+                    const filteredResult = filterQueryResults<T, M>(prismaInstance, result, caslQuery.mask, caslQuery.creationTree, abilities, fluentModel as M, operation, opts)
                     if (perf) {
                         perf.mark('prisma-casl-extension-4')
                         logger?.log(

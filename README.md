@@ -188,3 +188,13 @@ Here are some performance metrics for the above query for the small test sqlite 
 `entry Relation @relation(fields: [entryIdA, entryIdB], references: [refA, refB])` does not work.
 `entry Relation @relation(fields: [entryId], references: [ref])` does work.
 Since internally a relation like `entryId: someId` might be replaced by `entry: { connect: { ref: someId, ...caslConditions } }`
+
+### Custom generated Prisma client
+
+```ts
+import { Prisma } from "./client/location";
+
+useCaslAbilities<typeof Prisma, Prisma.ModelName>(abilities, {
+  prismaInstance: Prisma,
+});
+```

@@ -3,16 +3,39 @@ import { seedClient } from './client'
 import { seed } from './seed'
 
 import { prismaQuery } from '@casl/prisma'
+import { Prisma } from '@prisma/client'
 import { useCaslAbilities } from '../src/index'
 import { abilityBuilder } from './abilities'
-
-
 beforeEach(async () => {
     await seed(seedClient)
 })
 
 
 describe('prisma extension casl', () => {
+    describe('custom prisma client', () => {
+        it('use custom prisma client', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities<typeof Prisma, Prisma.ModelName>(builderFactory, {
+                    prismaInstance: Prisma
+                })
+            )
+
+
+            const result = await client.$casl((a) => {
+                a.can('read', 'User')
+                return a
+            }).user.findMany()
+            expect(result.length).toEqual(2)
+            expect(await client.user.findMany()).toEqual([])
+            expect(await client.$casl((a) => a).user.findMany()).toEqual([])
+        })
+    })
+
     describe('override rules', () => {
         it('overwrites abilities', async () => {
             function builderFactory() {
@@ -2165,6 +2188,36 @@ describe('prisma extension casl', () => {
                 _sum: { id: true }
             })
             expect(result).toEqual([{ _avg: { id: 0 }, _count: { id: 1 }, _max: { id: 0 }, _min: { id: 0 }, _sum: { id: 0 }, email: "0" }, { _avg: { id: 1 }, _count: { id: 1 }, _max: { id: 1 }, _min: { id: 1 }, _sum: { id: 1 }, email: "1" }])
+        })
+        it('can groupBy data', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+                can('read', 'User', { email: "0" })
+
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            const result = await client.user.groupBy({
+                by: ['email'],
+                where: {
+                    posts: {
+                        some: {
+                            id: {
+                                lte: 0
+                            }
+                        }
+                    }
+                },
+                _avg: { id: true },
+                _count: { id: true },
+                _min: { id: true },
+                _max: { id: true },
+                _sum: { id: true }
+            })
+            expect(result).toEqual([{ _avg: { id: 0 }, _count: { id: 1 }, _max: { id: 0 }, _min: { id: 0 }, _sum: { id: 0 }, email: "0" }])
         })
     })
     describe('fluent api queries', () => {

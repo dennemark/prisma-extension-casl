@@ -5,11 +5,13 @@ import { CreationTree } from "./convertCreationTreeToSelect";
 import { caslOperationDict, getPermittedFields, getSubject, isSubset, PrismaCaslOperation, PrismaExtensionCaslOptions, relationFieldsByModel } from "./helpers";
 import { storePermissions } from "./storePermissions";
 
-export function filterQueryResults(result: any, mask: any, creationTree: CreationTree | undefined, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: string, operation: PrismaCaslOperation, opts?: PrismaExtensionCaslOptions) {
+export function filterQueryResults<T extends typeof Prisma = typeof Prisma, M extends Prisma.ModelName = Prisma.ModelName>(prismaInstance: T, result: any, mask: any, creationTree: CreationTree | undefined, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: string, operation: PrismaCaslOperation, opts?: PrismaExtensionCaslOptions) {
+
     if (typeof result === 'number') {
         return result
     }
-    const prismaModel = model in relationFieldsByModel ? model as Prisma.ModelName : undefined
+
+    const prismaModel = model in relationFieldsByModel(prismaInstance) ? model as M : undefined
     if (!prismaModel) {
         throw new Error(`Model ${model} does not exist on Prisma Client`)
     }
@@ -23,13 +25,13 @@ export function filterQueryResults(result: any, mask: any, creationTree: Creatio
                 if (creationTree.mutation?.length) {
                     creationTree.mutation.forEach(({ where }) => {
                         if (isSubset(where, entry)) {
-                            if (!abilities.can('create', getSubject(model, entry))) {
+                            if (!abilities.can('create', getSubject<T, M>(prismaInstance, model, entry))) {
                                 throw new Error('')
                             }
                         }
                     })
                 } else {
-                    if (!abilities.can('create', getSubject(model, entry))) {
+                    if (!abilities.can('create', getSubject<T, M>(prismaInstance, model, entry))) {
                         throw new Error('')
                     }
                 }
@@ -49,7 +51,7 @@ export function filterQueryResults(result: any, mask: any, creationTree: Creatio
                 if (isSubset(where, entry)) {
                     fields.forEach((field) => {
                         try {
-                            if (!abilities.can('update', getSubject(model, entry), field)) {
+                            if (!abilities.can('update', getSubject<T, M>(prismaInstance, model, entry), field)) {
                                 throw new Error(field)
                             }
                         } catch (e) {
@@ -60,7 +62,7 @@ export function filterQueryResults(result: any, mask: any, creationTree: Creatio
             })
         }
 
-        const permittedFields = getPermittedFields(abilities, 'read', model, entry)
+        const permittedFields = getPermittedFields<T, M>(prismaInstance, abilities, 'read', model, entry)
 
         let hasKeys = false
         Object.keys(entry).filter((field) => {
@@ -71,10 +73,10 @@ export function filterQueryResults(result: any, mask: any, creationTree: Creatio
                 return field !== opts?.permissionField
             }
         }).forEach((field) => {
-            const relationField = relationFieldsByModel[model][field]
+            const relationField = relationFieldsByModel(prismaInstance)[model][field]
             if (relationField) {
                 const nestedCreationTree = creationTree && field in creationTree.children ? creationTree.children[field] : undefined
-                const res = filterQueryResults(entry[field], mask?.[field], nestedCreationTree, abilities, relationField.type, operation, opts)
+                const res = filterQueryResults<T, M>(prismaInstance, entry[field], mask?.[field], nestedCreationTree, abilities, relationField.type, operation, opts)
                 // do not distinguish array to get empty array for prisma
                 entry[field] = res // Array.isArray(res) ? res.length > 0 ? res : null : res
             }
@@ -93,7 +95,7 @@ export function filterQueryResults(result: any, mask: any, creationTree: Creatio
 
         return hasKeys && Object.keys(entry).length > 0 ? entry : null
     }
-    const permissionResult = storePermissions(result, abilities, model, opts)
+    const permissionResult = storePermissions<T, M>(prismaInstance, result, abilities, model, opts)
     if (Array.isArray(permissionResult)) {
         return permissionResult.map((entry) => filterPermittedFields(entry)).filter((x) => x)
     } else {

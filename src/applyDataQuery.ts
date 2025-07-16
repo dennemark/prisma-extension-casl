@@ -1,6 +1,6 @@
 import { AbilityTuple, PureAbility } from '@casl/ability'
 import { accessibleBy, createPrismaAbility, PrismaQuery } from '@casl/prisma'
-import { Prisma } from '@prisma/client'
+import type { Prisma } from '@prisma/client'
 import { applyAccessibleQuery } from './applyAccessibleQuery'
 import { applyWhereQuery } from './applyWhereQuery'
 import { CreationTree } from './convertCreationTreeToSelect'
@@ -23,17 +23,18 @@ import './polyfills'
  * @param model prisma model
  * @returns enriched query with casl authorization or Error
  */
-export function applyDataQuery(
+export function applyDataQuery<T extends typeof Prisma = typeof Prisma, M extends Prisma.ModelName = Prisma.ModelName>(
+    prismaInstance: T,
     abilities: PureAbility<AbilityTuple, PrismaQuery>,
     args: any,
     operation: PrismaCaslOperation,
     action: string,
     model: string,
-    creationTree?: CreationTree
+    creationTree?: CreationTree<M>
 ) {
-    const tree = creationTree ? creationTree : { action: action, model: model, children: {}, mutation: [] } as CreationTree
+    const tree = creationTree ? creationTree : { action: action, model: model, children: {}, mutation: [] } as CreationTree<M>
 
-    const permittedFields = getPermittedFields(abilities, action, model)
+    const permittedFields = getPermittedFields<T, M>(prismaInstance, abilities, action, model)
 
     const mutationArgs: any[] = []
         ; (Array.isArray(args) ? args : [args]).map((argsEntry) => {
@@ -55,7 +56,7 @@ export function applyDataQuery(
                              */
                             const argFields = new Set(nestedArgs.flatMap((arg) => {
                                 return Object.keys(arg).filter((field) => {
-                                    return field in propertyFieldsByModel[model]
+                                    return field in propertyFieldsByModel(prismaInstance)[model]
                                 })
                             }))
                             tree.mutation.push({ fields: [...argFields], where: argsEntry.where })
@@ -77,7 +78,7 @@ export function applyDataQuery(
                             // if nestedAction is update, we probably have upsert
                             // if nestedAction is create, we probably have connectOrCreate
                             // therefore we check for 'update' accessibleQuery
-                            applyWhereQuery(nestedAbilities, argsEntry, nestedAction !== 'update' && nestedAction !== 'create' ? action : 'update', model)
+                            applyWhereQuery<T, M>(prismaInstance, nestedAbilities, argsEntry, nestedAction !== 'update' && nestedAction !== 'create' ? action : 'update', model)
 
                         }
                     }
@@ -94,9 +95,9 @@ export function applyDataQuery(
         // get all mutation arg fields and if they are short code connect (userId instead of user: { connect: id }), we convert it
         // except if it is a createMany or updateMany operation
         const queriedFields = (mutation ? Object.keys(mutation) : []).map((field) => {
-            const relationModelId = propertyFieldsByModel[model][field]
+            const relationModelId = propertyFieldsByModel(prismaInstance)[model][field]
             if (relationModelId && mutation[field] !== null) {
-                const fieldId = relationFieldsByModel[model][relationModelId].relationToFields?.[0]
+                const fieldId = relationFieldsByModel(prismaInstance)[model][relationModelId].relationToFields?.[0]
                 if (fieldId && operation !== 'createMany' && operation !== 'createManyAndReturn') {
                     mutation[relationModelId] = { connect: { [fieldId]: mutation[field] } }
                     delete mutation[field]
@@ -108,7 +109,7 @@ export function applyDataQuery(
         })
 
         queriedFields.forEach((field) => {
-            const relationModel = relationFieldsByModel[model][field]
+            const relationModel = relationFieldsByModel(prismaInstance)[model][field]
             // omit relation models also through i.e. stat
             if (permittedFields?.includes(field) === false && !relationModel) {
                 // if fields are not permitted we throw an error and exit
@@ -120,18 +121,18 @@ export function applyDataQuery(
                         const mutationAction = caslNestedOperationDict[nestedAction]
                         const isConnection = nestedAction === 'connect' || nestedAction === 'disconnect'
 
-                        tree.children[field] = { action: mutationAction, model: relationModel.type as Prisma.ModelName, children: {}, mutation: [] }
+                        tree.children[field] = { action: mutationAction, model: relationModel.type as M, children: {}, mutation: [] }
                         if (nestedAction !== 'disconnect' && nestedArgs !== true) {
-                            const dataQuery = applyDataQuery(abilities, nestedArgs, operation, mutationAction, relationModel.type, tree.children[field])
+                            const dataQuery = applyDataQuery<T, M>(prismaInstance, abilities, nestedArgs, operation, mutationAction, relationModel.type, tree.children[field])
                             mutation[field][nestedAction] = dataQuery.args
                             // connection works like a where query, so we apply it
                             if (isConnection) {
-                                const accessibleQuery = accessibleBy(abilities, mutationAction)[relationModel.type as Prisma.ModelName]
+                                const accessibleQuery = accessibleBy(abilities, mutationAction)[relationModel.type as M]
 
                                 if (Array.isArray(mutation[field][nestedAction])) {
-                                    mutation[field][nestedAction] = mutation[field][nestedAction].map((q) => applyAccessibleQuery(q, accessibleQuery))
+                                    mutation[field][nestedAction] = mutation[field][nestedAction].map((q) => applyAccessibleQuery<T, M>(prismaInstance, q, accessibleQuery))
                                 } else {
-                                    mutation[field][nestedAction] = applyAccessibleQuery(mutation[field][nestedAction], accessibleQuery)
+                                    mutation[field][nestedAction] = applyAccessibleQuery<T, M>(prismaInstance, mutation[field][nestedAction], accessibleQuery)
                                 }
                             }
                         }

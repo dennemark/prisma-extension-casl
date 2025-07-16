@@ -1,10 +1,9 @@
 
 import { AbilityTuple, PureAbility } from '@casl/ability'
 import { accessibleBy, PrismaQuery } from '@casl/prisma'
-import { Prisma } from '@prisma/client'
+import type { Prisma } from '@prisma/client'
 import { applyAccessibleQuery } from './applyAccessibleQuery'
 import { relationFieldsByModel } from './helpers'
-
 
 /**
  * applies casl authorization conditions to where query for model
@@ -21,7 +20,8 @@ import { relationFieldsByModel } from './helpers'
  * @param relation (optional) relation field
  * @returns enriched query with casl authorization
  */
-export function applyWhereQuery(
+export function applyWhereQuery<T extends typeof Prisma = typeof Prisma, M extends Prisma.ModelName = Prisma.ModelName>(
+    prismaInstance: T,
     abilities: PureAbility<AbilityTuple, PrismaQuery>,
     args: any,
     action: string,
@@ -29,14 +29,14 @@ export function applyWhereQuery(
     relation?: string,
     requiredRelation?: boolean
 ) {
-    const prismaModel = model in relationFieldsByModel ? model as Prisma.ModelName : undefined
+    const relationByModel = relationFieldsByModel(prismaInstance)
+    const prismaModel = model in relationByModel ? model as M : undefined
     if (!prismaModel) {
         throw new Error(`Model ${model} does not exist on Prisma Client`)
     }
 
     const accessibleQuery = accessibleBy(abilities, action)[prismaModel]
-
-    if (Object.keys(accessibleQuery).length > 0) {
+    if (accessibleQuery && Object.keys(accessibleQuery).length > 0) {
         if (args === true) {
             args = {}
         }
@@ -50,7 +50,7 @@ export function applyWhereQuery(
             : { OR: [{ [relation]: null }, { [relation]: accessibleQuery }] }
             : accessibleQuery
         // Add the accessibleBy conditions to the where clause
-        args.where = applyAccessibleQuery(args.where, relationQuery)
+        args.where = applyAccessibleQuery<T, M>(prismaInstance, args.where, relationQuery)
     }
 
     return args

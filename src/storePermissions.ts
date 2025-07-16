@@ -1,8 +1,9 @@
 import { AbilityTuple, PureAbility } from "@casl/ability";
 import { PrismaQuery } from "@casl/prisma";
+import type { Prisma } from '@prisma/client';
 import { getSubject, PrismaExtensionCaslOptions } from "./helpers";
 
-export function storePermissions(result: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: string, opts?: PrismaExtensionCaslOptions) {
+export function storePermissions<T extends typeof Prisma = typeof Prisma, M extends Prisma.ModelName = Prisma.ModelName>(prismaInstance: T, result: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: string, opts?: PrismaExtensionCaslOptions) {
   if (!opts?.permissionField) {
     return result
   }
@@ -12,7 +13,7 @@ export function storePermissions(result: any, abilities: PureAbility<AbilityTupl
     if (entry) {
       entry[prop] = []
       actions.forEach((action) => {
-        if (abilities.can(action, getSubject(model, entry))) {
+        if (abilities.can(action, getSubject<T, M>(prismaInstance, model, entry))) {
           entry[prop].push(action)
         }
       })

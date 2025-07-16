@@ -1,6 +1,7 @@
 
 import { AbilityTuple, PureAbility } from '@casl/ability'
 import { PrismaQuery } from '@casl/prisma'
+import type { Prisma } from '@prisma/client'
 import { getPermittedFields, relationFieldsByModel } from './helpers'
 
 
@@ -14,9 +15,9 @@ import { getPermittedFields, relationFieldsByModel } from './helpers'
  * @param model prisma model
  * @returns enriched query with selection of fields considering casl authorization
  */
-export function applySelectPermittedFields(abilities: PureAbility<AbilityTuple, PrismaQuery>, args: any, model: string) {
+export function applySelectPermittedFields<T extends typeof Prisma = typeof Prisma, M extends Prisma.ModelName = Prisma.ModelName>(prismaInstance: T, abilities: PureAbility<AbilityTuple, PrismaQuery>, args: any, model: string) {
 
-    const permittedFields = getPermittedFields(abilities, 'read', model)
+    const permittedFields = getPermittedFields<T, M>(prismaInstance, abilities, 'read', model)
     if (permittedFields) {
         // prepare select statement and transform include to select if necessary
         if (args === true) {
@@ -34,7 +35,7 @@ export function applySelectPermittedFields(abilities: PureAbility<AbilityTuple, 
         const queriedFields = args.select ? Object.keys(args.select) : []
         // remove all fields that are not a relation or not permitted
         const remainingFields = queriedFields.filter((field) => {
-            const isRelation = relationFieldsByModel[model][field] ? true : false
+            const isRelation = relationFieldsByModel(prismaInstance)[model][field] ? true : false
             if (!(permittedFields.includes(field)) && !isRelation) {
                 delete args.select[field]
                 return false

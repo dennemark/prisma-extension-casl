@@ -1,8 +1,8 @@
 
+import { Prisma } from '@prisma/client'
 import { applyCaslToQuery } from '../src/applyCaslToQuery'
 import { caslOperationDict, PrismaCaslOperation } from '../src/helpers'
 import { abilityBuilder } from './abilities'
-
 describe('apply casl to query', () => {
 
     it('does not add conditions if there are none on abilities', async () => {
@@ -10,7 +10,7 @@ describe('apply casl to query', () => {
         can('read', 'Post', ['id'])
         can('read', 'User')
         const abilities = build()
-        const result = applyCaslToQuery('findUnique', {
+        const result = applyCaslToQuery(Prisma, 'findUnique', {
             where: {
                 id: 1
             },
@@ -43,7 +43,7 @@ describe('apply casl to query', () => {
         })
         can('read', 'User', ['email'])
         const abilities = build()
-        const result = applyCaslToQuery('findUnique', {
+        const result = applyCaslToQuery(Prisma, 'findUnique', {
             where: {
                 id: 1
             },
@@ -121,7 +121,7 @@ describe('apply casl to query', () => {
             id: 0
         })
         const abilities = build()
-        const result = applyCaslToQuery('findUnique', {}, abilities, 'User')
+        const result = applyCaslToQuery(Prisma, 'findUnique', {}, abilities, 'User')
         expect(result.args).toEqual({})
         expect(result.mask).toEqual({})
     })
@@ -131,7 +131,7 @@ describe('apply casl to query', () => {
 
         can('read', 'User', 'email', { id: 0 })
         const abilities = build()
-        const result = applyCaslToQuery('findUnique', {
+        const result = applyCaslToQuery(Prisma, 'findUnique', {
             select: {
                 email: true
             }
@@ -150,7 +150,7 @@ describe('apply casl to query', () => {
             id: 0
         })
         const abilities = build()
-        const result = applyCaslToQuery('create', {
+        const result = applyCaslToQuery(Prisma, 'create', {
             include: {
                 author: true
             }
@@ -169,7 +169,7 @@ describe('apply casl to query', () => {
             can('read', 'Post', ['id'])
 
             const abilities = build()
-            const result = applyCaslToQuery(operation as PrismaCaslOperation, {
+            const result = applyCaslToQuery(Prisma, operation as PrismaCaslOperation, {
                 ...(settings.dataQuery ? { data: { id: 0 } } : {}),
                 ...(settings.includeSelectQuery ? { include: { posts: true } } : {})
             }, abilities, 'User')

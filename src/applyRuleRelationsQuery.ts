@@ -120,11 +120,11 @@ function removeNestedIncludeSelect(args: any) {
  * @param model prisma model
  * @returns `{ args: mergedQuery, mask: description of fields that should be removed from result }`
  */
-export function applyRuleRelationsQuery(args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, action: string, model: Prisma.ModelName, creationTree?: CreationTree) {
+export function applyRuleRelationsQuery<T extends typeof Prisma = typeof Prisma, M extends Prisma.ModelName = Prisma.ModelName>(prismaInstance: T, args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, action: string, model: M, creationTree?: CreationTree<M>) {
 
-  const creationSelectQuery = creationTree ? convertCreationTreeToSelect(abilities, creationTree) ?? {} : {}
+  const creationSelectQuery = creationTree ? convertCreationTreeToSelect<T, M>(prismaInstance, abilities, creationTree) ?? {} : {}
 
-  const queryRelations = getNestedQueryRelations(args, abilities, action, model, creationSelectQuery === true ? {} : creationSelectQuery)
+  const queryRelations = getNestedQueryRelations<T, M>(prismaInstance, args, abilities, action, model, creationSelectQuery === true ? {} : creationSelectQuery)
 
   if (!args.select && !args.include) {
     args.include = {}
@@ -151,7 +151,7 @@ export function applyRuleRelationsQuery(args: any, abilities: PureAbility<Abilit
  * @param creationSelectQuery 
  * @returns `{ args: mergedQuery, mask: description of fields that should be removed from result }`
  */
-function getNestedQueryRelations(args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, action: string, model: Prisma.ModelName, creationSelectQuery: any = {}) {
+function getNestedQueryRelations<T extends typeof Prisma = typeof Prisma, M extends Prisma.ModelName = Prisma.ModelName>(prismaInstance: T, args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, action: string, model: M, creationSelectQuery: any = {}) {
   // rulesToAST won't return conditions
   // if a rule is inverted and if a can rule exists without condition
   // we therefore create fake ability here
@@ -164,19 +164,21 @@ function getNestedQueryRelations(args: any, abilities: PureAbility<AbilityTuple,
       inverted: false
     }
   }))
+  const relationByModel = relationFieldsByModel(prismaInstance)
+
   try {
     const ast = rulesToAST(ability, action, model)
 
-    const queryRelations = getRuleRelationsQuery(model, ast, creationSelectQuery === true ? {} : creationSelectQuery)
+    const queryRelations = getRuleRelationsQuery<T, M>(prismaInstance, model, ast, creationSelectQuery === true ? {} : creationSelectQuery)
       ;['include', 'select'].map((method) => {
         if (args && args[method]) {
           for (const relation in args[method]) {
-            if (model in relationFieldsByModel && relation in relationFieldsByModel[model]) {
-              const relationField = relationFieldsByModel[model][relation]
+            if (model in relationByModel && relation in relationByModel[model]) {
+              const relationField = relationByModel[model][relation]
 
               if (relationField) {
                 const nestedQueryRelations = deepMerge(
-                  getNestedQueryRelations(args[method][relation], abilities, action === 'all' ? 'all' : 'read', relationField.type as Prisma.ModelName),
+                  getNestedQueryRelations<T, M>(prismaInstance, args[method][relation], abilities, action === 'all' ? 'all' : 'read', relationField.type as M),
                   (typeof queryRelations[relation]?.select === 'object' ? queryRelations[relation]?.select : {})
                 )
                 if (nestedQueryRelations && Object.keys(nestedQueryRelations).length > 0) {

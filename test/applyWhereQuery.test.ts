@@ -1,7 +1,7 @@
 
+import { Prisma } from '@prisma/client'
 import { applyWhereQuery } from '../src/applyWhereQuery'
 import { abilityBuilder } from './abilities'
-
 
 describe('apply where query', () => {
     it('adds where query if args are true', () => {
@@ -12,7 +12,7 @@ describe('apply where query', () => {
         can('read', 'User', {
             id: 1
         })
-        const args = applyWhereQuery(build(), true, 'read', 'User')
+        const args = applyWhereQuery(Prisma, build(), true, 'read', 'User')
         expect(args).toEqual({ where: { AND: [{ OR: [{ id: 1 }], AND: [{ NOT: { id: 0 } }] }] } })
     })
     it('adds where query if missing', () => {
@@ -20,7 +20,7 @@ describe('apply where query', () => {
         can('read', 'User', {
             id: 0
         })
-        const args = applyWhereQuery(build(), {}, 'read', 'User')
+        const args = applyWhereQuery(Prisma, build(), {}, 'read', 'User')
         expect(args).toEqual({ where: { AND: [{ OR: [{ id: 0 }] }] } })
     })
     it('does not add where query if there is no condition', () => {
@@ -29,7 +29,7 @@ describe('apply where query', () => {
         can('read', 'User', ['email'], {
             id: 0
         })
-        const args = applyWhereQuery(build(), {}, 'read', 'User')
+        const args = applyWhereQuery(Prisma, build(), {}, 'read', 'User')
         expect(args).toEqual({})
     })
     it('adds to existing where query', () => {
@@ -37,7 +37,7 @@ describe('apply where query', () => {
         can('read', 'User', {
             id: 0
         })
-        const args = applyWhereQuery(build(), {
+        const args = applyWhereQuery(Prisma, build(), {
             where: {
                 id: 1,
                 AND: [{ id: 1 }]
@@ -49,7 +49,7 @@ describe('apply where query', () => {
         const { can, cannot, build } = abilityBuilder()
         can('read', 'User', ['email'])
         can('read', 'Post')
-        const args = applyWhereQuery(build(), {
+        const args = applyWhereQuery(Prisma, build(), {
             include: {
                 posts: true
             },
