@@ -59,7 +59,6 @@ export function filterQueryResults(result: any, mask: any, creationTree: Creatio
                 }
             })
         }
-
         const permittedFields = getPermittedFields(abilities, 'read', model, entry)
 
         let hasKeys = false
@@ -78,7 +77,7 @@ export function filterQueryResults(result: any, mask: any, creationTree: Creatio
                 // do not distinguish array to get empty array for prisma
                 entry[field] = res // Array.isArray(res) ? res.length > 0 ? res : null : res
             }
-            if ((!permittedFields.includes(field) && !relationField) || mask?.[field] === true) {
+            if (operation !== 'groupBy' && (!permittedFields.includes(field) && !relationField) || mask?.[field] === true) {
                 delete entry[field]
             } else if (relationField) {
                 hasKeys = true

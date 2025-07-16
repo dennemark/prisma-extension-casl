@@ -2166,6 +2166,33 @@ describe('prisma extension casl', () => {
             })
             expect(result).toEqual([{ _avg: { id: 0 }, _count: { id: 1 }, _max: { id: 0 }, _min: { id: 0 }, _sum: { id: 0 }, email: "0" }, { _avg: { id: 1 }, _count: { id: 1 }, _max: { id: 1 }, _min: { id: 1 }, _sum: { id: 1 }, email: "1" }])
         })
+        it('can groupBy data with nested permission', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+                can('read', 'User', {
+                    posts: {
+                        some: {
+                            id: 0
+                        }
+                    }
+                })
+
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            const result = await client.user.groupBy({
+                by: ['email'],
+                _avg: { id: true },
+                _count: { id: true },
+                _min: { id: true },
+                _max: { id: true },
+                _sum: { id: true }
+            })
+            expect(result).toEqual([{ _avg: { id: 0 }, _count: { id: 1 }, _max: { id: 0 }, _min: { id: 0 }, _sum: { id: 0 }, email: "0" }])
+        })
     })
     describe('fluent api queries', () => {
         it('can do chained queries if abilities exist', async () => {
