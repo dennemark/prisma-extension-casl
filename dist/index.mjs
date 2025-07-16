@@ -1440,7 +1440,7 @@ function filterQueryResults(result, mask, creationTree, abilities, model, operat
         const res = filterQueryResults(entry[field], mask?.[field], nestedCreationTree, abilities, relationField.type, operation, opts);
         entry[field] = res;
       }
-      if (!permittedFields.includes(field) && !relationField || mask?.[field] === true) {
+      if (operation !== "groupBy" && (!permittedFields.includes(field) && !relationField) || mask?.[field] === true) {
         delete entry[field];
       } else if (relationField) {
         hasKeys = true;

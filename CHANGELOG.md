@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.6](https://github.com/dennemark/prisma-extension-casl/compare/1.3.5...1.3.6) (2025-07-16)
+
+### Bug Fixes
+
+* :bug: fix groupBy not returning the grouped property ([5400335](https://github.com/dennemark/prisma-extension-casl/commit/5400335fd7b6dc4a8edbc01f9e8f1c2c566cf388))
+
 ## [1.3.5](https://github.com/dennemark/prisma-extension-casl/compare/1.3.4...1.3.5) (2025-04-22)
 
 ### Bug Fixes
