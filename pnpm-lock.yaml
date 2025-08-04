@@ -13,10 +13,10 @@ importers:
         version: 6.7.3
       '@casl/prisma':
         specifier: ^1.5.1
-        version: 1.5.1(@casl/ability@6.7.3)(@prisma/client@6.5.0(prisma@6.5.0(typescript@5.8.2))(typescript@5.8.2))
+        version: 1.5.1(@casl/ability@6.7.3)(@prisma/client@6.13.0(prisma@6.5.0(typescript@5.8.2))(typescript@5.8.2))
       '@prisma/client':
         specifier: ^6.5.0
-        version: 6.5.0(prisma@6.5.0(typescript@5.8.2))(typescript@5.8.2)
+        version: 6.13.0(prisma@6.5.0(typescript@5.8.2))(typescript@5.8.2)
       '@prisma/generator-helper':
         specifier: ^6.5.0
         version: 6.5.0
@@ -715,8 +715,8 @@ packages:
     resolution: {integrity: sha512-UA91GwWPhFExt3IizW6bOeY/pQ0BkuNwKjk9iQW9KqxluGCrg4VenZ0/L+2Y0+ZOtme72EVvg6v0zo3AMQRCeA==}
     engines: {node: '>=12'}
 
-  '@prisma/client@6.5.0':
-    resolution: {integrity: sha512-M6w1Ql/BeiGoZmhMdAZUXHu5sz5HubyVcKukbLs3l0ELcQb8hTUJxtGEChhv4SVJ0QJlwtLnwOLgIRQhpsm9dw==}
+  '@prisma/client@6.13.0':
+    resolution: {integrity: sha512-8m2+I3dQovkV8CkDMluiwEV1TxV9EXdT6xaCz39O6jYw7mkf5gwfmi+cL4LJsEPwz5tG7sreBwkRpEMJedGYUQ==}
     engines: {node: '>=18.18'}
     peerDependencies:
       prisma: '*'
@@ -2167,8 +2167,8 @@ packages:
   mz@2.7.0:
     resolution: {integrity: sha512-z81GNO7nnYMEhrGh9LeymoE4+Yr0Wn5McHIZMK5cfQCl+NDX08sCZgUc9/6MHni9IWuFLm1Z3HTCXu2z9fN62Q==}
 
-  nanoid@3.3.7:
-    resolution: {integrity: sha512-eSRppjcPIatRIMC1U6UngP8XFcz8MQWGQdt1MTBQ7NaAmvXDfvNxbvWV3x2y6CdEUciCSsDHDQZbhYaB8QEo2g==}
+  nanoid@3.3.11:
+    resolution: {integrity: sha512-N8SpfPUnUp1bK+PMYW8qSWdl9U+wwNWI4QKxOYDy9JAro3WMX7p2OeVRF9v+347pnakNevPmiHhNmZ2HbFA76w==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
     hasBin: true
 
@@ -2579,8 +2579,8 @@ packages:
     resolution: {integrity: sha512-l5x7VUUWbjVFbafGLxPWkYsHIhEvmF85tbIeFZWc8ZPtoMyybuEhL7Jye/ooC4/d48FgOjSJXgsF/AJPYCW8Zw==}
     engines: {node: '>= 10.0.0', npm: '>= 3.0.0'}
 
-  source-map-js@1.2.0:
-    resolution: {integrity: sha512-itJW8lvSA0TXEphiRoawsCksnlf8SyvmFzIhltqAHluXd88pkCd+cXJVHTDwdCr0IzwptSm035IHQktUu1QUMg==}
+  source-map-js@1.2.1:
+    resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
     engines: {node: '>=0.10.0'}
 
   source-map-support@0.5.13:
@@ -2593,6 +2593,7 @@ packages:
   source-map@0.8.0-beta.0:
     resolution: {integrity: sha512-2ymg6oRBpebeZi9UUNsgQ89bhx01TcTkmNTGnNO88imTmbSgy4nfujrgVEFKWpMTEGA11EDkTt7mqObTPdigIA==}
     engines: {node: '>= 8'}
+    deprecated: The work that was done in this beta branch won't be included in future versions
 
   spdx-correct@3.2.0:
     resolution: {integrity: sha512-kN9dJbvnySHULIluDHy32WHRUu3Og7B9sbY7tsFLctQkIqnMh3hErYgdMjTYuqmcXX+lK5T1lnUt3G7zNswmZA==}
@@ -3192,10 +3193,10 @@ snapshots:
     dependencies:
       '@ucast/mongo2js': 1.3.4
 
-  '@casl/prisma@1.5.1(@casl/ability@6.7.3)(@prisma/client@6.5.0(prisma@6.5.0(typescript@5.8.2))(typescript@5.8.2))':
+  '@casl/prisma@1.5.1(@casl/ability@6.7.3)(@prisma/client@6.13.0(prisma@6.5.0(typescript@5.8.2))(typescript@5.8.2))':
     dependencies:
       '@casl/ability': 6.7.3
-      '@prisma/client': 6.5.0(prisma@6.5.0(typescript@5.8.2))(typescript@5.8.2)
+      '@prisma/client': 6.13.0(prisma@6.5.0(typescript@5.8.2))(typescript@5.8.2)
       '@ucast/core': 1.10.2
       '@ucast/js': 3.0.4
 
@@ -3704,7 +3705,7 @@ snapshots:
       '@pnpm/network.ca-file': 1.0.2
       config-chain: 1.1.13
 
-  '@prisma/client@6.5.0(prisma@6.5.0(typescript@5.8.2))(typescript@5.8.2)':
+  '@prisma/client@6.13.0(prisma@6.5.0(typescript@5.8.2))(typescript@5.8.2)':
     optionalDependencies:
       prisma: 6.5.0(typescript@5.8.2)
       typescript: 5.8.2
@@ -5295,7 +5296,7 @@ snapshots:
       object-assign: 4.1.1
       thenify-all: 1.6.0
 
-  nanoid@3.3.7:
+  nanoid@3.3.11:
     optional: true
 
   natural-compare@1.4.0: {}
@@ -5486,9 +5487,9 @@ snapshots:
 
   postcss@8.4.40:
     dependencies:
-      nanoid: 3.3.7
+      nanoid: 3.3.11
       picocolors: 1.1.1
-      source-map-js: 1.2.0
+      source-map-js: 1.2.1
     optional: true
 
   pretty-format@29.7.0:
@@ -5731,7 +5732,7 @@ snapshots:
       ip-address: 9.0.5
       smart-buffer: 4.2.0
 
-  source-map-js@1.2.0:
+  source-map-js@1.2.1:
     optional: true
 
   source-map-support@0.5.13:
