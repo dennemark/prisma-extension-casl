@@ -71,7 +71,8 @@ function mergeArgsAndRelationQuery(args: any, relationQuery: any) {
     })
 
   if (found === false) {
-    Object.entries(relationQuery).forEach(([k, v]: [string, any]) => {
+    for (const k in relationQuery) {
+      const v = relationQuery[k]
       if (v?.select) {
         args.include = {
           ...(args.include ?? {}),
@@ -79,7 +80,7 @@ function mergeArgsAndRelationQuery(args: any, relationQuery: any) {
         }
         mask[k] = args.where ? true : removeNestedIncludeSelect(v.select)
       }
-    })
+    }
   }
   return {
     args,
@@ -94,15 +95,22 @@ function mergeArgsAndRelationQuery(args: any, relationQuery: any) {
  * @returns mask
  */
 function removeNestedIncludeSelect(args: any) {
-  return typeof args === 'object' ? Object.fromEntries((Object.entries(args) as [string, any]).map(([k, v]): [string, any] => {
-    if (v?.select) {
-      return [k, removeNestedIncludeSelect(v.select)]
-    } else if (v?.include) {
-      return [k, removeNestedIncludeSelect(v.include)]
-    } else {
-      return [k, v]
+  if (typeof args === 'object') {
+    const res: Record<string, any> = {}
+    for (const k in args) {
+      const v = args[k]
+      if (v?.select) {
+        res[k] = removeNestedIncludeSelect(v.select)
+      } else if (v?.include) {
+        res[k] = removeNestedIncludeSelect(v.include)
+      } else {
+        res[k] = v
+      }
     }
-  })) : args
+    return res
+  }
+  return args
+
 }
 
 

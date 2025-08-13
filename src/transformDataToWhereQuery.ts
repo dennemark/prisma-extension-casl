@@ -3,7 +3,8 @@ import { relationFieldsByModel } from "./helpers"
 export function transformDataToWhereQuery(args: any, model: string) {
 
   ;['connect', 'disconnect'].forEach((action) => {
-    Object.entries(args.data).forEach(([relation, obj]: [string, any]) => {
+    for (const relation in args.data) {
+      const obj = args.data[relation]
       if (typeof obj === 'object' && !Array.isArray(obj) && obj[action]) {
         // combine args.data.relation[action].AND and args.where.AND
         const ANDArgs = { AND: [...(obj[action].AND ?? []), ...(args.where[relation]?.AND ?? [])] }
@@ -27,7 +28,7 @@ export function transformDataToWhereQuery(args: any, model: string) {
         delete args.data[relation]
         delete args.where[relation][relationTo]
       }
-    })
+    }
   })
   return args
 }

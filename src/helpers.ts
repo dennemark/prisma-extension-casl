@@ -107,6 +107,16 @@ export const propertyFieldsByModel = Object.fromEntries(Prisma.dmmf.datamodel.mo
     return [model.name, propertyFields]
 }))
 
+const modelFieldsByModel = Object.fromEntries(
+    Object.entries(propertyFieldsByModel).map(([model, value]) => ([model, Object.keys(value)]))
+)
+
+const subjectFieldsByModel = Object.fromEntries(
+    Object.entries(modelFieldsByModel).map(([model, value]) => {
+        return [model, [...value, ...Object.keys(relationFieldsByModel[model]),]]
+    })
+)
+
 export function pick<T extends Record<string, K>, K extends keyof T>(obj: T | undefined, keys: K[]) {
     return keys.reduce((acc, val) => {
         if (obj && val in obj) {
@@ -115,6 +125,8 @@ export function pick<T extends Record<string, K>, K extends keyof T>(obj: T | un
         return acc;
     }, {} as Pick<T, K>);
 }
+
+
 
 /**
  * goes through all permitted fields of a model
@@ -139,7 +151,7 @@ export function getPermittedFields(
     model: string,
     obj?: any
 ) {
-    const modelFields = Object.keys(propertyFieldsByModel[model])
+    const modelFields = modelFieldsByModel[model]
     const permittedFields = permittedFieldsOf(abilities, action, obj ? getSubject(model, obj) : model, {
         fieldsFrom: rule => {
             return rule.fields || modelFields;
@@ -155,8 +167,7 @@ export function getPermittedFields(
  * @returns 
  */
 export function getSubject(model: string, obj: any) {
-    const modelFields = Object.keys(propertyFieldsByModel[model])
-    const subjectFields = [...modelFields, ...Object.keys(relationFieldsByModel[model])]
+    const subjectFields = subjectFieldsByModel[model]
     return subject(model, pick(obj, subjectFields))
 }
 

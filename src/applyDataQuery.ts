@@ -53,11 +53,14 @@ export function applyDataQuery(
                              * 
                              * i.e. {field: 'a', anotherField:'b'} should not consider conditions of a rule which is only applied on 'field'
                              */
-                            const argFields = new Set(nestedArgs.flatMap((arg) => {
-                                return Object.keys(arg).filter((field) => {
-                                    return field in propertyFieldsByModel[model]
-                                })
-                            }))
+                            const argFields = new Set<string>()
+                            for (const arg of nestedArgs) {
+                                for (const field in arg) {
+                                    if (field in propertyFieldsByModel[model]) {
+                                        argFields.add(field)
+                                    }
+                                }
+                            }
                             tree.mutation.push({ fields: [...argFields], where: argsEntry.where })
                             const nestedAbilities = createPrismaAbility(abilities.rules.filter((rule) => {
                                 if (rule.fields && rule.subject === model) {
@@ -115,7 +118,8 @@ export function applyDataQuery(
                 throw new Error(`It's not allowed to "${action}" "${field}" on "${model}"`)
             } else if (relationModel && mutation[field]) {
                 // if additional relations are found, we apply data query on them, too
-                Object.entries(mutation[field]).forEach(([nestedAction, nestedArgs]) => {
+                for (const nestedAction in mutation[field]) {
+                    const nestedArgs = mutation[field][nestedAction]
                     if (nestedAction in caslNestedOperationDict) {
                         const mutationAction = caslNestedOperationDict[nestedAction]
                         const isConnection = nestedAction === 'connect' || nestedAction === 'disconnect'
@@ -138,7 +142,7 @@ export function applyDataQuery(
                     } else {
                         throw new Error(`Unknown nested action ${nestedAction} on ${model}`)
                     }
-                })
+                }
             }
         })
 
