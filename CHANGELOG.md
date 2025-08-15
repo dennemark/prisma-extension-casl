@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.3.7](https://github.com/dennemark/prisma-extension-casl/compare/1.3.6...1.3.7) (2025-08-15)
+
+### Bug Fixes
+
+* :bug: fix count including authorization ([2bc4d7a](https://github.com/dennemark/prisma-extension-casl/commit/2bc4d7af88d03ad70a17b6c40293938a7b4963c1))
+
 ## [1.3.6](https://github.com/dennemark/prisma-extension-casl/compare/1.3.5...1.3.6) (2025-07-16)
 
 ### Bug Fixes

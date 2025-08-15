@@ -891,6 +891,14 @@ var propertyFieldsByModel = Object.fromEntries(import_client.Prisma.dmmf.datamod
   }));
   return [model.name, propertyFields];
 }));
+var modelFieldsByModel = Object.fromEntries(
+  Object.entries(propertyFieldsByModel).map(([model, value]) => [model, Object.keys(value)])
+);
+var subjectFieldsByModel = Object.fromEntries(
+  Object.entries(modelFieldsByModel).map(([model, value]) => {
+    return [model, [...value, ...Object.keys(relationFieldsByModel[model])]];
+  })
+);
 function pick(obj, keys) {
   return keys.reduce((acc, val) => {
     if (obj && val in obj) {
@@ -900,7 +908,7 @@ function pick(obj, keys) {
   }, {});
 }
 function getPermittedFields(abilities, action, model, obj) {
-  const modelFields = Object.keys(propertyFieldsByModel[model]);
+  const modelFields = modelFieldsByModel[model];
   const permittedFields = c4(abilities, action, obj ? getSubject(model, obj) : model, {
     fieldsFrom: (rule) => {
       return rule.fields || modelFields;
@@ -909,8 +917,7 @@ function getPermittedFields(abilities, action, model, obj) {
   return permittedFields;
 }
 function getSubject(model, obj) {
-  const modelFields = Object.keys(propertyFieldsByModel[model]);
-  const subjectFields = [...modelFields, ...Object.keys(relationFieldsByModel[model])];
+  const subjectFields = subjectFieldsByModel[model];
   return R2(model, pick(obj, subjectFields));
 }
 function getFluentField(data) {
@@ -1021,11 +1028,14 @@ function applyDataQuery(abilities, args, operation, action, model, creationTree)
         mutationArgs.push(...nestedArgs);
         if (!hasWhereQuery && "where" in argsEntry) {
           hasWhereQuery = true;
-          const argFields = new Set(nestedArgs.flatMap((arg) => {
-            return Object.keys(arg).filter((field) => {
-              return field in propertyFieldsByModel[model];
-            });
-          }));
+          const argFields = /* @__PURE__ */ new Set();
+          for (const arg of nestedArgs) {
+            for (const field in arg) {
+              if (field in propertyFieldsByModel[model]) {
+                argFields.add(field);
+              }
+            }
+          }
           tree.mutation.push({ fields: [...argFields], where: argsEntry.where });
           const nestedAbilities = e3(abilities.rules.filter((rule) => {
             if (rule.fields && rule.subject === model) {
@@ -1065,7 +1075,8 @@ function applyDataQuery(abilities, args, operation, action, model, creationTree)
       if (permittedFields?.includes(field) === false && !relationModel) {
         throw new Error(`It's not allowed to "${action}" "${field}" on "${model}"`);
       } else if (relationModel && mutation[field]) {
-        Object.entries(mutation[field]).forEach(([nestedAction, nestedArgs]) => {
+        for (const nestedAction in mutation[field]) {
+          const nestedArgs = mutation[field][nestedAction];
           if (nestedAction in caslNestedOperationDict) {
             const mutationAction = caslNestedOperationDict[nestedAction];
             const isConnection = nestedAction === "connect" || nestedAction === "disconnect";
@@ -1085,7 +1096,7 @@ function applyDataQuery(abilities, args, operation, action, model, creationTree)
           } else {
             throw new Error(`Unknown nested action ${nestedAction} on ${model}`);
           }
-        });
+        }
       }
     });
   });
@@ -1111,6 +1122,8 @@ function applyIncludeSelectQuery(abilities, args, model) {
             }
             args[method][relation] = applyIncludeSelectQuery(abilities, args[method][relation], relationField.type);
           }
+        } else if (relation === "_count") {
+          args[method][relation] = applyIncludeSelectQuery(abilities, args[method][relation], model);
         }
       }
     }
@@ -1236,7 +1249,8 @@ function mergeArgsAndRelationQuery(args, relationQuery) {
     }
   });
   if (found === false) {
-    Object.entries(relationQuery).forEach(([k2, v4]) => {
+    for (const k2 in relationQuery) {
+      const v4 = relationQuery[k2];
       if (v4?.select) {
         args.include = {
           ...args.include ?? {},
@@ -1244,7 +1258,7 @@ function mergeArgsAndRelationQuery(args, relationQuery) {
         };
         mask[k2] = args.where ? true : removeNestedIncludeSelect(v4.select);
       }
-    });
+    }
   }
   return {
     args,
@@ -1252,15 +1266,21 @@ function mergeArgsAndRelationQuery(args, relationQuery) {
   };
 }
 function removeNestedIncludeSelect(args) {
-  return typeof args === "object" ? Object.fromEntries(Object.entries(args).map(([k2, v4]) => {
-    if (v4?.select) {
-      return [k2, removeNestedIncludeSelect(v4.select)];
-    } else if (v4?.include) {
-      return [k2, removeNestedIncludeSelect(v4.include)];
-    } else {
-      return [k2, v4];
+  if (typeof args === "object") {
+    const res = {};
+    for (const k2 in args) {
+      const v4 = args[k2];
+      if (v4?.select) {
+        res[k2] = removeNestedIncludeSelect(v4.select);
+      } else if (v4?.include) {
+        res[k2] = removeNestedIncludeSelect(v4.include);
+      } else {
+        res[k2] = v4;
+      }
     }
-  })) : args;
+    return res;
+  }
+  return args;
 }
 function applyRuleRelationsQuery(args, abilities, action, model, creationTree) {
   const creationSelectQuery = creationTree ? convertCreationTreeToSelect(abilities, creationTree) ?? {} : {};
@@ -1317,7 +1337,8 @@ function getNestedQueryRelations(args, abilities, action, model, creationSelectQ
 function transformDataToWhereQuery(args, model) {
   ;
   ["connect", "disconnect"].forEach((action) => {
-    Object.entries(args.data).forEach(([relation, obj]) => {
+    for (const relation in args.data) {
+      const obj = args.data[relation];
       if (typeof obj === "object" && !Array.isArray(obj) && obj[action]) {
         const ANDArgs = { AND: [...obj[action].AND ?? [], ...args.where[relation]?.AND ?? []] };
         const relationTo = relationFieldsByModel[model][relation].relationToFields?.[0];
@@ -1340,7 +1361,7 @@ function transformDataToWhereQuery(args, model) {
         delete args.data[relation];
         delete args.where[relation][relationTo];
       }
-    });
+    }
   });
   return args;
 }
