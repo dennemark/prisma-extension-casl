@@ -40,6 +40,8 @@ export function applyIncludeSelectQuery(
 
                         args[method][relation] = applyIncludeSelectQuery(abilities, args[method][relation], relationField.type)
                     }
+                } else if (relation === '_count') {
+                    args[method][relation] = applyIncludeSelectQuery(abilities, args[method][relation], model)
                 }
             }
         }

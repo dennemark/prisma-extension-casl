@@ -2089,6 +2089,87 @@ describe('prisma extension casl', () => {
                 topicId: 0
             })
         })
+        it('can count nested data when select true', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+
+                can('read', 'Thread')
+                can('read', 'Post', {
+                    id: 1
+                })
+
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            // await seedClient.post.updateMany({ data: { threadId: null } })
+            const query = {
+                where: {
+                    id: 0
+                },
+                include: {
+                    _count: {
+                        select: {
+                            posts: true
+                        }
+                    },
+                }
+            } as const
+            const seedResult = await seedClient.thread.findUnique(query)
+            const result = await client.thread.findUnique(query)
+            expect(seedResult).toEqual({
+                _count: { posts: 2 },
+                creatorId: 0,
+                id: 0,
+                topicId: 0
+            })
+            expect(result).toEqual({
+                _count: { posts: 1 },
+                creatorId: 0,
+                id: 0,
+                topicId: 0
+            })
+        })
+        it('can count nested data when select is query', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can, cannot } = builder
+
+                can('read', 'Thread')
+                can('read', 'Post', {
+                    id: 1
+                })
+
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+            const result = await client.thread.findUnique({
+                where: {
+                    id: 0
+                },
+                include: {
+                    _count: {
+                        select: {
+                            posts: {
+                                where: {
+                                    id: 0
+                                }
+                            }
+                        }
+                    },
+                }
+            })
+            expect(result).toEqual({
+                _count: { posts: 0 },
+                creatorId: 0,
+                id: 0,
+                topicId: 0
+            })
+        })
     })
     describe('update/createManyAndReturn', () => {
         it('can updateManyAndReturn', async () => {
