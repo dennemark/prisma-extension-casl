@@ -1,10 +1,15 @@
 generator client {
-    provider = "prisma-client-js"
+    provider = "prisma-client"
+    output   = "../src/generated/prisma"
+}
+
+generator metadata {
+    provider = "node ./prisma/generators/metadata.js"
+    output   = "../src/generated/prisma"
 }
 
 datasource db {
     provider = "sqlite"
-    url      = "file:./dev.db"
 }
 
 model User {

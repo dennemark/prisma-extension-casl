@@ -1,12 +1,11 @@
-import { AbilityTuple, PureAbility } from '@casl/ability';
+import { AbilityTuple, Ability } from '@casl/ability';
 import { rulesToAST } from '@casl/ability/extra';
 import { PrismaQuery } from '@casl/prisma';
-import { Prisma } from '@prisma/client';
 import { getRuleRelationsQuery } from './getRuleRelationsQuery';
 
 export type CreationTree = {
   action: string,
-  model: Prisma.ModelName,
+  model: string,
   children: Record<string, CreationTree>,
   /**
    * mutation query for creation / update
@@ -20,7 +19,7 @@ export type CreationTree = {
   mutation: { fields: string[], where: any }[]
 }
 
-export function convertCreationTreeToSelect(abilities: PureAbility<AbilityTuple, PrismaQuery>, relationQuery: CreationTree): Record<string, any> | true | null {
+export function convertCreationTreeToSelect(abilities: Ability<AbilityTuple, PrismaQuery>, relationQuery: CreationTree): Record<string, any> | true | null {
   // Recursively filter children
   let relationResult: Record<string, any> = {};
   if (relationQuery.action === 'create') {

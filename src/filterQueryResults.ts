@@ -1,16 +1,15 @@
-import { AbilityTuple, PureAbility } from "@casl/ability";
+import { Ability, AbilityTuple } from "@casl/ability";
 import { PrismaQuery } from "@casl/prisma";
-import { Prisma } from "@prisma/client";
+
 import { CreationTree } from "./convertCreationTreeToSelect";
 import { caslOperationDict, getPermittedFields, getSubject, isSubset, PrismaCaslOperation, PrismaExtensionCaslOptions, relationFieldsByModel } from "./helpers";
 import { storePermissions } from "./storePermissions";
 
-export function filterQueryResults(result: any, mask: any, creationTree: CreationTree | undefined, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: string, operation: PrismaCaslOperation, opts?: PrismaExtensionCaslOptions) {
+export function filterQueryResults(result: any, mask: any, creationTree: CreationTree | undefined, abilities: Ability<AbilityTuple, PrismaQuery>, model: string, operation: PrismaCaslOperation, opts?: PrismaExtensionCaslOptions) {
     if (typeof result === 'number') {
         return result
     }
-    const prismaModel = model in relationFieldsByModel ? model as Prisma.ModelName : undefined
-    if (!prismaModel) {
+    if (!(model in relationFieldsByModel)) {
         throw new Error(`Model ${model} does not exist on Prisma Client`)
     }
     const operationFields = ["_min", "_max", "_avg", "_count", "_sum"]

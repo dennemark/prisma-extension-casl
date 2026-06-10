@@ -1,6 +1,6 @@
-import { AbilityBuilder, AbilityTuple, PureAbility } from '@casl/ability'
-import { PrismaQuery } from '@casl/prisma'
-import { Prisma, PrismaClient, PrismaPromise } from '@prisma/client'
+import { Ability, AbilityBuilder, AbilityTuple } from '@casl/ability'
+import { createCaslExtension, PrismaQuery } from '@casl/prisma'
+import { Prisma } from '@prisma/client/extension'
 import { applyCaslToQuery } from './applyCaslToQuery'
 import { filterQueryResults } from './filterQueryResults'
 import { caslOperationDict, getFluentField, getFluentModel, PrismaCaslOperation, PrismaExtensionCaslOptions, propertyFieldsByModel, relationFieldsByModel } from './helpers'
@@ -36,7 +36,7 @@ export { applyCaslToQuery }
  * @returns 
  */
 export function useCaslAbilities(
-    getAbilityFactory: () => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>,
+    getAbilityFactory: () => AbilityBuilder<Ability<AbilityTuple, PrismaQuery>>,
     opts?: PrismaExtensionCaslOptions) {
     // Set default options
     const txMaxWait = opts?.txMaxWait ?? 30000
@@ -55,8 +55,7 @@ export function useCaslAbilities(
             reject: (error: unknown) => void;
         }>> = {};
 
-        function extendCaslAbilities(extendFactory: (factory: AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) {
-
+        function extendCaslAbilities<T = typeof client>(extendFactory: (factory: AbilityBuilder<Ability<AbilityTuple, PrismaQuery>>) => AbilityBuilder<Ability<AbilityTuple, PrismaQuery>>): T {
             // alter the getAblities function shortly
             const extendedClient = client.$extends({
                 query: {
@@ -66,29 +65,32 @@ export function useCaslAbilities(
                 },
             })
             // if we are within a transaction, return client with transaction
-            //@ts-ignore
-            const transactionId = Prisma.getExtensionContext(this)[Symbol.for('prisma.client.transaction.id')]
-            if (transactionId) {
+            // Prisma 7 uses Symbol.for('prisma.client.transaction.scope_context')
+            // @ts-ignore
+            const ctx = Prisma.getExtensionContext(this)
+            const scopeCtx = (ctx as any)[Symbol.for('prisma.client.transaction.scope_context')]
+            if (scopeCtx?.kind === 'nested') {
                 //@ts-ignore
-                const transactionClient = extendedClient._createItxClient({
-                    kind: 'itx',
-                    id: transactionId
-                }) as typeof extendedClient
+                const transactionClient = extendedClient._createItxClient(
+                    { kind: 'itx', id: scopeCtx.txId },
+                    scopeCtx.scopeId,
+                    scopeCtx.scopeState
+                ) as typeof extendedClient
                 //@ts-ignore
                 transactionClient.$casl = extendCaslAbilities
                 // if $transaction is called on already existing transaction client, just use current transaction
                 transactionClient.$transaction = async (first: any) => {
                     return first(transactionClient)
                 }
-                return transactionClient
+                return transactionClient as unknown as T
             }
             //@ts-ignore
             extendedClient.$casl = extendCaslAbilities
-            return extendedClient
+            return extendedClient as unknown as T
         }
 
 
-        const allOperations = (getAbilities: () => AbilityBuilder<PureAbility<AbilityTuple, PrismaQuery>>) => ({
+        const allOperations = (getAbilities: () => AbilityBuilder<Ability<AbilityTuple, PrismaQuery>>) => ({
             async $allOperations<T>({ args, query, model, operation, ...rest }: { args: any, query: any, model: any, operation: any }) {
 
                 const { fluentModel, fluentRelationModel, fluentRelationField } = getFluentModel(model, rest)
@@ -164,7 +166,7 @@ export function useCaslAbilities(
                         // on fluent models we need to take mask of the relation
                         caslQuery.mask = fluentRelationModel && fluentRelationModel in caslQuery.mask ? caslQuery.mask[fluentRelationModel] : {}
                     }
-                    const filteredResult = filterQueryResults(result, caslQuery.mask, caslQuery.creationTree, abilities, fluentModel as Prisma.ModelName, operation, opts)
+                    const filteredResult = filterQueryResults(result, caslQuery.mask, caslQuery.creationTree, abilities, fluentModel as string, operation, opts)
                     if (perf) {
                         perf.mark('prisma-casl-extension-4')
                         logger?.log(
@@ -335,7 +337,8 @@ export function useCaslAbilities(
 
                 new Promise((resolve, reject) => {
                     if (transaction && transaction.kind === 'itx') {
-                        runBatchTransaction((client as any)._createItxClient(transaction)).then(resolve).catch(reject)
+                        const scopeId = globalThis.crypto?.randomUUID() ?? `${Date.now()}-${Math.random().toString(16).slice(2)}`
+                        runBatchTransaction((client as any)._createItxClient(transaction, scopeId, { stack: [] })).then(resolve).catch(reject)
                     } else {
                         client.$transaction(async (tx) => {
                             return runBatchTransaction(tx);
@@ -359,7 +362,7 @@ export function useCaslAbilities(
         };
 
 
-        return client.$extends({
+        return client.$extends(createCaslExtension()).$extends({
             name: "prisma-extension-casl",
             client: {
                 $casl: extendCaslAbilities

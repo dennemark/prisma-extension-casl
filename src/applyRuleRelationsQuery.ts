@@ -1,7 +1,6 @@
-import { AbilityTuple, PureAbility } from '@casl/ability';
+import { AbilityTuple, Ability } from '@casl/ability';
 import { rulesToAST } from '@casl/ability/extra';
 import { createPrismaAbility, PrismaQuery } from '@casl/prisma';
-import { Prisma } from '@prisma/client';
 import { convertCreationTreeToSelect, CreationTree } from './convertCreationTreeToSelect';
 import { deepMerge } from './deepMerge';
 import { getRuleRelationsQuery } from './getRuleRelationsQuery';
@@ -128,7 +127,7 @@ function removeNestedIncludeSelect(args: any) {
  * @param model prisma model
  * @returns `{ args: mergedQuery, mask: description of fields that should be removed from result }`
  */
-export function applyRuleRelationsQuery(args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, action: string, model: Prisma.ModelName, creationTree?: CreationTree) {
+export function applyRuleRelationsQuery(args: any, abilities: Ability<AbilityTuple, PrismaQuery>, action: string, model: string, creationTree?: CreationTree) {
 
   const creationSelectQuery = creationTree ? convertCreationTreeToSelect(abilities, creationTree) ?? {} : {}
 
@@ -159,7 +158,7 @@ export function applyRuleRelationsQuery(args: any, abilities: PureAbility<Abilit
  * @param creationSelectQuery 
  * @returns `{ args: mergedQuery, mask: description of fields that should be removed from result }`
  */
-function getNestedQueryRelations(args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, action: string, model: Prisma.ModelName, creationSelectQuery: any = {}) {
+function getNestedQueryRelations(args: any, abilities: Ability<AbilityTuple, PrismaQuery>, action: string, model: string, creationSelectQuery: any = {}) {
   // rulesToAST won't return conditions
   // if a rule is inverted and if a can rule exists without condition
   // we therefore create fake ability here
@@ -184,7 +183,7 @@ function getNestedQueryRelations(args: any, abilities: PureAbility<AbilityTuple,
 
               if (relationField) {
                 const nestedQueryRelations = deepMerge(
-                  getNestedQueryRelations(args[method][relation], abilities, action === 'all' ? 'all' : 'read', relationField.type as Prisma.ModelName),
+                  getNestedQueryRelations(args[method][relation], abilities, action === 'all' ? 'all' : 'read', relationField.type),
                   (typeof queryRelations[relation]?.select === 'object' ? queryRelations[relation]?.select : {})
                 )
                 if (nestedQueryRelations && Object.keys(nestedQueryRelations).length > 0) {

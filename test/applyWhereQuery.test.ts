@@ -13,7 +13,7 @@ describe('apply where query', () => {
             id: 1
         })
         const args = applyWhereQuery(build(), true, 'read', 'User')
-        expect(args).toEqual({ where: { AND: [{ OR: [{ id: 1 }], AND: [{ NOT: { id: 0 } }] }] } })
+        expect(args).toEqual({ where: { AND: [{ OR: [{ id: 1 }] }] } })
     })
     it('adds where query if missing', () => {
         const { can, build } = abilityBuilder()

@@ -1,13 +1,11 @@
-import { PrismaClient } from '@prisma/client'
-const client = new PrismaClient()
+import { PrismaClient } from '../src/generated/prisma/client'
 
 export async function seed(prisma: PrismaClient) {
-    await prisma.$transaction([
-        prisma.user.deleteMany(),
-        prisma.post.deleteMany(),
-        prisma.thread.deleteMany(),
-        prisma.topic.deleteMany()
-    ])
+    // Use sequential operations instead of batch transaction for Prisma 7 compatibility
+    await prisma.post.deleteMany()
+    await prisma.thread.deleteMany()
+    await prisma.user.deleteMany()
+    await prisma.topic.deleteMany()
     await prisma.user.createMany({
         data: [{
             id: 0,

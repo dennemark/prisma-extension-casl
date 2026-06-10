@@ -8,6 +8,8 @@
 >
 > This extension should be added last. Since it creates interactive transactions internally. There might still be issues with batching causing N+1 problems.
 
+- Requires **Prisma 7** and **CASL v2** (`@casl/ability ^7.0.0` + `@casl/prisma ^2.0.0`)
+- A [custom Prisma metadata generator](#prisma-metadata-generator) must be added to your `schema.prisma`
 - Supports only CRUD actions `create`, `read`, `update` and `delete`.
 - The permissions on fields of the query result are filtered by `read` ability.
 - Rule conditions are automatically applied via `accessibleBy` and if `include` or `select` are used, this will even be applied to the nested relations.
@@ -16,11 +18,36 @@
 - `update` and `create` are wrapped into a transaction, since `create` abilities will be checked on result of mutation and if it was not allowed the transaction will revert the creation. This limits client transactions to interactive transactions only. Sequential transactions are not supported.
 - optionally add options to `useCaslAbilities`. Add `permissionField` to it to get an array of crud rights of the queried model: `['create', 'read', 'update', 'delete']` and add additional Actions via `addPermissionActions`, which can be used to check abilities client-side conveniently without all the necessary relation queries
 
+### Prerequisites
+
+#### Schema and generator
+
+Add the metadata generator to your `schema.prisma`, to generate DMMF:
+
+```prisma
+generator metadata {
+    provider = "node ./node_modules/prisma-extension-casl/prisma/generators/metadata.js"
+    output   = "../src/generated/prisma"
+}
+```
+
+> The generator should point to the **same output directory** as for prisma-client.
+
+Run generate
+
+```bash
+pnpm prisma generate
+```
+
+This generates both the Prisma client and the CASL metadata file.
+
 ### Examples
 
 Now how does it work?
 
 ```ts
+import { modelsMeta } from './generated/prisma/metadata'
+
 function builderFactory() {
   const builder = abilityBuilder();
   const { can } = builder;
@@ -34,7 +61,10 @@ function builderFactory() {
 }
 
 const caslClient = prismaClient.$extends(
-  useCaslAbilities(builderFactory, "casl")
+  useCaslAbilities(builderFactory, { 
+    modelsMeta,
+    permissionField: 'casl'
+  })
 );
 const result = await caslClient.post.findMany({
   include: {
@@ -67,7 +97,7 @@ Why do we create this builder factory function? It allows us to alter the rules 
 
 ```ts
 const result = await caslClient
-  .$casl((extend) => {
+  .$casl<typeof caslClient>((extend) => {
     extend.cannot("read", "Post");
     return extend;
   })
@@ -77,6 +107,9 @@ const result = await caslClient
     },
   }); // will throw an error, since we added an additional cannot rule to post!
 ```
+
+> Pass `typeof caslClient` as the generic parameter to preserve full Prisma client types  
+> (model methods like `.post`, `.user` etc.) on the returned client.
 
 Mutations will only run, if abilities allow it.
 
@@ -89,7 +122,7 @@ function builderFactory() {
   cannot("update", "Post", "text");
   return builder;
 }
-const caslClient = prismaClient.$extends(useCaslAbilities(builderFactory));
+const caslClient = prismaClient.$extends(useCaslAbilities(builderFactory, { modelsMeta }));
 const result = await caslClient.post.update({
   data: { text: "-" },
   where: { id: 0 },
@@ -172,12 +205,12 @@ console.log(result) // [{ email: "-" }]
 
 Here are some performance metrics for the above query for the small test sqlite db:
 
-- plain prisma query: **0.56225**
-- casl prisma query: **3.33416**
-  - create abilities: **0.18987**
-  - enrich query with casl: **0.09284**
-  - prisma query: **2.97764**
-  - filtering query results: **0.07380**
+- plain prisma query: **1.283736**
+- casl prisma query: **1.463387**
+  - create abilities: **0.181223**
+  - enrich query with casl: **0.1095559**
+  - prisma query: **1.88673**
+  - filtering query results: **0.085762**
 
 #### Nested fields and wildcards are not supported / tested
 

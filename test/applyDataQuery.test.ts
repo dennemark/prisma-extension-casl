@@ -53,7 +53,7 @@ describe('apply data query', () => {
                         data: { email: '-1' }, where: {
                             id: 0
                         }
-                    }, mutation, mutation, 'User')).toThrow(`It's not allowed to run "${mutation}" on "User"`)
+                    }, mutation, mutation, 'User')).toThrow(`It's not allowed to "${mutation}" on "User"`)
                 })
             })
         })
