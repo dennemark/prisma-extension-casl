@@ -3,3 +3,4 @@ dev.db
 dev.db-journal
 *.env*
 src/generated
+test-consumer/src/generated
