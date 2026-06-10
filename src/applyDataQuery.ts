@@ -1,6 +1,5 @@
-import { AbilityTuple, PureAbility } from '@casl/ability'
+import { AbilityTuple, Ability } from '@casl/ability'
 import { accessibleBy, createPrismaAbility, PrismaQuery } from '@casl/prisma'
-import { Prisma } from '@prisma/client'
 import { applyAccessibleQuery } from './applyAccessibleQuery'
 import { applyWhereQuery } from './applyWhereQuery'
 import { CreationTree } from './convertCreationTreeToSelect'
@@ -24,7 +23,7 @@ import './polyfills'
  * @returns enriched query with casl authorization or Error
  */
 export function applyDataQuery(
-    abilities: PureAbility<AbilityTuple, PrismaQuery>,
+    abilities: Ability<AbilityTuple, PrismaQuery>,
     args: any,
     operation: PrismaCaslOperation,
     action: string,
@@ -124,13 +123,13 @@ export function applyDataQuery(
                         const mutationAction = caslNestedOperationDict[nestedAction]
                         const isConnection = nestedAction === 'connect' || nestedAction === 'disconnect'
 
-                        tree.children[field] = { action: mutationAction, model: relationModel.type as Prisma.ModelName, children: {}, mutation: [] }
+                        tree.children[field] = { action: mutationAction, model: relationModel.type, children: {}, mutation: [] }
                         if (nestedAction !== 'disconnect' && nestedArgs !== true) {
                             const dataQuery = applyDataQuery(abilities, nestedArgs, operation, mutationAction, relationModel.type, tree.children[field])
                             mutation[field][nestedAction] = dataQuery.args
                             // connection works like a where query, so we apply it
                             if (isConnection) {
-                                const accessibleQuery = accessibleBy(abilities, mutationAction)[relationModel.type as Prisma.ModelName]
+                                const accessibleQuery = accessibleBy(abilities, mutationAction).ofType(relationModel.type)
 
                                 if (Array.isArray(mutation[field][nestedAction])) {
                                     mutation[field][nestedAction] = mutation[field][nestedAction].map((q) => applyAccessibleQuery(q, accessibleQuery))

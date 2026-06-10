@@ -3,6 +3,7 @@ import { seedClient } from './client'
 import { seed } from './seed'
 
 import { prismaQuery } from '@casl/prisma'
+import { modelsMeta } from '../src/generated/prisma/metadata'
 import { useCaslAbilities } from '../src/index'
 import { abilityBuilder } from './abilities'
 
@@ -21,17 +22,19 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
 
 
-            const result = await client.$casl((a) => {
+            const result = await client.$casl<typeof client>((a) => {
                 a.can('read', 'User')
                 return a
             }).user.findMany()
             expect(result.length).toEqual(2)
             expect(await client.user.findMany()).toEqual([])
-            expect(await client.$casl((a) => a).user.findMany()).toEqual([])
+            expect(await client.$casl<typeof client>((a) => a).user.findMany()).toEqual([])
         })
     })
     describe('transaction', () => {
@@ -41,14 +44,17 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             expect(client.$transaction).toBeDefined()
-            expect(client.$casl((abilities) => abilities).$transaction).toBeDefined()
+            expect(client.$casl<typeof client>((abilities) => abilities).$transaction).toBeDefined()
             let transactionClient = undefined
-            await client.$casl((abilities) => abilities).$transaction(async (tx) => {
+            //@ts-ignore
+            await client.$casl<typeof client>((abilities) => abilities).$transaction(async (tx) => {
                 //@ts-ignore
-                transactionClient = tx.$casl((abilities) => abilities)
+                transactionClient = tx.$casl<typeof client>((abilities) => abilities)
                 return
             })
             expect(transactionClient).toBeDefined()
@@ -69,7 +75,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             await expect(client.user.create({
                 data: {
@@ -120,7 +128,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             // expect(await client.user.count()).toEqual(2)
 
@@ -146,7 +156,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             expect(await client.user.count()).toEqual(2)
             await expect(
@@ -176,7 +188,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             await expect(client.user.create({
                 data: {
@@ -216,7 +230,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             await expect(client.user.create({
                 data: {
@@ -270,7 +286,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             await expect(client.user.create({
                 data: {
@@ -308,20 +326,23 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             expect(await
-                client.$casl((abilities) => {
+                client.$casl<typeof client>((abilities) => {
                     abilities.can('read', 'User', 'email')
                     abilities.can('create', 'User')
                     return abilities
+                    //@ts-ignore
                 }).$transaction(async (tx) => {
-                    return [await tx.user.create({
+                    return [await (tx as any).user.create({
                         data: {
                             email: 'second-mail',
                         }
                     }),
-                    await tx.user.create({
+                    await (tx as any).user.create({
                         data: {
                             email: 'third-mail'
                         }
@@ -336,15 +357,18 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             expect(await
-                client.$casl((abilities) => {
+                client.$casl<typeof client>((abilities) => {
                     abilities.can('read', 'User', 'email')
                     return abilities
+                    //@ts-ignore
                 }).$transaction(async (tx) => {
                     try {
-                        await tx.user.create({
+                        await (tx as any).user.create({
                             data: {
                                 email: 'third-mail'
                             }
@@ -353,11 +377,11 @@ describe('prisma extension casl', () => {
 
                     }
                     //@ts-ignore
-                    return [await tx.$casl((abilities) => {
+                    return [await (tx.$casl((abilities) => {
                         abilities.can('read', 'User', 'email')
                         abilities.can('create', 'User')
                         return abilities
-                    }).user.create({
+                    }) as any).user.create({
                         data: {
                             email: 'second-mail',
                         }
@@ -376,6 +400,7 @@ describe('prisma extension casl', () => {
             }
             const client = seedClient.$extends(
                 useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta,
                     beforeQuery: async (tx) => {
                         await tx.post.create({
                             data: {
@@ -407,6 +432,7 @@ describe('prisma extension casl', () => {
             }
             const client = seedClient.$extends(
                 useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta,
                     beforeQuery: async (tx) => {
                         await tx.post.create({
                             data: {
@@ -450,7 +476,9 @@ describe('prisma extension casl', () => {
             }
             const client = seedClient.$extends(
                 //@ts-ignore
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
 
             const result = await client.user.findUnique({
@@ -484,7 +512,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.user.findUnique({
                 where: {
@@ -523,7 +553,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
 
 
@@ -558,7 +590,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.user.findUnique({
                 where: {
@@ -584,7 +618,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             expect(await client.user.findUnique({
                 where: {
@@ -601,7 +637,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             expect(await client.user.findUnique({
                 where: {
@@ -632,7 +670,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
 
             const result = await client.post.findUnique({
@@ -682,7 +722,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
 
 
@@ -722,7 +764,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result2 = await client.post.findUnique({
                 where: {
@@ -773,7 +817,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result2 = await client.post.findUnique({
                 where: {
@@ -813,7 +859,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.user.findMany()
             expect(result).toEqual([{ email: '0', favoriteId: 0, id: 0 }, { email: '1', favoriteId: null, id: 1 }])
@@ -831,7 +879,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.user.findMany()
             expect(result).toEqual([{ id: 0, favoriteId: 0, }, { email: '1', favoriteId: null, id: 1 }])
@@ -848,7 +898,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.user.findMany()
             expect(result).toEqual([{ email: '0', favoriteId: 0, id: 0 }, { email: '1' }])
@@ -863,7 +915,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.user.findMany()
             expect(result).toEqual([{ email: '0', id: 0 }, { email: '1' }])
@@ -878,7 +932,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.user.findMany()
 
@@ -895,7 +951,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.user.findMany()
 
@@ -917,7 +975,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.post.findUnique({ where: { id: 0 }, include: { thread: true } })
             expect(result).toEqual({ authorId: 0, id: 0, threadId: 0, text: '', thread: { id: 0 } })
@@ -937,7 +997,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             expect(await client.post.findUnique({ where: { id: 0 }, include: { thread: true } })).toEqual({
                 authorId: 0,
@@ -963,7 +1025,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
 
             expect(await client.post.findUnique({
@@ -989,7 +1053,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
 
             expect(await client.post.findUnique({
@@ -1014,7 +1080,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.post.findUnique({
                 where: { id: 0 },
@@ -1046,7 +1114,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.topic.findUnique({
                 where: {
@@ -1084,7 +1154,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.post.findUnique({ where: { id: 2 } })
             expect(result?.authorId).toBe(1)
@@ -1110,7 +1182,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.post.findMany({ include: { thread: true } })
             expect(result).toEqual([{ authorId: 0, id: 0, text: '', threadId: 0, thread: { id: 0 } }, { authorId: 1, id: 1, text: '', threadId: 0, thread: { id: 0 } }, { authorId: 0, id: 3, text: '', threadId: 2, thread: { id: 2 } }])
@@ -1131,7 +1205,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
 
             const result = await client.user.findMany()
@@ -1153,7 +1229,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             console.log("read performance")
 
@@ -1187,7 +1265,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
 
             await expect(client.user.update({
@@ -1208,7 +1288,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.user.update({
                 data: {
@@ -1230,7 +1312,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.user.update({
                 data: {
@@ -1252,7 +1336,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.user.update({
                 data: {
@@ -1273,7 +1359,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             await expect(client.user.update({
                 data: {
@@ -1294,7 +1382,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             await expect(client.user.update({
                 data: {
@@ -1316,7 +1406,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.user.update({
                 data: {
@@ -1343,7 +1435,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.user.update({
                 data: {
@@ -1387,7 +1481,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
 
             await expect(client.post.update({
@@ -1422,7 +1518,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
 
             await expect(client.post.update({
@@ -1451,7 +1549,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
 
             await expect(client.post.update({
@@ -1477,7 +1577,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.user.update({
                 data: {
@@ -1523,7 +1625,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
 
             await expect(client.user.update({
@@ -1587,7 +1691,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             await expect(client.user.update({
                 data: {
@@ -1624,7 +1730,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
 
             await expect(client.user.update({
@@ -1665,7 +1773,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             console.log('update performance')
             const t1 = performance.now()
@@ -1732,7 +1842,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             await expect(client.user.delete({
                 where: {
@@ -1749,7 +1861,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.user.delete({
                 where: {
@@ -1770,7 +1884,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.user.delete({
                 where: {
@@ -1793,7 +1909,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.user.delete({
                 where: {
@@ -1815,7 +1933,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             await expect(client.user.delete({
                 where: {
@@ -1835,7 +1955,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             await expect(client.user.deleteMany({
                 where: {
@@ -1852,7 +1974,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             await client.user.deleteMany({
                 where: {
@@ -1876,7 +2000,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             await client.user.deleteMany({
                 where: {
@@ -1900,7 +2026,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             await client.user.deleteMany({
                 where: {
@@ -1928,7 +2056,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.user.create({
                 data: {
@@ -1963,7 +2093,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             expect(await client.user.create({
                 data: {
@@ -1996,7 +2128,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             await expect(client.user.create({
                 data: {
@@ -2023,7 +2157,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             await expect(client.user.create({
                 data: {
@@ -2043,7 +2179,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.user.aggregate({
                 _avg: { id: true },
@@ -2071,7 +2209,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             await seedClient.post.updateMany({ data: { threadId: null } })
             const result = await client.thread.findUnique({
@@ -2102,7 +2242,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             // await seedClient.post.updateMany({ data: { threadId: null } })
             const query = {
@@ -2145,7 +2287,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.thread.findUnique({
                 where: {
@@ -2183,7 +2327,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.post.updateMany({ data: { text: 'updateMany' } })
             const resultReturn = await client.post.updateManyAndReturn({ data: { text: 'updateManyAndReturn' } })
@@ -2201,7 +2347,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.post.createMany({ data: [{ authorId: 0, text: 'createMany' }] })
             const resultReturn = await client.post.createManyAndReturn({ data: [{ authorId: 0, text: 'createManyAndReturn' }] })
@@ -2219,7 +2367,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.user.count()
             expect(result).toEqual(2)
@@ -2235,7 +2385,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.user.groupBy({
                 by: ['email'],
@@ -2262,7 +2414,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.user.groupBy({
                 by: ['email'],
@@ -2289,7 +2443,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             const result = await client.user.findUnique({ where: { id: 0 } }).posts()
             expect(result).toEqual([{ authorId: 0, text: '', id: 0, threadId: 0 }])
@@ -2303,7 +2459,9 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             expect(await client.user.findUnique({ where: { id: 0 } }).posts()).toEqual([])
 
@@ -2316,11 +2474,13 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory)
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta
+                })
             )
             // await expect(await client.user.findUnique({ where: { id: 0 } }).posts()).rejects.toThrow()
 
-            const result = await client.$casl((abilities) => {
+            const result = await client.$casl<typeof client>((abilities) => {
                 abilities.can('read', 'Post')
                 return abilities
             }).user.findUnique({ where: { id: 0 } }).posts()
@@ -2360,7 +2520,10 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory, { permissionField: 'casl', addPermissionActions: ['share'] })
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta,
+                    permissionField: 'casl', addPermissionActions: ['share']
+                })
             )
             const result = await client.user.findMany()
             expect(result).toEqual([
@@ -2393,7 +2556,10 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory, { permissionField: 'casl' })
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta,
+                    permissionField: 'casl'
+                })
             )
             const result = await client.post.findUnique({ where: { id: 0 } }).author()
             expect(result).toEqual({ email: '0', favoriteId: 0, id: 0, casl: ['create', 'read', 'update', 'delete'] })
@@ -2423,7 +2589,10 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory, { permissionField: 'casl' })
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta,
+                    permissionField: 'casl'
+                })
             )
             const result = await client.post.findUnique({
                 where: { id: 0 },
@@ -2484,7 +2653,10 @@ describe('prisma extension casl', () => {
                 return builder
             }
             const client = seedClient.$extends(
-                useCaslAbilities(builderFactory, { permissionField: 'casl' })
+                useCaslAbilities(builderFactory, {
+                    modelsMeta: modelsMeta,
+                    permissionField: 'casl'
+                })
             )
             const result = await client.user.findUnique({ where: { id: 0 } }).posts()
             expect(result).toEqual([

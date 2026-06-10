@@ -1,8 +1,8 @@
-import { AbilityTuple, PureAbility } from "@casl/ability";
+import { Ability, AbilityTuple } from '@casl/ability';
 import { PrismaQuery } from "@casl/prisma";
 import { getSubject, PrismaExtensionCaslOptions } from "./helpers";
 
-export function storePermissions(result: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: string, opts?: PrismaExtensionCaslOptions) {
+export function storePermissions(result: any, abilities: Ability<AbilityTuple, PrismaQuery>, model: string, opts?: PrismaExtensionCaslOptions) {
   if (!opts?.permissionField) {
     return result
   }

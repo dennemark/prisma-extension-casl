@@ -1,6 +1,5 @@
-import { AbilityTuple, PureAbility } from '@casl/ability'
+import { Ability, AbilityTuple } from '@casl/ability'
 import { accessibleBy, PrismaQuery } from '@casl/prisma'
-import { Prisma } from '@prisma/client'
 import { applyDataQuery } from "./applyDataQuery"
 import { applyIncludeSelectQuery } from "./applyIncludeSelectQuery"
 import { applyRuleRelationsQuery } from './applyRuleRelationsQuery'
@@ -17,10 +16,10 @@ import { transformDataToWhereQuery } from "./transformDataToWhereQuery"
  * @param model Prisma model
  * @returns Enriched query with casl authorization
  */
-export function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abilities: PureAbility<AbilityTuple, PrismaQuery>, model: Prisma.ModelName, queryAllRuleRelations?: boolean) {
+export function applyCaslToQuery(operation: PrismaCaslOperation, args: any, abilities: Ability<AbilityTuple, PrismaQuery>, model: string, queryAllRuleRelations?: boolean) {
     const operationAbility = caslOperationDict[operation]
 
-    accessibleBy(abilities, operationAbility.action)[model]
+    const accessibleQuery = accessibleBy(abilities, operationAbility.action).ofType(model)
 
     let creationTree = undefined
     if (operationAbility.dataQuery && args.data) {
