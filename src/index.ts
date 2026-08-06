@@ -49,6 +49,8 @@ export function useCaslAbilities(
             model: string;
             action: string;
             args: unknown;
+            /** per-query timeout in ms set via `timeoutCasl` - extends the batch transaction timeout */
+            timeout?: number;
             /** called before resolve */
             callback: (result: unknown) => void;
             resolve: (result: unknown) => void;
@@ -98,6 +100,9 @@ export function useCaslAbilities(
                 const debug = (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') && args.debugCasl
                 const debugAllErrors = args.debugCasl
                 delete args.debugCasl
+                /** per-query timeout in ms that extends the batch transaction timeout */
+                const timeoutCasl = args.timeoutCasl
+                delete args.timeoutCasl
                 const perf = debug ? performance : undefined
                 const logger = debug ? console : undefined
                 perf?.clearMeasures('prisma-casl-extension-Overall')
@@ -226,6 +231,7 @@ export function useCaslAbilities(
                         model,
                         action,
                         args,
+                        timeout: timeoutCasl,
                         reject,
                         resolve,
                         callback,
@@ -333,6 +339,16 @@ export function useCaslAbilities(
                     return results;
                 }
 
+                /**
+                 * all queries of a batch are executed within a single transaction,
+                 * so a per-query `timeoutCasl` can only extend - never shrink - the
+                 * general `txTimeout`. the transaction is given the maximum of both.
+                 */
+                const batchTimeout = batch.reduce((max, request: any) => {
+                    const timeout = request.timeout
+                    return typeof timeout === 'number' && timeout > max ? timeout : max
+                }, txTimeout)
+
                 new Promise((resolve, reject) => {
                     if (transaction && transaction.kind === 'itx') {
                         runBatchTransaction((client as any)._createItxClient(transaction)).then(resolve).catch(reject)
@@ -341,7 +357,7 @@ export function useCaslAbilities(
                             return runBatchTransaction(tx);
                         }, {
                             maxWait: txMaxWait,
-                            timeout: txTimeout,
+                            timeout: batchTimeout,
                         }).then(resolve).catch(reject)
                     }
                 }).then((results: any) => {

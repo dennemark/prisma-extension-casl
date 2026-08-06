@@ -25,7 +25,10 @@ export type PrismaExtensionCaslOptions = {
     afterQuery?: (tx: Prisma.TransactionClient) => Promise<void>,
     /** max wait for batch transaction - default 30000 */
     txMaxWait?: number
-    /** timeout for batch transaction - default 30000 */
+    /**
+     * timeout for batch transaction - default 30000
+     * can be extended per query via `timeoutCasl` in the query args
+     */
     txTimeout?: number
 }
 

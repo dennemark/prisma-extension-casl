@@ -106,6 +106,12 @@ Check out tests for some other examples.
 
 To debug queries add `debugCasl: true` to the query like this `caslClient.post.findUnique({ debugCasl: true })`
 
+### Per query timeouts
+
+To extend the batch transaction timeout for a single query add `timeoutCasl` with the desired timeout in ms to the query like this `caslClient.post.findUnique({ timeoutCasl: 60000 })`.
+
+Since all queries of a batch are executed within one transaction, `timeoutCasl` can only extend (never shrink) the general `txTimeout` option - the effective transaction timeout is the maximum of both.
+
 ### Limitations and Constraints
 
 #### NEEDS TO BE THE LAST EXTENSION

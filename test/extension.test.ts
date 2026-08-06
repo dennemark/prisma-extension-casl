@@ -14,6 +14,28 @@ beforeEach(async () => {
 
 describe('prisma extension casl', () => {
     describe('override rules', () => {
+        it('accepts and strips timeoutCasl from query args', async () => {
+            function builderFactory() {
+                const builder = abilityBuilder()
+
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory)
+            )
+
+            const result = await client.$casl((abilities) => {
+                abilities.can('read', 'User')
+                return abilities
+            }).user.findMany({
+                where: {
+                    email: '0'
+                },
+                //@ts-ignore
+                timeoutCasl: 1000
+            })
+            expect(result).toEqual([{ id: 0, email: '0', favoriteId: 0 }])
+        })
         it('overwrites abilities', async () => {
             function builderFactory() {
                 const builder = abilityBuilder()
@@ -35,6 +57,35 @@ describe('prisma extension casl', () => {
         })
     })
     describe('transaction', () => {
+        it('extends the batch transaction timeout using timeoutCasl', async () => {
+            const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+            function builderFactory() {
+                const builder = abilityBuilder()
+                const { can } = builder
+                can('read', 'User')
+                return builder
+            }
+            const client = seedClient.$extends(
+                useCaslAbilities(builderFactory, {
+                    txTimeout: 100,
+                    txMaxWait: 100,
+                    beforeQuery: async () => {
+                        await sleep(300)
+                    }
+                })
+            )
+            // without timeoutCasl the query exceeds the 100ms transaction timeout
+            await expect(
+                client.$casl((abilities) => abilities).user.findMany()
+            ).rejects.toThrow()
+
+            // with timeoutCasl the transaction timeout is extended to 5000ms
+            const result = await client.$casl((abilities) => abilities).user.findMany({
+                //@ts-ignore
+                timeoutCasl: 5000
+            })
+            expect(result.length).toEqual(2)
+        })
         it('has $transaction on $casl client', async () => {
             function builderFactory() {
                 const builder = abilityBuilder()
